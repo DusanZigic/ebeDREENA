@@ -7,7 +7,7 @@
 #include <map>
 #include <fstream>
 
-int GetInputs(int argc, char const *argv[], std::string &csys, std::string &snn, std::string &pname, std::string &cent, double &xb, int &eventn, double &bcpp, int &phiptsn, double &tstep, double &tcrit, int &bcpseed)
+int GetInputs(int argc, char const *argv[], std::string &csys, std::string &snn, std::string &pname, std::string &cent, double &xb, size_t &eventn, double &bcpp, size_t &phiptsn, double &tstep, double &tcrit, int &bcpseed)
 {
 	std::vector<std::string> inputs; for (int i=2; i<argc; i++) inputs.push_back(argv[i]);
 
@@ -89,7 +89,7 @@ int GetInputs(int argc, char const *argv[], std::string &csys, std::string &snn,
 	return 1;
 }
 
-int GetInputs(int argc, char const *argv[], std::string &snn, std::string &pname, double &xb, int &LdndxMaxPts, int &LCollMaxPts)
+int GetInputs(int argc, char const *argv[], std::string &snn, std::string &pname, double &xb, size_t &LdndxMaxPts, size_t &LCollMaxPts)
 {
 
 	std::vector<std::string> inputs; for (int i=2; i<argc; i++) inputs.push_back(argv[i]);
