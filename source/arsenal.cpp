@@ -2,6 +2,7 @@
 #include "elossheader.hpp"
 #include "importexport.hpp"
 #include "linearinterpolation.hpp"
+#include "polyintegration.hpp"
 
 #include <iostream>
 #include <string>
@@ -404,4 +405,17 @@ void gaussFilterIntegrate(const std::vector<double> &radiativeRAA, const std::ve
 
 		singRAA.push_back(1.0 / dsdpti2.interpolation(pT) * GFSum);
 	}
+}
+
+void calculateAvgPathlenTemps(const std::vector<double> &pathLenghDist, const std::vector<double> &temperatureDist, std::vector<double> &avgPathLength, std::vector<double> &avgTemp)
+{
+	interpolationF pathLenghDistInt(phiGridPts, pathLenghDist);
+	avgPathLength.push_back(cubicIntegrate(phiGridPts, pathLenghDist)/2.0/M_PI);
+	avgPathLength.push_back((pathLenghDistInt.interpolation(phiGridPts.front()) + pathLenghDistInt.interpolation(phiGridPts.back()))/2.0);
+	avgPathLength.push_back((pathLenghDistInt.interpolation(M_PI/2.0)           + pathLenghDistInt.interpolation(3.0*M_PI/2.0))     /2.0);
+
+	interpolationF temperatureDistInt(phiGridPts, temperatureDist);
+	avgTemp.push_back(cubicIntegrate(phiGridPts, temperatureDist)/2.0/M_PI);
+	avgTemp.push_back((temperatureDistInt.interpolation(phiGridPts.front()) + temperatureDistInt.interpolation(phiGridPts.back()))/2.0);
+	avgTemp.push_back((temperatureDistInt.interpolation(M_PI/2.0)           + temperatureDistInt.interpolation(3.0*M_PI/2.0))     /2.0);
 }
