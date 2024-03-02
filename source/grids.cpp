@@ -395,12 +395,12 @@ size_t gridPoints::finPtsLength() const {
 
 double gridPoints::productLog(double x)
 {
-	if (x == 0) {
-		return 0;
+	if (x == 0.0) {
+		return 0.0;
 	}
 
 	double w0, w1;
-	if (x > 0) {
+	if (x > 0.0) {
 		w0 = std::log(1.2 * x / std::log(2.4 * x / std::log1p(2.4 * x)));
 	}
 	else {
