@@ -3,7 +3,7 @@
 #include "grids.hpp"
 #include "linearinterpolation.hpp"
 #include "elossheader.hpp"
-// #include "ltables.hpp"
+#include "ltables.hpp"
 
 #include <iostream>
 #include <string>
@@ -453,82 +453,85 @@ int exportResults(const std::string &particleName, size_t event_id, const std::v
 	return 1;
 }
 
-/*int exportLTables(const std::vector<double> &ldndxTable, const std::vector<double> &lnormTable, const std::vector<double> &lcollTable)
+int exportLTables(const std::vector<double> &ldndxTable, const std::vector<double> &lnormTable, const std::vector<double> &lcollTable)
 {
 	std::stringstream xBss; xBss << std::fixed << std::setprecision(1) << LT_xB;
 	std::stringstream nfss; nfss << std::fixed << std::setprecision(1) << LT_nf;
 
-	const std::string path_out_ldndx = "./LTables/LdndxTbl_nf=" + nfss.str() + "_" + LT_pName + "_xB=" + xBss.str() + ".dat";
-	std::ofstream file_out_ldndx(path_out_ldndx);
-	if (!file_out_ldndx.is_open()) {
-		cerr << "Error: unable to open Ldndx table export file." << endl;
-		return -1;
-	}
+	{//exporting Ldndx table
+		const std::string path_out = "./LTables/LdndxTbl_nf=" + nfss.str() + "_" + LT_pName + "_xB=" + xBss.str() + ".dat";
+		std::ofstream file_out(path_out, std::ios_base::out);
+		if (!file_out.is_open()) {
+			std::cerr << "Error: unable to open Ldndx table export file." << std::endl;
+			return -1;
+		}
 
-	//opening LNorm export file:
-	string path_out_lnorm = "LTables/LNormTbl_nf=" + nfss.str() + "_" + LT_pName + "_xB=" + xBss.str() + ".dat";
-	ofstream file_out_lnorm(path_out_lnorm);
-	if (!file_out_lnorm.is_open()) {
-		cerr << "Error: unable to open LNorm table export file." << endl;
-		return -1;
-	}
+		for (size_t iTau=0; iTau<LT_Grids.tauPtsLength(); iTau++) {
+			for (size_t ip=0; ip<LT_Grids.pPtsLength(); ip++) {
+				for (size_t iT=0; iT<LT_Grids.TPtsLength(); iT++) {
+					for (size_t ix=0; ix<LT_Grids.xPtsLength(); ix++) {
+						size_t ldndxIndex = iTau*LT_Grids.xPtsLength()*LT_Grids.TPtsLength()*LT_Grids.pPtsLength() + 
+											ip*LT_Grids.xPtsLength()*LT_Grids.TPtsLength() + 
+											iT*LT_Grids.xPtsLength() + 
+											ix;
 
-	for (int tau_i=0; tau_i<LT_Grids.tauPtsLength(); tau_i++)
-	{
-		for (int p_i=0; p_i<LT_Grids.pPtsLength(); p_i++)
-		{
-			for (int T_i=0; T_i<LT_Grids.TPtsLength(); T_i++)
-			{
-				for (int x_i=0; x_i<LT_Grids.xPtsLength(); x_i++)
-				{
-					//calculating ldndx index:
-					int ldndx_index = tau_i*LT_Grids.xPtsLength()*LT_Grids.TPtsLength()*LT_Grids.pPtsLength()
-									+ p_i*LT_Grids.xPtsLength()*LT_Grids.TPtsLength()
-									+ T_i*LT_Grids.xPtsLength()
-									+ x_i;
-
-					//printing ldndx to file:
-					file_out_ldndx << fixed << setprecision(10) << LT_Grids.tauPts(tau_i) << " "
-								   << fixed << setprecision(10) << LT_Grids.pPts(p_i) << " "
-								   << fixed << setprecision(10) << LT_Grids.TPts(T_i) << " "
-								   << fixed << setprecision(10) << LT_Grids.xPts(x_i) << " "
-								   << fixed << setprecision(10) << ldndxtbl[ldndx_index] << endl;
+						//printing ldndx to file:
+						file_out << std::fixed << std::setprecision(10) << LT_Grids.tauPts(iTau) << " ";
+						file_out << std::fixed << std::setprecision(10) << LT_Grids.pPts(ip) << " ";
+						file_out << std::fixed << std::setprecision(10) << LT_Grids.TPts(iT) << " ";
+						file_out << std::fixed << std::setprecision(10) << LT_Grids.xPts(ix) << " ";
+						file_out << std::fixed << std::setprecision(10) << ldndxTable[ldndxIndex] << "\n";
+					}
 				}
-
-				//calculating lnorm index:
-				int lnorm_index = tau_i*LT_Grids.TPtsLength()*LT_Grids.pPtsLength()
-								+ p_i*LT_Grids.TPtsLength()
-								+ T_i;
-
-				//printing lnorm to file:
-				file_out_lnorm << fixed << setprecision(10) << LT_Grids.tauPts(tau_i) << " "
-							   << fixed << setprecision(10) << LT_Grids.pPts(p_i) << " "
-							   << fixed << setprecision(10) << LT_Grids.TPts(T_i) << " "
-							   << fixed << setprecision(10) << lnormtbl[lnorm_index] << endl;
 			}
 		}
+
+		file_out.close();
 	}
 
-	file_out_ldndx.close(); file_out_lnorm.close(); //closing Ldndx and LNorm files
-
-	//opening LColl export file:
-	string path_out_lcoll = "LTables/LCollTbl_nf=" + nfss.str() + "_" + LT_pName + ".dat";
-	ofstream file_out_lcoll(path_out_lcoll);
-	if (!file_out_lcoll.is_open()) {
-		cerr << "Error: unable to open LColl table export file." << endl;
-		return -1;
-	}
-
-	//printing lcoll to file:
-	for (int p_i=0; p_i<LT_Grids.pCollPtsLength(); p_i++)
-	{
-		for (int T_i=0; T_i<LT_Grids.TCollPtsLength(); T_i++)
-		{
-			file_out_lcoll << fixed << setprecision(10) << LT_Grids.pCollPts(p_i) << " "
-						   << fixed << setprecision(10) << LT_Grids.TCollPts(T_i) << " "
-						   << fixed << setprecision(10) << lcolltbl[p_i*LT_Grids.TCollPtsLength() + T_i] << endl;
+	{//exporting LNorm table
+		const std::string path_out = "./LTables/LNormTbl_nf=" + nfss.str() + "_" + LT_pName + "_xB=" + xBss.str() + ".dat";
+		std::ofstream file_out(path_out, std::ios_base::out);
+		if (!file_out.is_open()) {
+			std::cerr << "Error: unable to open LNorm table export file." << std::endl;
+			return -2;
 		}
+
+		for (size_t iTau=0; iTau<LT_Grids.tauPtsLength(); iTau++) {
+			for (size_t ip=0; ip<LT_Grids.pPtsLength(); ip++) {
+				for (size_t iT=0; iT<LT_Grids.TPtsLength(); iT++) {
+					size_t lnormIndex = iTau*LT_Grids.TPtsLength()*LT_Grids.pPtsLength() + 
+										ip*LT_Grids.TPtsLength() + 
+										iT;
+
+					file_out << std::fixed << std::setprecision(10) << LT_Grids.tauPts(iTau) << " ";
+					file_out << std::fixed << std::setprecision(10) << LT_Grids.pPts(ip) << " ";
+					file_out << std::fixed << std::setprecision(10) << LT_Grids.TPts(iT) << " ";
+					file_out << std::fixed << std::setprecision(10) << lnormTable[lnormIndex] << "\n";
+				}
+			}
+		}
+
+		file_out.close();
 	}
 
-	file_out_lcoll.close(); //closing LColl file
-}*/
+	{//exporting LColl table
+		std::string path_out = "./LTables/LCollTbl_nf=" + nfss.str() + "_" + LT_pName + ".dat";
+		std::ofstream file_out(path_out, std::ios_base::out);
+		if (!file_out.is_open()) {
+			std::cerr << "Error: unable to open LColl table export file." << std::endl;
+			return -3;
+		}
+		for (size_t ip=0; ip<LT_Grids.pCollPtsLength(); ip++) {
+			for (size_t iT=0; iT<LT_Grids.TCollPtsLength(); iT++) {
+				file_out << std::fixed << std::setprecision(10) << LT_Grids.pCollPts(ip) << " ";
+				file_out << std::fixed << std::setprecision(10) << LT_Grids.TCollPts(iT) << " ";
+				file_out << std::fixed << std::setprecision(10) << lcollTable[ip*LT_Grids.TCollPtsLength() + iT] << "\n";
+			}
+		}
+
+		file_out.close();
+	}
+
+	return 1;
+}

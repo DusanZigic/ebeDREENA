@@ -6,6 +6,7 @@
 #include "inputparser.hpp"
 #include "mainheader.hpp"
 #include "elossheader.hpp"
+#include "ltables.hpp"
 
 #include <iostream>
 #include <string>
@@ -24,13 +25,13 @@ int main(int argc, char const *argv[])
 		return 0;
 	}
     else if (argv[1] ==  std::string("AverageEL")) {
-        // if (GetInputs(argc, argv, collsys, sNN, pName, centrality, xB, eventN, BCPP, phiGridN, TIMESTEP, TCRIT, BCPSEED) == 0) return -1;
-        // AverageEL();
+        if (GetInputs(argc, argv, collsys, sNN, pName, centrality, xB, eventN, BCPP, phiGridN, TIMESTEP, TCRIT, BCPSEED) == 0) return -1;
+        AverageEL();
     }
     else if (argv[1] == std::string("LTables")) {
 
-		// if (GetInputs(argc, argv, LT_sNN, LT_pName, LT_xB, LdndxMaxPoints, LCollMaxPoints) == 0) return -2;
-		// GenerateLTables();
+		if (GetInputs(argc, argv, LT_sNN, LT_pName, LT_xB, LdndxMaxPoints, LCollMaxPoints) == 0) return -2;
+		GenerateLTables();
 	}
 	else {
 		std::cerr << "posible calculations: AverageEL, LTables" << std::endl;
