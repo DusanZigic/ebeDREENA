@@ -478,11 +478,13 @@ std::vector<double> gridPoints::generateGrids(const std::vector<std::vector<doub
 
 	gridpoints.push_back(densityX.front());
 
-	for (size_t i=1; i<numpts; i++)
+	for (size_t i=1; i<numpts-1; i++)
 	{
 		double a = inttabX.front() + (inttabX.back()-inttabX.front())*static_cast<double>(i)/static_cast<double>(numpts-1);
 		gridpoints.push_back(inttabInt.interpolation(a));
 	}
+
+	gridpoints.push_back(inttabX.back());
 
 	return gridpoints;
 }
