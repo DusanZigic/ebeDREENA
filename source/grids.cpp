@@ -484,7 +484,7 @@ std::vector<double> gridPoints::generateGrids(const std::vector<std::vector<doub
 		gridpoints.push_back(inttabInt.interpolation(a));
 	}
 
-	gridpoints.push_back(inttabX.back());
+	gridpoints.push_back(densityX.back());
 
 	return gridpoints;
 }
