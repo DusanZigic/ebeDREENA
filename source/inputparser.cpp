@@ -89,13 +89,13 @@ int GetInputs(int argc, char const *argv[], std::string &csys, std::string &snn,
 	return 1;
 }
 
-int GetInputs(int argc, char const *argv[], std::string &snn, std::string &pname, double &xb, size_t &LdndxMaxPts, size_t &LCollMaxPts)
+int GetInputs(int argc, char const *argv[], std::string &snn, std::string &pname, double &xb, size_t &LdndxMaxPts, size_t &LCollMaxPts, double &tcrit)
 {
 
 	std::vector<std::string> inputs; for (int i=2; i<argc; i++) inputs.push_back(argv[i]);
 
 	if ((inputs.size() == 1) && (inputs[0] == "-h")) {
-		std::cout << "default values: -sNN=5020GeV -pName=Charm -xB=0.6 -LdndxMaxPoints=500000 -LCollMaxPoints=10000" << std::endl;
+		std::cout << "default values: -sNN=5020GeV -pName=Charm -xB=0.6 -LdndxMaxPoints=500000 -LCollMaxPoints=10000 --TCRIT=0.155" << std::endl;
 		return 0;
 	}
 
@@ -142,6 +142,9 @@ int GetInputs(int argc, char const *argv[], std::string &snn, std::string &pname
 
 	LCollMaxPts = 10000;     if (inputparams_f.count("LCollMaxPoints") > 0) LCollMaxPts = stoi(inputparams_f["LCollMaxPoints"]);
 						     if (inputparams.count("LCollMaxPoints")   > 0) LCollMaxPts = stoi(  inputparams["LCollMaxPoints"]);
+	
+		  tcrit = 0.155;     if (inputparams_f.count("TCRIT") 	   	   > 0) tcrit   	= stod(inputparams_f["TCRIT"]);
+						    if (  inputparams.count("TCRIT") 	   	   > 0) tcrit    	= stod(  inputparams["TCRIT"]);
 
 	//checking if provided value of sNN is an option:
 	if ((snn != "5440GeV") && (snn != "5020GeV") && (snn != "2760GeV") && (snn != "200GeV")) {

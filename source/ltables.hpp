@@ -12,5 +12,6 @@ extern double LT_xB;          //xB value
 extern gridPoints LT_Grids;   //grids
 extern size_t LdndxMaxPoints; //maximal number of points for Ldndx integration
 extern size_t LCollMaxPoints; //maximal number of points for collisional integration
+extern double LT_TCRIT;       //critical temperature
 
 #endif

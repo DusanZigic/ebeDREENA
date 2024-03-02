@@ -30,7 +30,7 @@ int main(int argc, char const *argv[])
     }
     else if (argv[1] == std::string("LTables")) {
 
-		if (GetInputs(argc, argv, LT_sNN, LT_pName, LT_xB, LdndxMaxPoints, LCollMaxPoints) == 0) return -2;
+		if (GetInputs(argc, argv, LT_sNN, LT_pName, LT_xB, LdndxMaxPoints, LCollMaxPoints, LT_TCRIT) == 0) return -2;
 		GenerateLTables();
 	}
 	else {

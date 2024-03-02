@@ -21,6 +21,7 @@ double LT_xB;		    //xB value
 gridPoints LT_Grids;    //grids
 size_t LdndxMaxPoints;  //maximal number of points for Ldndx integration
 size_t LCollMaxPoints;  //maximal number of points for collisional integration
+double LT_TCRIT;		//critical temperature
 
 static const double Ng = 3.0;		//effective number of gluons
 static const double lambda = 0.2;   //QCD scale
@@ -275,7 +276,7 @@ void GenerateLTables()
 {
 	LT_nf = 3.0; if (LT_sNN == "200GeV") LT_nf = 2.5;
 
-	LT_Grids.setGridPoints(LT_sNN, LT_pName, 0.155);
+	LT_Grids.setGridPoints(LT_sNN, LT_pName, LT_TCRIT);
 
     LT_CR = LT_pName == "Gluon" ? 3.0 : 4.0/3.0;
 
