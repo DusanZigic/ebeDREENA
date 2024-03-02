@@ -6,6 +6,7 @@
 
 //defining global variables to be used in all source files:
 
+extern std::string collsys;				    		  	      //collision system
 extern std::string sNN; 					    		  	  //collision energy
 extern double nf;									          //effective number of flavours
 extern std::string pName; 					    		  	  //particle name

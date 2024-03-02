@@ -352,9 +352,7 @@ int loadPhiPoints()
 int exportResults(size_t event_id, const std::vector<std::vector<double>> &RAApTphi, const std::vector<double> &avgPathLength, const std::vector<double> &avgTemp, size_t trajecNum, size_t elossNum)
 {
 	std::vector<std::string> header;
-	header.push_back("#collision_system: Pb+Pb");
-	if (sNN ==  "200GeV") header[0] = "#collision_system: Au+Au";
-	if (sNN == "5440GeV") header[0] = "#collision_system: Xe+Xe";
+	header.push_back("#collision_system: " + collsys);
 	header.push_back("#collision_energy: " + sNN);
 	header.push_back("#particle_type: " + pName);
 	header.push_back("#centrality: " + centrality);
@@ -381,7 +379,7 @@ int exportResults(size_t event_id, const std::vector<std::vector<double>> &RAApT
 	header.push_back("#   pT [GeV]       phi          R_AA   ");
 
 	//setting file path:
-	const std::string path_out = "./CResults/CResults_" + pName + "/" + pName + "_sNN=" + sNN + "_cent=" + centrality + "_xB=" + xbsstr.str() + "_dist_" + std::to_string(event_id) + ".dat";
+	const std::string path_out = "./CResults/CResults_" + pName + "/" + pName + "_" + collsys + "_sNN=" + sNN + "_cent=" + centrality + "_xB=" + xbsstr.str() + "_dist_" + std::to_string(event_id) + ".dat";
 
 	std::ofstream file_out(path_out, std::ios_base::out);
 	if (!file_out.is_open()) {
@@ -405,10 +403,8 @@ int exportResults(size_t event_id, const std::vector<std::vector<double>> &RAApT
 
 int exportResults(const std::string &particleName, size_t event_id, const std::vector<std::vector<double>> &RAApTphi, const std::vector<double> &avgPathLength, const std::vector<double> &avgTemp, size_t trajecNum, size_t elossNum)
 {
-		std::vector<std::string> header;
-	header.push_back("#collision_system: Pb+Pb");
-	if (sNN ==  "200GeV") header[0] = "#collision_system: Au+Au";
-	if (sNN == "5440GeV") header[0] = "#collision_system: Xe+Xe";
+	std::vector<std::string> header;
+    header.push_back("#collision_system: " + collsys);
 	header.push_back("#collision_energy: " + sNN);
 	header.push_back("#particle_type: " + particleName);
 	header.push_back("#centrality: " + centrality);
@@ -435,7 +431,7 @@ int exportResults(const std::string &particleName, size_t event_id, const std::v
 	header.push_back("#   pT [GeV]       phi          R_AA   ");
 
 	//setting file path:
-	const std::string path_out = "./CResults/CResults_" + pName + "/" + pName + "_sNN=" + sNN + "_cent=" + centrality + "_xB=" + xbsstr.str() + "_dist_" + std::to_string(event_id) + ".dat";
+	const std::string path_out = "./CResults/CResults_" + pName + "/" + pName + "_" + collsys + "_sNN=" + sNN + "_cent=" + centrality + "_xB=" + xbsstr.str() + "_dist_" + std::to_string(event_id) + ".dat";
 
 	std::ofstream file_out(path_out, std::ios_base::out);
 	if (!file_out.is_open()) {

@@ -7,12 +7,12 @@
 #include <map>
 #include <fstream>
 
-int GetInputs(int argc, char const *argv[], std::string &snn, std::string &pname, std::string &cent, double &xb, int &eventn, double &bcpp, int &phiptsn, double &tstep, double &tcrit, int &bcpseed)
+int GetInputs(int argc, char const *argv[], std::string &csys, std::string &snn, std::string &pname, std::string &cent, double &xb, int &eventn, double &bcpp, int &phiptsn, double &tstep, double &tcrit, int &bcpseed)
 {
 	std::vector<std::string> inputs; for (int i=2; i<argc; i++) inputs.push_back(argv[i]);
 
 	if ((inputs.size() == 1) && (inputs[0] == "-h")) {
-		std::cout << "default values: --sNN=5020GeV --pName=Charm --centrality=30-40% --xB=0.6 --eventN=1000 --BCPP=20% --phiGridN=25 --TIMESTEP=0.1 --TCRIT=0.155 --BCPSEED=0" << std::endl;
+		std::cout << "default values: --collsys=PbPb --sNN=5020GeV --pName=Charm --centrality=30-40% --xB=0.6 --eventN=1000 --BCPP=20% --phiGridN=25 --TIMESTEP=0.1 --TCRIT=0.155 --BCPSEED=0" << std::endl;
 		return 0;
 	}
 
@@ -45,6 +45,8 @@ int GetInputs(int argc, char const *argv[], std::string &snn, std::string &pname
 
 	//setting parameter values based on config file values and overwriting with command line values:
 	//
+				   csys = "PbPb";    if (inputparams_f.count("collsys")    > 0) csys    =      inputparams_f["collsys"];
+									 if (  inputparams.count("collsys")    > 0) csys    =        inputparams["collsys"];
 	                snn = "5020GeV"; if (inputparams_f.count("sNN")        > 0) snn     =      inputparams_f["sNN"];
 						             if (  inputparams.count("sNN")        > 0) snn     =        inputparams["sNN"];
 
