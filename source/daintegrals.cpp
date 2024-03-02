@@ -139,8 +139,8 @@ double FdA415(double ph, double dp, interpolationF &normint, interpolationF &dnd
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //dA INTEGRALS:
 
-static int dAMaxPoints1, dAMaxPoints2, dAMaxPoints3, dAMaxPoints4, dAMaxPoints5, dAMaxPoints6, dAMaxPoints7; //number of points for dA integration
-static std::vector<double> dAHS1, dAHS2, dAHS3, dAHS4, dAHS5, dAHS6, dAHS7; 								 //vectors that store Halton sequences for dA integrals
+static size_t dAMaxPoints1, dAMaxPoints2, dAMaxPoints3, dAMaxPoints4, dAMaxPoints5, dAMaxPoints6, dAMaxPoints7; //number of points for dA integration
+static std::vector<double> dAHS1, dAHS2, dAHS3, dAHS4, dAHS5, dAHS6, dAHS7; 								 	//vectors that store Halton sequences for dA integrals
 
 //function that initializes Halton sequences for dA integrals calculations:
 void dAHaltonSeqInit(size_t dAMaxPts)
