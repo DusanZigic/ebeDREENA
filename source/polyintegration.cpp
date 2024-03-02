@@ -5,10 +5,9 @@
 
 static size_t locatePoint(const std::vector<double> &data, double x, int interpolationOrder)
 {
-	size_t ju, jm, jl;
-	size_t mm = interpolationOrder + 1;
-	size_t n = data.size();
-	size_t mmmin;
+	int ju, jm, jl;
+	int mm = interpolationOrder + 1;
+	int n = data.size();
 	bool ascnd = (data.back() >= data.front());
 	jl = 0;
 	ju = n - 1;
@@ -22,47 +21,34 @@ static size_t locatePoint(const std::vector<double> &data, double x, int interpo
 			ju = jm;
 		}
 	}
-	mmmin = n - mm < jl - ((mm - 2) >> 1) ? n - mm : jl - ((mm - 2) >> 1);
-	return (0 > mmmin ? 0 : mmmin);
+	int pointLocation = std::max(0, std::min(n - mm, jl - ((mm - 2) >> 1)));
+	return static_cast<size_t>(pointLocation);
 }
 
 static void polynomialCoeff(const std::vector<double> &dataX, const std::vector<double> &dataF, std::vector<double> &coeff)
 {
 	size_t n = dataX.size();
+	coeff.resize(n, 0.0);
+	double phi, ff, b;	
+	std::vector<double> s(n, 0.0);	
+	s[n-1] = -dataX[0];
 
-	coeff.resize(n); fill(coeff.begin(), coeff.end(), 0.0);
-
-	size_t k, j, i;
-	double phi, ff, b;
-	
-	std::vector<double> s(n); fill(s.begin(), s.end(), 0.0);
-	
-	s[n - 1] = -dataX[0];
-
-	for (i = 1; i<n; i++)
-	{
-		for (j = n - 1 - i; j<n - 1; j++)
-		{
-			s[j] -= dataX[i] * s[j + 1];
-		}
-		s[n - 1] -= dataX[i];
+	for (size_t i=1; i<n; i++) {
+		for (size_t j=n-1-i; j<n-1; j++)
+			s[j] -= dataX[i] * s[j+1];
+		s[n-1] -= dataX[i];
 	}
 
-	for (j = 0; j<n; j++)
-	{
+	for (size_t j=0; j<n; j++) {
 		phi = n;
 		
-		for (k = n - 1; k>0; k--)
-		{
-			phi = k * s[k] + dataX[j] * phi;
-		}
+		for (size_t k=n-1; k>0; k--)
+			phi = k*s[k] + dataX[j]*phi;
 		
-		ff = dataF[j] / phi;
-		
+		ff = dataF[j]/phi;		
 		b = 1.0;
 		
-		for (k = n - 1; k >= 0; k--)
-		{
+		for (int k=n-1; k>=0; k--) {
 			coeff[k] += b * ff;
 			b = s[k] + dataX[j] * b;
 		}
