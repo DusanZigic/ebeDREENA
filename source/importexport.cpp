@@ -89,7 +89,7 @@ int loadLdndx()
 	std::stringstream xBss; xBss << std::fixed << std::setprecision(1) << xB;
 	std::stringstream nfss; nfss << std::fixed << std::setprecision(1) << nf;
 
-	const std::string path_in = "./LTables/LdndxTbl_nf=" + nfss.str() + "_" + partName + "_xB=" + xBss.str() + ".dat";
+	const std::string path_in = "./ltables/ldndx_nf=" + nfss.str() + "_" + partName + "_xB=" + xBss.str() + ".dat";
 
 	std::ifstream file_in(path_in);
 	if (!file_in.is_open()) {
@@ -132,7 +132,7 @@ int loadLNorm()
 	std::stringstream xBss; xBss << std::fixed << std::setprecision(1) << xB;
 	std::stringstream nfss; nfss << std::fixed << std::setprecision(1) << nf;
 
-	const std::string path_in = "./LTables/LNormTbl_nf=" + nfss.str() + "_" + partName + "_xB=" + xBss.str() + ".dat";
+	const std::string path_in = "./ltables/lnorm_nf=" + nfss.str() + "_" + partName + "_xB=" + xBss.str() + ".dat";
 
 	std::ifstream file_in(path_in);
 	if (!file_in.is_open()) {
@@ -173,7 +173,7 @@ int loadLColl()
 
 	std::stringstream nfss; nfss << std::fixed << std::setprecision(1) << nf;
 
-	const std::string path_in = "./LTables/LCollTbl_nf=" + nfss.str() + "_" + partName + ".dat";
+	const std::string path_in = "./ltables/lcoll_nf=" + nfss.str() + "_" + partName + ".dat";
 
 	std::ifstream file_in(path_in);
 	if (!file_in.is_open()) {
@@ -212,11 +212,11 @@ std::vector<double> tempTauGrid, tempXGrid, tempYGrid; //temperature evolutions 
 
 int loadTempGridParams()
 {
-	const std::string path_in = "./TProfiles/TProfiles_bin_cent=" + centrality + "/temp_grids.dat";
+	const std::string path_in = "./evols/evols_cent=" + centrality + "/evolgridparams.dat";
 
 	std::ifstream file_in(path_in);
 	if (!file_in.is_open()) {
-		std::cerr << "Error: unable to open TProfile grid parameters file." << std::endl;
+		std::cerr << "Error: unable to open evolution grid parameters file." << std::endl;
 		return -1;
 	}
 
@@ -257,7 +257,7 @@ int loadTempGridParams()
 
 int loadTProfile(size_t event_id, interpolationF &tempProfile)
 {
-	const std::string path_in = "./TProfiles/TProfiles_bin_cent=" + centrality + "/TProfile_" + std::to_string(event_id) + ".dat";
+	const std::string path_in = "./evols/evols_cent=" + centrality + "/tempevol_" + std::to_string(event_id) + ".dat";
 
 	std::ifstream file_in(path_in, std::ios_base::in | std::ios_base::binary);
 	if (!file_in.is_open()) {
@@ -287,7 +287,7 @@ int loadTProfile(size_t event_id, interpolationF &tempProfile)
 
 int loadBinCollPoints(size_t event_id, std::vector<std::vector<double>> &bcpoints)
 {
-	const std::string path_in = "./BinaryCollPoints/BinaryCollPoints_cent=" + centrality + "/BinaryCollPoints_" + std::to_string(event_id) + ".dat";
+	const std::string path_in = "./binarycollpts/binarycollpts_cent=" + centrality + "/binarycollpts_" + std::to_string(event_id) + ".dat";
 
 	std::ifstream file_in(path_in, std::ios_base::in);
 	if (!file_in.is_open()) {
@@ -301,7 +301,7 @@ int loadBinCollPoints(size_t event_id, std::vector<std::vector<double>> &bcpoint
 
 	while (std::getline(file_in, line))
 	{
-		if (line.length() > 0)
+		if (line.length() == 0)
             continue;
         
         if (line.at(0) == '#')
@@ -379,7 +379,7 @@ int exportResults(size_t event_id, const std::vector<std::vector<double>> &RAApT
 	header.push_back("#   pT [GeV]       phi          R_AA   ");
 
 	//setting file path:
-	const std::string path_out = "./CResults/CResults_" + pName + "/" + pName + "_" + collsys + "_sNN=" + sNN + "_cent=" + centrality + "_xB=" + xbsstr.str() + "_dist_" + std::to_string(event_id) + ".dat";
+	const std::string path_out = "./results/results" + pName + "/" + pName + "_" + collsys + "_sNN=" + sNN + "_cent=" + centrality + "_xB=" + xbsstr.str() + "_dist_" + std::to_string(event_id) + ".dat";
 
 	std::ofstream file_out(path_out, std::ios_base::out);
 	if (!file_out.is_open()) {
@@ -431,7 +431,7 @@ int exportResults(const std::string &particleName, size_t event_id, const std::v
 	header.push_back("#   pT [GeV]       phi          R_AA   ");
 
 	//setting file path:
-	const std::string path_out = "./CResults/CResults_" + pName + "/" + pName + "_" + collsys + "_sNN=" + sNN + "_cent=" + centrality + "_xB=" + xbsstr.str() + "_dist_" + std::to_string(event_id) + ".dat";
+	const std::string path_out = "./results/results" + pName + "/" + pName + "_" + collsys + "_sNN=" + sNN + "_cent=" + centrality + "_xB=" + xbsstr.str() + "_dist_" + std::to_string(event_id) + ".dat";
 
 	std::ofstream file_out(path_out, std::ios_base::out);
 	if (!file_out.is_open()) {
@@ -459,7 +459,7 @@ int exportLTables(const std::vector<double> &ldndxTable, const std::vector<doubl
 	std::stringstream nfss; nfss << std::fixed << std::setprecision(1) << LT_nf;
 
 	{//exporting Ldndx table
-		const std::string path_out = "./LTables/LdndxTbl_nf=" + nfss.str() + "_" + LT_pName + "_xB=" + xBss.str() + ".dat";
+		const std::string path_out = "./ltables/ldndx_nf=" + nfss.str() + "_" + LT_pName + "_xB=" + xBss.str() + ".dat";
 		std::ofstream file_out(path_out, std::ios_base::out);
 		if (!file_out.is_open()) {
 			std::cerr << "Error: unable to open Ldndx table export file." << std::endl;
@@ -490,7 +490,7 @@ int exportLTables(const std::vector<double> &ldndxTable, const std::vector<doubl
 	}
 
 	{//exporting LNorm table
-		const std::string path_out = "./LTables/LNormTbl_nf=" + nfss.str() + "_" + LT_pName + "_xB=" + xBss.str() + ".dat";
+		const std::string path_out = "./ltables/lnorm_nf=" + nfss.str() + "_" + LT_pName + "_xB=" + xBss.str() + ".dat";
 		std::ofstream file_out(path_out, std::ios_base::out);
 		if (!file_out.is_open()) {
 			std::cerr << "Error: unable to open LNorm table export file." << std::endl;
@@ -516,7 +516,7 @@ int exportLTables(const std::vector<double> &ldndxTable, const std::vector<doubl
 	}
 
 	{//exporting LColl table
-		std::string path_out = "./LTables/LCollTbl_nf=" + nfss.str() + "_" + LT_pName + ".dat";
+		std::string path_out = "./ltables/lcoll_nf=" + nfss.str() + "_" + LT_pName + ".dat";
 		std::ofstream file_out(path_out, std::ios_base::out);
 		if (!file_out.is_open()) {
 			std::cerr << "Error: unable to open LColl table export file." << std::endl;
