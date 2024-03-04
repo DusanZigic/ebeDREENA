@@ -413,12 +413,12 @@ int exportResults(size_t event_id, const std::vector<std::vector<double>> &RAApT
 
 	for (const auto &head : header) file_out << head << "\n";
 
-
 	for (size_t ipT= 0; ipT<Grids.finPtsLength(); ipT++)
-		for (size_t iPhi=0; iPhi<phiGridN; iPhi++)
-			file_out << std::fixed << std::setw(14) << std::setprecision(10) <<   Grids.finPts(ipT) << " "
-					 << std::fixed << std::setw(12) << std::setprecision(10) <<    phiGridPts[iPhi] << " "
-					 << std::fixed << std::setw(12) << std::setprecision(10) << RAApTphi[ipT][iPhi] << "\n";
+		for (size_t iPhi=0; iPhi<phiGridN; iPhi++) {
+			file_out << std::fixed << std::setw(14) << std::setprecision(10) <<   Grids.finPts(ipT) << " ";
+			file_out << std::fixed << std::setw(12) << std::setprecision(10) <<    phiGridPts[iPhi] << " ";
+			file_out << std::fixed << std::setw(12) << std::setprecision(10) << RAApTphi[ipT][iPhi] << "\n";
+		}
 
 	file_out.close();
 
@@ -465,12 +465,12 @@ int exportResults(const std::string &particleName, size_t event_id, const std::v
 
 	for (const auto &head : header) file_out << head << "\n";
 
-
 	for (size_t ipT= 0; ipT<Grids.finPtsLength(); ipT++) //printing RAA(pT,phi) to file
-		for (size_t iPhi=0; iPhi<phiGridN; iPhi++)
-			file_out << std::fixed << std::setw(14) << std::setprecision(10) <<   Grids.finPts(ipT) << " "
-					 << std::fixed << std::setw(12) << std::setprecision(10) <<    phiGridPts[iPhi] << " "
-					 << std::fixed << std::setw(12) << std::setprecision(10) << RAApTphi[ipT][iPhi] << "\n";
+		for (size_t iPhi=0; iPhi<phiGridN; iPhi++) {
+			file_out << std::fixed << std::setw(14) << std::setprecision(10) <<   Grids.finPts(ipT) << " ";
+			file_out << std::fixed << std::setw(12) << std::setprecision(10) <<    phiGridPts[iPhi] << " ";
+			file_out << std::fixed << std::setw(12) << std::setprecision(10) << RAApTphi[ipT][iPhi] << "\n";
+		}
 
 	file_out.close();
 
