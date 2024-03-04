@@ -117,9 +117,8 @@ void interpolationF::SetData(const std::vector<double> &x1Data, const std::vecto
 
 	m_data.resize(m_variableN+1);
 
-	m_data[0] = std::vector<double>(x1Data.begin(), x1Data.begin() + m_dataLength);
-	m_data[1] = std::vector<double>(x2Data.begin(), x2Data.begin() + m_dataLength);
-    m_data[2] = std::vector<double>(0);
+	m_data[0] = std::vector<double>(x1Data.begin(), x1Data.end());
+	m_data[1] = std::vector<double>(x2Data.begin(), x2Data.end());
 	for (const auto &row : fData)
 		for (const auto &elem : row)
 			m_data[2].push_back(elem);
@@ -431,14 +430,13 @@ void interpolationF::createGrids()
 
 void interpolationF::locatePointF(const std::vector<double> &points, std::vector<size_t> &positions) const
 {
-	positions.resize(points.size(), 0.0L);
-    size_t ju, jm, jl, mm, n, mmmin;
+	positions.resize(points.size(), 0);
+    int ju, jm, jl, mm = 1 + 1;
 	bool ascnd;
 	for (size_t iv=0; iv<m_data.size()-1; iv++)
 	{
 		jl = 0;
 		ju = m_data[iv].size() - 1;
-		mm = 2;
 		ascnd = (m_data[iv].back() >= m_data[iv][0]);
 
 		while ((ju - jl) >1) {
@@ -450,9 +448,8 @@ void interpolationF::locatePointF(const std::vector<double> &points, std::vector
 				ju = jm;
 			}
 		}
-		n = m_data[iv].size();
-		mmmin = n - mm < jl - ((mm - 2) >> 1) ? n - mm : jl - ((mm - 2) >> 1);
-		positions[iv] = 0 > mmmin ? 0 : mmmin;
+		int n = static_cast<int>(m_data[iv].size());
+		positions[iv] = static_cast<size_t>(std::max(0, std::min(n - mm, jl - ((mm - 2) >> 1))));
 	}
 }
 
