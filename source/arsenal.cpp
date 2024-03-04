@@ -142,8 +142,7 @@ void gaussFilterIntegrate(const std::vector<double> &radiativeRAA1, const std::v
 //singRAA1 		- RAA array after Gauss filter integration (dA410)				  <- output
 //singRAA2 		- RAA array after Gauss filter integration (rest of dA integrals) <- output
 {
-	std::vector<double> pcollpoints = Grids.pCollPts();
-    interpolationF muCollInt(pcollpoints, collisionalEL); //creating collisional energy loss interpolated function
+    interpolationF muCollInt(Grids.pCollPts(), collisionalEL); //creating collisional energy loss interpolated function
 
 	std::vector<double> qGaussTabOG, fGaussTabOG; //defining vectors that will store original Gauss filter sampling points
 	generateGaussTab(qGaussTabOG, fGaussTabOG);   //generating sampling points and settin number of sampling poins
@@ -153,8 +152,7 @@ void gaussFilterIntegrate(const std::vector<double> &radiativeRAA1, const std::v
 	//////////////////////////////////////////////////////////////////////////////////
 	//Gauss integration of dAp410:
 	{
-		std::vector<double> radpoints = Grids.RadPts();
-        interpolationF RadRelInt(radpoints, radiativeRAA1); //creating radiative RAA1 interpolated function
+        interpolationF RadRelInt(Grids.RadPts(), radiativeRAA1); //creating radiative RAA1 interpolated function
 
 		double GFSum; //defining sum variable for Gauss filter
 		double dppT;  //defining integration variable
@@ -196,8 +194,7 @@ void gaussFilterIntegrate(const std::vector<double> &radiativeRAA1, const std::v
 	//////////////////////////////////////////////////////////////////////////////////
 	//Gauss integration of FdA:
 	{
-		std::vector<double> radpoints = Grids.RadPts(), fdppoints = Grids.FdpPts(); //creating radiative RAA2 interpolated function
-		interpolationF RadRelInt(radpoints, fdppoints, radiativeRAA2);
+		interpolationF RadRelInt(Grids.RadPts(), Grids.FdpPts(), radiativeRAA2);
 
 		double GFSum; //defining sum variable for Gauss filter
 		double dppT;  //defining integration variable
@@ -251,8 +248,7 @@ void gaussFilterIntegrate(const interpolationF &dsdpti2lquark, const std::vector
 //singRAA1 		- RAA array after Gauss filter integration (dA410)				  <- output
 //singRAA2 		- RAA array after Gauss filter integration (rest of dA integrals) <- output
 {
-	std::vector<double> pcollpoints = Grids.pCollPts();
-    interpolationF muCollInt(pcollpoints, collisionalEL); //creating collisional energy loss interpolated function
+    interpolationF muCollInt(Grids.pCollPts(), collisionalEL); //creating collisional energy loss interpolated function
 
 	std::vector<double> qGaussTabOG, fGaussTabOG; //defining vectors that will store original Gauss filter sampling points
 	generateGaussTab(qGaussTabOG, fGaussTabOG);   //generating sampling points and settin number of sampling poins
@@ -262,8 +258,7 @@ void gaussFilterIntegrate(const interpolationF &dsdpti2lquark, const std::vector
 	//////////////////////////////////////////////////////////////////////////////////
 	//Gauss integration of dAp410:
 	{
-		std::vector<double> radpoints = Grids.RadPts();
-        interpolationF RadRelInt(radpoints, radiativeRAA1); //creating radiative RAA1 interpolated function
+        interpolationF RadRelInt(Grids.RadPts(), radiativeRAA1); //creating radiative RAA1 interpolated function
 
 		double GFSum; //defining sum variable for Gauss filter
 		double dppT;  //defining integration variable
@@ -305,8 +300,7 @@ void gaussFilterIntegrate(const interpolationF &dsdpti2lquark, const std::vector
 	//////////////////////////////////////////////////////////////////////////////////
 	//Gauss integration of FdA:
 	{
-		std::vector<double> radpoints = Grids.RadPts(), fdppoints = Grids.FdpPts(); //creating radiative RAA2 interpolated function
-		interpolationF RadRelInt(radpoints, fdppoints, radiativeRAA2);
+		interpolationF RadRelInt(Grids.RadPts(), Grids.FdpPts(), radiativeRAA2);
 
 		double GFSum; //defining sum variable for Gauss filter
 		double dppT;  //defining integration variable
@@ -357,10 +351,8 @@ void gaussFilterIntegrate(const std::vector<double> &radiativeRAA, const std::ve
 //collisionalEL - collisional energy loss				   <- input
 //singRAA 		- RAA array after Gauss filter integration <- output
 {
-	std::vector<double>   radpoints = Grids.RadPts();
-    interpolationF RadRelInt(radpoints,   radiativeRAA);  //creating radiative RAA interpolated function
-	std::vector<double> pcollpoints = Grids.pCollPts();
-    interpolationF muCollInt(pcollpoints, collisionalEL); //creating collisional energy loss interpolated function
+    interpolationF RadRelInt(Grids.RadPts(),   radiativeRAA);  //creating radiative RAA interpolated function
+    interpolationF muCollInt(Grids.pCollPts(), collisionalEL); //creating collisional energy loss interpolated function
 
 	std::vector<double> qGaussTabOG, fGaussTabOG; //defining vectors that will store original Gauss filter sampling points
 	generateGaussTab(qGaussTabOG, fGaussTabOG);   //generating sampling points and settin number of sampling poins
