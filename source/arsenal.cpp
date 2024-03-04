@@ -134,7 +134,7 @@ static void generateGaussTab(std::vector<double> &qGTab, std::vector<double> &fG
 	}
 }
 
-void gaussFilterIntegrate(const std::vector<double> &radiativeRAA1, const std::vector<std::vector<double>> &radiativeRAA2, std::vector<double> collisionalEL, std::vector<double> &singRAA1, std::vector<std::vector<double>> &singRAA2)
+void gaussFilterIntegrate(const std::vector<double> &radiativeRAA1, const std::vector<std::vector<double>> &radiativeRAA2, const std::vector<double> &collisionalEL, std::vector<double> &singRAA1, std::vector<std::vector<double>> &singRAA2)
 //function that performs Gauss filter integration - modefied pT integration algorithm
 //radiativeRAA1 - raditive RAA (dA410)											  <- input
 //radiativeRAA2 - raditive RAA (rest of dA integrals)							  <- input
