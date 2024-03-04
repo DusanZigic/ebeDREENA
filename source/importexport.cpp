@@ -455,7 +455,7 @@ int exportResults(const std::string &particleName, size_t event_id, const std::v
 	header.push_back("#   pT [GeV]       phi          R_AA   ");
 
 	//setting file path:
-	const std::string path_out = "./results/results" + pName + "/" + pName + "_" + collsys + "_sNN=" + sNN + "_cent=" + centrality + "_xB=" + xbsstr.str() + "_dist_" + std::to_string(event_id) + ".dat";
+	const std::string path_out = "./results/results" + particleName + "/" + particleName + "_" + collsys + "_sNN=" + sNN + "_cent=" + centrality + "_xB=" + xbsstr.str() + "_dist_" + std::to_string(event_id) + ".dat";
 
 	std::ofstream file_out(path_out, std::ios_base::out);
 	if (!file_out.is_open()) {
