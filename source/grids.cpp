@@ -27,18 +27,18 @@ void gridPoints::setGridPoints(const std::string &sNN, const std::string &partic
 		//tauPts:
 		size_t taugridn = 21;
 		std::vector<std::vector<double>> tauden{{0.0, 10.0}, {20.0, 10.0}};
-		m_tauPts = generateGrids(tauden, taugridn);
+		generateGrids(tauden, taugridn, m_tauPts);
 
 		//pPts:
 		size_t pgridn = 25;
 		double pgridmax = sNN == "200GeV" ? 100.0 : 200.0;
 		std::vector<std::vector<double>> pden{{1.0, 8.0}, {20.0, 7.0}, {30.0, 3.0}, {60.0, 5.0}, {pgridmax, 1.0}};
-		m_pPts = generateGrids(pden, pgridn);
+		generateGrids(pden, pgridn, m_pPts);
 
 		//TPts:
 		size_t Tgridn = 40;
 		std::vector<std::vector<double>> Tden{{0.01, 10.0}, {2.0, 10.0}};
-		m_TPts = generateGrids(Tden, Tgridn);
+		generateGrids(Tden, Tgridn, m_TPts);
 
 		//xPts:
 		double mg = muF(m_TPts[0])/std::sqrt(2.0);
@@ -53,13 +53,13 @@ void gridPoints::setGridPoints(const std::string &sNN, const std::string &partic
 		size_t Radgridn = 20;
 		double Radgridmax = sNN == "200GeV" ? 70.0 : 170.0;
 		std::vector<std::vector<double>> Radden{{2.0, 10.0}, {21.8, 10.0}, {44.5, 1.050001}, {Radgridmax, 1.0}};
-		m_RadPts = generateGrids(Radden, Radgridn);
+		generateGrids(Radden, Radgridn, m_RadPts);
 
 		//FdpPts:
 		double mgC = muF(3.0/2.0*m_TCRIT)/std::sqrt(2.0);
 		size_t Fdpgridn = 16;
 		std::vector<std::vector<double>> Fdpden = {{5.0*mgC/2.0, 10.0}, {12.0, 5.0}, {30.0, 0.0}};
-		m_FdpPts = generateGrids(Fdpden, Fdpgridn-4);
+		generateGrids(Fdpden, Fdpgridn-4, m_FdpPts);
 		m_FdpPts.insert(m_FdpPts.begin(), 4.0*mgC/2.0);
 		m_FdpPts.insert(m_FdpPts.begin(), 3.0*mgC/2.0);
 		m_FdpPts.insert(m_FdpPts.begin(), 2.0*mgC/2.0);
@@ -69,18 +69,18 @@ void gridPoints::setGridPoints(const std::string &sNN, const std::string &partic
 		size_t pCollgridn = 20;
 		double pCollgridmax = sNN == "200GeV" ? 70.0 : 170.0;
 		std::vector<std::vector<double>> pCollden{{1.0, 10.0}, {4.0, 10.0}, {9.0, 2.5}, {30.0, 0.6}, {60.0, 0.5}, {pCollgridmax, 0.3}};
-		m_pCollPts = generateGrids(pCollden, pCollgridn);
+		generateGrids(pCollden, pCollgridn, m_pCollPts);
 
 		//TCollPts:
 		size_t TCollgridn = 40;
 		std::vector<std::vector<double>> TCollden{{0.01, 10.0}, {2.0, 10.0}};
-		m_TCollPts = generateGrids(TCollden, TCollgridn);
+		generateGrids(TCollden, TCollgridn, m_TCollPts);
 
 		//finpts:
 		size_t fingridn = 30;
 		double fingridmax = sNN == "200GeV" ? 50.0 : 150.0;
 		std::vector<std::vector<double>> finden{{5.0, 10.0}, {50.0, 10.0}, {70.0, 5.0}, {fingridmax, 3.0}};
-		m_finPts = generateGrids(finden, fingridn);
+		generateGrids(finden, fingridn, m_finPts);
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	else if (particleName == "Charm") {
@@ -88,18 +88,18 @@ void gridPoints::setGridPoints(const std::string &sNN, const std::string &partic
 		//tauPts:
 		size_t taugridn = 21;
 		std::vector<std::vector<double>> tauden{{0.0, 10.0}, {5.0, 10.0}, {10.0, 10.0}, {15.0, 10.0}, {20.0, 10.0}};
-		m_tauPts = generateGrids(tauden, taugridn);
+		generateGrids(tauden, taugridn, m_tauPts);
 		
 		//pPts:
 		size_t pgridn = 25;
 		double pgridmax = sNN == "200GeV" ? 100.0 : 200.0;
 		std::vector<std::vector<double>> pden{{1.0, 8.0}, {20.0, 7.0}, {30.0, 3.0}, {60.0, 5.0}, {pgridmax, 1.0}};
-		m_pPts = generateGrids(pden, pgridn);
+		generateGrids(pden, pgridn, m_pPts);
 
 		//TPts:
 		size_t Tgridn = 40;
 		std::vector<std::vector<double>> Tden{{0.01, 10.0}, {2.0, 10.0}};
-		m_TPts = generateGrids(Tden, Tgridn);
+		generateGrids(Tden, Tgridn, m_TPts);
 
 		//xPts:
 		double mg = muF(m_TPts[0])/std::sqrt(2.0);
@@ -114,13 +114,13 @@ void gridPoints::setGridPoints(const std::string &sNN, const std::string &partic
 		size_t Radgridn = 20;
 		double Radgridmax = sNN == "200GeV" ? 70.0 : 170.0;
 		std::vector<std::vector<double>> Radden{{2.0, 10.0}, {21.8, 10.0}, {44.5, 1.05}, {Radgridmax, 1.0}};
-		m_RadPts = generateGrids(Radden, Radgridn);
+		generateGrids(Radden, Radgridn, m_RadPts);
 
 		//FdpPts:
 		double mgC = muF(3.0/2.0*m_TCRIT)/std::sqrt(2.0);
 		size_t Fdpgridn = 16;
 		std::vector<std::vector<double>> Fdpden = {{5.0*mgC/2.0, 10.0}, {12.0, 5.0}, {30.0, 0.0}};
-		m_FdpPts = generateGrids(Fdpden, Fdpgridn-4);
+		generateGrids(Fdpden, Fdpgridn-4, m_FdpPts);
 		m_FdpPts.insert(m_FdpPts.begin(), 4.0*mgC/2.0);
 		m_FdpPts.insert(m_FdpPts.begin(), 3.0*mgC/2.0);
 		m_FdpPts.insert(m_FdpPts.begin(), 2.0*mgC/2.0);
@@ -130,18 +130,18 @@ void gridPoints::setGridPoints(const std::string &sNN, const std::string &partic
 		size_t pCollgridn = 20;
 		double pCollgridmax = sNN == "200GeV" ? 70.0 : 170.0;
 		std::vector<std::vector<double>> pCollden{{1.0, 10.0}, {4.0, 10.0}, {9.0, 2.5}, {30.0, 0.6}, {60.0, 0.5}, {pCollgridmax, 0.3}};
-		m_pCollPts = generateGrids(pCollden, pCollgridn);
+		generateGrids(pCollden, pCollgridn, m_pCollPts);
 
 		//TCollPts:
 		size_t TCollgridn = 40;
 		std::vector<std::vector<double>> TCollden{{0.01, 10.0}, {2.0, 10.0}};
-		m_TCollPts = generateGrids(TCollden, TCollgridn);
+		generateGrids(TCollden, TCollgridn, m_TCollPts);
 
 		//finpts:
 		size_t fingridn = 30;
 		double fingridmax = sNN == "200GeV" ? 50.0 : 150.0;
 		std::vector<std::vector<double>> finden{{5.0, 10.0}, {50.0, 10.0}, {70.0, 5.0}, {fingridmax, 3.0}};
-		m_finPts = generateGrids(finden, fingridn);
+		generateGrids(finden, fingridn, m_finPts);
 		
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -150,19 +150,19 @@ void gridPoints::setGridPoints(const std::string &sNN, const std::string &partic
 		//tauPts:
 		size_t taugridn = 21;
 		std::vector<std::vector<double>> tauden{{0.0, 10.0}, {20.0, 10.0}};
-		m_tauPts = generateGrids(tauden, taugridn);
+		generateGrids(tauden, taugridn, m_tauPts);
 
 		//pPts:
 		size_t    pgridn = sNN == "200GeV" ?    35 :    50;
 		double  pgridmax = sNN == "200GeV" ? 150.0 : 450.0;
 		double pgridmaxw = sNN == "200GeV" ?   0.5 :   1.0;
 		std::vector<std::vector<double>> pden{{1.0, 8.0}, {20.0, 7.0}, {40.0, 3.0}, {100.0, 5.0}, {pgridmax, pgridmaxw}};
-		m_pPts = generateGrids(pden, pgridn);
+		generateGrids(pden, pgridn, m_pPts);
 
 		//TPts:
 		size_t Tgridn = 40;
 		std::vector<std::vector<double>> Tden{{0.01, 10.0}, {2.0, 10.0}};
-		m_TPts = generateGrids(Tden, Tgridn);
+		generateGrids(Tden, Tgridn, m_TPts);
 
 		//xPts:
 		double mg = muF(m_TPts[0])/std::sqrt(2.0);
@@ -178,13 +178,13 @@ void gridPoints::setGridPoints(const std::string &sNN, const std::string &partic
 		size_t   Radgridn = sNN == "200GeV" ?    30 :    40;
 		double Radgridmax = sNN == "200GeV" ? 120.0 : 420.0;
 		std::vector<std::vector<double>> Radden{{2.0, 10.0}, {50.0, 10.0}, {70.0, 1.0}, {Radgridmax, 1.0}};
-		m_RadPts = generateGrids(Radden, Radgridn);
+		generateGrids(Radden, Radgridn, m_RadPts);
 
 		//FdpPts:
 		double mgC = muF(3.0/2.0*m_TCRIT)/std::sqrt(2.0);
 		size_t Fdpgridn = 22;
 		std::vector<std::vector<double>> Fdpden = {{5.0*mgC/2.0, 10.0}, {12.0, 5.0}, {30.0, 0.0}};
-		m_FdpPts = generateGrids(Fdpden, Fdpgridn-4);
+		generateGrids(Fdpden, Fdpgridn-4, m_FdpPts);
 		m_FdpPts.insert(m_FdpPts.begin(), 4.0*mgC/2.0);
 		m_FdpPts.insert(m_FdpPts.begin(), 3.0*mgC/2.0);
 		m_FdpPts.insert(m_FdpPts.begin(), 2.0*mgC/2.0);
@@ -194,18 +194,18 @@ void gridPoints::setGridPoints(const std::string &sNN, const std::string &partic
 		size_t   pCollgridn = sNN == "200GeV" ?    30 :    40;
 		double pCollgridmax = sNN == "200GeV" ? 120.0 : 420.0;
 		std::vector<std::vector<double>> pCollden{{1.0, 10.0}, {4.0, 10.0}, {9.0, 2.5}, {30.0, 0.6}, {60.0, 0.5}, {pCollgridmax, 0.3}};
-		m_pCollPts = generateGrids(pCollden, pCollgridn);
+		generateGrids(pCollden, pCollgridn, m_pCollPts);
 
 		//TCollPts:
 		size_t TCollgridn = 40;
 		std::vector<std::vector<double>> TCollden{{0.01, 10.0}, {2.0, 10.0}};
-		m_TCollPts = generateGrids(TCollden, TCollgridn);
+		generateGrids(TCollden, TCollgridn, m_TCollPts);
 
 		//finpts:
 		size_t   fingridn = sNN == "200GeV" ?    35 :    50;
 		double fingridmax = sNN == "200GeV" ? 100.0 : 400.0;
 		std::vector<std::vector<double>> finden{{5.0, 10.0}, {50.0, 10.0}, {70.0, 5.0}, {fingridmax, 3.0}};
-		m_finPts = generateGrids(finden, fingridn);
+		generateGrids(finden, fingridn, m_finPts);
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	else {
@@ -213,19 +213,19 @@ void gridPoints::setGridPoints(const std::string &sNN, const std::string &partic
 		//tauPts:
 		size_t taugridn = 21;
 		std::vector<std::vector<double>> tauden{{0.0, 10.0}, {20.0, 10.0}};
-		m_tauPts = generateGrids(tauden, taugridn);
+		generateGrids(tauden, taugridn, m_tauPts);
 
 		//pPts:
 		size_t    pgridn = sNN == "200GeV" ?    35 :    50;
 		double  pgridmax = sNN == "200GeV" ? 150.0 : 450.0;
 		double pgridmaxw = sNN == "200GeV" ?   0.5 :   1.0;
 		std::vector<std::vector<double>> pden{{1.0, 8.0}, {20.0, 7.0}, {40.0, 3.0}, {100.0, 5.0}, {pgridmax, pgridmaxw}};
-		m_pPts = generateGrids(pden, pgridn);
+		generateGrids(pden, pgridn, m_pPts);
 
 		//TPts:
 		size_t Tgridn = 40;
 		std::vector<std::vector<double>> Tden{{0.01, 10.0}, {2.0, 10.0}};
-		m_TPts = generateGrids(Tden, Tgridn);
+		generateGrids(Tden, Tgridn, m_TPts);
 
 		//xPts:
 		double mg = muF(m_TPts[0])/std::sqrt(2.0);
@@ -240,13 +240,13 @@ void gridPoints::setGridPoints(const std::string &sNN, const std::string &partic
 		size_t   Radgridn = sNN == "200GeV" ?    30 :    40;
 		double Radgridmax = sNN == "200GeV" ? 120.0 : 420.0;
 		std::vector<std::vector<double>> Radden{{2.0, 10.0}, {50.0, 10.0}, {70.0, 1.0}, {Radgridmax, 1.0}};
-		m_RadPts = generateGrids(Radden, Radgridn);
+		generateGrids(Radden, Radgridn, m_RadPts);
 
 		//FdpPts:
 		double mgC = muF(3.0/2.0*m_TCRIT)/std::sqrt(2.0);
 		size_t Fdpgridn = 22;
 		std::vector<std::vector<double>> Fdpden = {{5.0*mgC/2.0, 10.0}, {12.0, 5.0}, {30, 0.0}};
-		m_FdpPts = generateGrids(Fdpden, Fdpgridn-4);
+		generateGrids(Fdpden, Fdpgridn-4, m_FdpPts);
 		m_FdpPts.insert(m_FdpPts.begin(), 4.0*mgC/2.0);
 		m_FdpPts.insert(m_FdpPts.begin(), 3.0*mgC/2.0);
 		m_FdpPts.insert(m_FdpPts.begin(), 2.0*mgC/2.0);
@@ -256,18 +256,18 @@ void gridPoints::setGridPoints(const std::string &sNN, const std::string &partic
 		size_t   pCollgridn = sNN == "200GeV" ?    30 :    40;
 		double pCollgridmax = sNN == "200GeV" ? 120.0 : 420.0;
 		std::vector<std::vector<double>> pCollden{{1.0, 10.0}, {4.0, 10.0}, {9.0, 2.5}, {30.0, 0.6}, {60.0, 0.5}, {pCollgridmax, 0.3}};
-		m_pCollPts = generateGrids(pCollden, pCollgridn);
+		generateGrids(pCollden, pCollgridn, m_pCollPts);
 
 		//TCollPts:
 		size_t TCollgridn = 40;
 		std::vector<std::vector<double>> TCollden{{0.01, 10.0}, {2.0, 10.0}};
-		m_TCollPts = generateGrids(TCollden, TCollgridn);
+		generateGrids(TCollden, TCollgridn, m_TCollPts);
 
 		//finpts:
 		size_t   fingridn = sNN == "200GeV" ?    35 :    50;
 		double fingridmax = sNN == "200GeV" ? 100.0 : 400.0;
 		std::vector<std::vector<double>> finden{{5.0, 10.0}, {50.0, 10.0}, {70.0, 5.0}, {fingridmax, 3.0}};
-		m_finPts = generateGrids(finden, fingridn);
+		generateGrids(finden, fingridn, m_finPts);
 	}
 
 	//rounding grids to 10 decimal points:
@@ -289,10 +289,10 @@ gridPoints::~gridPoints() {}
 const std::vector<double> & gridPoints::tauPts() const {
     return m_tauPts;
 }
-double gridPoints::tauPts(size_t i) const {
+double gridPoints::tauPts(int i) const {
     if (i < 0)
-        return m_tauPts[m_tauPts.size()-abs(i)];
-    return m_tauPts[i];
+        return m_tauPts.at(m_tauPts.size() + i);
+    return m_tauPts.at(i);
 }
 size_t gridPoints::tauPtsLength() const {
     return m_tauPts.size();
@@ -301,9 +301,9 @@ size_t gridPoints::tauPtsLength() const {
 const std::vector<double> & gridPoints::pPts() const {
     return m_pPts;
 }
-double gridPoints::pPts(size_t i) const {
-    if (i < 0) return m_pPts[m_pPts.size()-abs(i)];
-    return m_pPts[i];
+double gridPoints::pPts(int i) const {
+    if (i < 0) return m_pPts.at(m_pPts.size() + i);
+    return m_pPts.at(i);
 }
 size_t gridPoints::pPtsLength() const {
     return m_pPts.size();
@@ -312,10 +312,10 @@ size_t gridPoints::pPtsLength() const {
 const std::vector<double> & gridPoints::TPts() const {
     return m_TPts;
 }
-double gridPoints::TPts(size_t i) const {
+double gridPoints::TPts(int i) const {
     if (i < 0)
-        return m_TPts[m_TPts.size()-abs(i)];
-    return m_TPts[i];
+        return m_TPts.at(m_TPts.size() + i);
+    return m_TPts.at(i);
 }
 size_t gridPoints::TPtsLength() const {
     return m_TPts.size();
@@ -324,10 +324,10 @@ size_t gridPoints::TPtsLength() const {
 const std::vector<double> & gridPoints::xPts() const {
     return m_xPts;
 }
-double gridPoints::xPts(size_t i) const {
+double gridPoints::xPts(int i) const {
     if (i < 0)
-        return m_xPts[m_xPts.size()-abs(i)];
-    return m_xPts[i];
+        return m_xPts.at(m_xPts.size() + i);
+    return m_xPts.at(i);
 }
 size_t gridPoints::xPtsLength() const {
     return m_xPts.size();
@@ -336,10 +336,10 @@ size_t gridPoints::xPtsLength() const {
 const std::vector<double> & gridPoints::RadPts() const {
     return m_RadPts;
 }
-double gridPoints::RadPts(size_t i) const {
+double gridPoints::RadPts(int i) const {
     if (i < 0)
-        return m_RadPts[m_RadPts.size()-abs(i)];
-    return m_RadPts[i];
+        return m_RadPts.at(m_RadPts.size() + i);
+    return m_RadPts.at(i);
 }
 size_t gridPoints::RadPtsLength() const {
     return m_RadPts.size();
@@ -348,10 +348,10 @@ size_t gridPoints::RadPtsLength() const {
 const std::vector<double> & gridPoints::FdpPts() const {
     return m_FdpPts;
 }
-double gridPoints::FdpPts(size_t i) const {
+double gridPoints::FdpPts(int i) const {
     if (i < 0)
-        return m_FdpPts[m_FdpPts.size()-abs(i)];
-    return m_FdpPts[i];
+        return m_FdpPts.at(m_FdpPts.size() + i);
+    return m_FdpPts.at(i);
 }
 size_t gridPoints::FdpPtsLength() const {
     return m_FdpPts.size();
@@ -360,10 +360,10 @@ size_t gridPoints::FdpPtsLength() const {
 const std::vector<double> & gridPoints::pCollPts() const {
     return m_pCollPts;
 }
-double gridPoints::pCollPts(size_t i) const {
+double gridPoints::pCollPts(int i) const {
     if (i < 0)
-        return m_pCollPts[m_pCollPts.size()-abs(i)];
-    return m_pCollPts[i];
+        return m_pCollPts.at(m_pCollPts.size() + i);
+    return m_pCollPts.at(i);
 }
 size_t gridPoints::pCollPtsLength() const {
     return m_pCollPts.size();
@@ -372,10 +372,10 @@ size_t gridPoints::pCollPtsLength() const {
 const std::vector<double> & gridPoints::TCollPts() const {
     return m_TCollPts;
 }
-double gridPoints::TCollPts(size_t i) const {
+double gridPoints::TCollPts(int i) const {
     if (i < 0)
-        return m_TCollPts[m_TCollPts.size()-abs(i)];
-    return m_TCollPts[i];
+        return m_TCollPts.at(m_TCollPts.size() + i);
+    return m_TCollPts.at(i);
 }
 size_t gridPoints::TCollPtsLength() const {
     return m_TCollPts.size();
@@ -384,10 +384,10 @@ size_t gridPoints::TCollPtsLength() const {
 const std::vector<double> & gridPoints::finPts() const {
     return m_finPts;
 }
-double gridPoints::finPts(size_t i) const {
+double gridPoints::finPts(int i) const {
     if (i < 0)
-        return m_finPts[m_finPts.size()-abs(i)];
-    return m_finPts[i];
+        return m_finPts.at(m_finPts.size() + i);
+    return m_finPts.at(i);
 }
 size_t gridPoints::finPtsLength() const {
     return m_finPts.size();
@@ -450,7 +450,7 @@ double gridPoints::linearIntegrate(const std::vector<double> &dataX, const std::
 	return sum;
 }
 
-std::vector<double> gridPoints::generateGrids(const std::vector<std::vector<double>> &density, size_t numpts) const
+void gridPoints::generateGrids(const std::vector<std::vector<double>> &density, size_t numpts, std::vector<double> &gridpoints)
 {
 	std::vector<double> densityX, densityF;
 	for (size_t i=0; i<density.size(); i++) {densityX.push_back(density[i][0]); densityF.push_back(density[i][1]);}
@@ -474,7 +474,7 @@ std::vector<double> gridPoints::generateGrids(const std::vector<std::vector<doub
 
 	interpolationF inttabInt(inttabX, inttabF);
 
-	std::vector<double> gridpoints;
+	gridpoints.resize(0);
 
 	gridpoints.push_back(densityX.front());
 
@@ -485,6 +485,4 @@ std::vector<double> gridPoints::generateGrids(const std::vector<std::vector<doub
 	}
 
 	gridpoints.push_back(densityX.back());
-
-	return gridpoints;
 }
