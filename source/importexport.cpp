@@ -281,7 +281,7 @@ int loadTempGridParams()
 
 int loadTProfile(size_t event_id, interpolationF &tempProfile)
 {
-	const std::string path_in = "./evols/evols_cent=" + centrality + "/tempevol_" + std::to_string(event_id) + ".dat";
+	const std::string path_in = "./evols/evols_cent=" + centrality + "/tempevol" + std::to_string(event_id) + ".dat";
 
 	std::ifstream file_in(path_in, std::ios_base::in | std::ios_base::binary);
 	if (!file_in.is_open()) {
@@ -311,7 +311,7 @@ int loadTProfile(size_t event_id, interpolationF &tempProfile)
 
 int loadBinCollPoints(size_t event_id, std::vector<std::vector<double>> &bcpoints)
 {
-	const std::string path_in = "./binarycollpts/binarycollpts_cent=" + centrality + "/binarycollpts_" + std::to_string(event_id) + ".dat";
+	const std::string path_in = "./binarycollpts/binarycollpts_cent=" + centrality + "/binarycollpts" + std::to_string(event_id) + ".dat";
 
 	std::ifstream file_in(path_in, std::ios_base::in);
 	if (!file_in.is_open()) {
