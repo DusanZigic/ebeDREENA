@@ -101,34 +101,37 @@ static double Ldndx(double tau, double p, double T, double x)
 	return (sum*kq*qq*phiq/LdndxMaxPoints);
 }
 
-static void RadLTables(std::vector<double> &ldndxtbl, std::vector<double> &lnormtbl)
+static void RadLTables(std::vector<std::vector<std::vector<std::vector<double>>>> &ldndxtbl, std::vector<std::vector<std::vector<double>>> &lnormtbl)
 {
 	LdndxHSeqInit();
 
-	double mu, M, x_lim_l, x_lim_h;
+	double tau, p, T, x, mu, M, xIntegLimitLow, xIntegLimitHigh;
 
-	for (const auto &tau : LT_Grids.tauPts()) {
-		for (const auto &p : LT_Grids.pPts()) {
-			for (const auto &T : LT_Grids.TPts()) {
-				std::vector<double> LdndxXTbl, LdndxVTbl;
+	for (size_t itau=0; itau<LT_Grids.tauPtsLength(); itau++) {
+		tau = LT_Grids.tauPts(itau);
 
-				for (const auto &x : LT_Grids.xPts()) {
-					ldndxtbl.push_back(Ldndx(tau, p, T, x));
-					LdndxXTbl.push_back(x);
-					LdndxVTbl.push_back(ldndxtbl.back());
+		for (size_t ip=0; ip<LT_Grids.pPtsLength(); ip++) {
+			p = LT_Grids.pPts(ip);
+
+			for (size_t iT=0; iT<LT_Grids.TPtsLength(); iT++) {
+				T = LT_Grids.TPts(iT);
+				
+				for (size_t ix=0; ix<LT_Grids.xPtsLength(); ix++) {
+					x = LT_Grids.xPts(ix);
+					ldndxtbl[itau][ip][iT][ix] = Ldndx(tau, p, T, x);
 				}
-
+				
 				mu = 0.197*std::sqrt((-8.0*(6.0+LT_nf)*M_PI*M_PI*T*T)/(2.0*LT_nf-33.0)/lambda/lambda/productLog((-8.0*(6.0+LT_nf)*M_PI*M_PI*T*T)/(2.0*LT_nf-33.0)/lambda/lambda));
 				if (LT_pName == "Bottom") M = 4.75;
 				else if (LT_pName == "Charm") M = 1.2;
 				else if (LT_pName == "Gluon") M = mu/sqrt(2.0);
 				else M = mu/sqrt(6.0);
+				
+				xIntegLimitLow = mu/std::sqrt(2.0)/(p + std::sqrt(p*p + M*M));
+				if (LT_pName == "Gluon") xIntegLimitHigh = 0.5;
+				else xIntegLimitHigh = 1.0 - M/(std::sqrt(p*p + M*M) + p);
 
-				x_lim_l = mu/std::sqrt(2.0)/(p + std::sqrt(p*p + M*M));
-				if (LT_pName == "Gluon") x_lim_h = 0.5;
-				else x_lim_h = 1.0 - M/(std::sqrt(p*p + M*M) + p);
-
-				lnormtbl.push_back(cubicIntegrate(LdndxXTbl, LdndxVTbl, x_lim_l, x_lim_h));
+				lnormtbl[itau][ip][iT] = cubicIntegrate(LT_Grids.xPts(), ldndxtbl[itau][ip][iT], xIntegLimitLow, xIntegLimitHigh);
 			}
 		}
 	}
@@ -263,13 +266,15 @@ static double ENumFinite(double p, double T)
 	return (ENumFiniteSum1 + ENumFiniteSum2);
 }
 
-static void CollLTables(std::vector<double> &lcolltbl)
+static void CollLTables(std::vector<std::vector<double>> &lcolltbl)
 {
 	LCollHSeqInit();
 
-	for (const auto &p : LT_Grids.pCollPts())
-		for (const auto &T : LT_Grids.TCollPts())
-			lcolltbl.push_back(ENumFinite(p, T));
+	for (size_t ip=0; ip<LT_Grids.pCollPtsLength(); ip++) {
+		for (size_t iT=0; iT<LT_Grids.TCollPtsLength(); iT++) {
+			lcolltbl[ip][iT] = ENumFinite(LT_Grids.pCollPts(ip), LT_Grids.TCollPts(iT));
+		}
+	}
 }
 
 void GenerateLTables()
@@ -280,10 +285,16 @@ void GenerateLTables()
 
     LT_CR = LT_pName == "Gluon" ? 3.0 : 4.0/3.0;
 
-	std::vector<double> LdndxTbl, LNormTbl;
+	std::vector<std::vector<std::vector<std::vector<double>>>> LdndxTbl(LT_Grids.tauPtsLength(),
+																		std::vector<std::vector<std::vector<double>>>(LT_Grids.pPtsLength(),
+																		std::vector<std::vector<double>>(LT_Grids.TPtsLength(),
+																		std::vector<double>(LT_Grids.xPtsLength(), 0.0))));;
+	std::vector<std::vector<std::vector<double>>> LNormTbl(LT_Grids.tauPtsLength(),
+														   std::vector<std::vector<double>>(LT_Grids.pPtsLength(),
+														   std::vector<double>(LT_Grids.TPtsLength(), 0.0)));
     RadLTables(LdndxTbl, LNormTbl);
 
-	std::vector<double> LCollTbl;
+	std::vector<std::vector<double>> LCollTbl(LT_Grids.pCollPtsLength(), std::vector<double>(LT_Grids.TCollPtsLength(), 0.0));
     CollLTables(LCollTbl);
 
 	if (exportLTables(LdndxTbl, LNormTbl, LCollTbl) != 1) return;

@@ -18,6 +18,6 @@ int loadPhiPoints();
 
 int exportResults(size_t event_id, const std::vector<std::vector<double>> &RAApTphi, const std::vector<double> &avgPathLength, const std::vector<double> &avgTemp, size_t trajecNum, size_t elossNum);
 int exportResults(const std::string &particleName, size_t event_id, const std::vector<std::vector<double>> &RAApTphi, const std::vector<double> &avgPathLength, const std::vector<double> &avgTemp, size_t trajecNum, size_t elossNum);
-int exportLTables(const std::vector<double> &ldndxTable, const std::vector<double> &lnormTable, const std::vector<double> &lcollTable);
+int exportLTables(const std::vector<std::vector<std::vector<std::vector<double>>>> &ldndxTable, const std::vector<std::vector<std::vector<double>>> &lnormTable, const std::vector<std::vector<double>> &lcollTable);
 
 #endif

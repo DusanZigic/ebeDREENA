@@ -477,7 +477,7 @@ int exportResults(const std::string &particleName, size_t event_id, const std::v
 	return 1;
 }
 
-int exportLTables(const std::vector<double> &ldndxTable, const std::vector<double> &lnormTable, const std::vector<double> &lcollTable)
+int exportLTables(const std::vector<std::vector<std::vector<std::vector<double>>>> &ldndxTable, const std::vector<std::vector<std::vector<double>>> &lnormTable, const std::vector<std::vector<double>> &lcollTable)
 {
 	std::stringstream xBss; xBss << std::fixed << std::setprecision(1) << LT_xB;
 	std::stringstream nfss; nfss << std::fixed << std::setprecision(1) << LT_nf;
@@ -497,21 +497,15 @@ int exportLTables(const std::vector<double> &ldndxTable, const std::vector<doubl
 		file_out << std::fixed << std::setw(12) <<     "x" << " ";
 		file_out << std::fixed << std::setw(17) << "Ldndx" << "\n";
 
-		for (size_t iTau=0; iTau<LT_Grids.tauPtsLength(); iTau++) {
+		for (size_t itau=0; itau<LT_Grids.tauPtsLength(); itau++) {
 			for (size_t ip=0; ip<LT_Grids.pPtsLength(); ip++) {
 				for (size_t iT=0; iT<LT_Grids.TPtsLength(); iT++) {
 					for (size_t ix=0; ix<LT_Grids.xPtsLength(); ix++) {
-						size_t ldndxIndex = iTau*LT_Grids.xPtsLength()*LT_Grids.TPtsLength()*LT_Grids.pPtsLength() + 
-											ip*LT_Grids.xPtsLength()*LT_Grids.TPtsLength() + 
-											iT*LT_Grids.xPtsLength() + 
-											ix;
-
-						//printing ldndx to file:
-						file_out << std::fixed 		<< std::setw(13) << std::setprecision(10) << LT_Grids.tauPts(iTau) << " ";
+						file_out << std::fixed 		<< std::setw(13) << std::setprecision(10) << LT_Grids.tauPts(itau) << " ";
 						file_out << std::fixed 		<< std::setw(14) << std::setprecision(10) << LT_Grids.pPts(ip) << " ";
 						file_out << std::fixed 		<< std::setw(12) << std::setprecision(10) << LT_Grids.TPts(iT) << " ";
 						file_out << std::fixed 		<< std::setw(12) << std::setprecision(10) << LT_Grids.xPts(ix) << " ";
-						file_out << std::scientific << std::setw(17) << std::setprecision(10) << ldndxTable[ldndxIndex] << "\n";
+						file_out << std::scientific << std::setw(17) << std::setprecision(10) << ldndxTable[itau][ip][iT][ix] << "\n";
 					}
 				}
 			}
@@ -534,17 +528,13 @@ int exportLTables(const std::vector<double> &ldndxTable, const std::vector<doubl
 		file_out << std::fixed << std::setw(12) <<     "T" << " ";
 		file_out << std::fixed << std::setw(17) << "LNorm" << "\n";
 
-		for (size_t iTau=0; iTau<LT_Grids.tauPtsLength(); iTau++) {
+		for (size_t itau=0; itau<LT_Grids.tauPtsLength(); itau++) {
 			for (size_t ip=0; ip<LT_Grids.pPtsLength(); ip++) {
 				for (size_t iT=0; iT<LT_Grids.TPtsLength(); iT++) {
-					size_t lnormIndex = iTau*LT_Grids.TPtsLength()*LT_Grids.pPtsLength() + 
-										ip*LT_Grids.TPtsLength() + 
-										iT;
-
-					file_out << std::fixed 		<< std::setw(13) << std::setprecision(10) << LT_Grids.tauPts(iTau) << " ";
+					file_out << std::fixed 		<< std::setw(13) << std::setprecision(10) << LT_Grids.tauPts(itau) << " ";
 					file_out << std::fixed 		<< std::setw(14) << std::setprecision(10) << LT_Grids.pPts(ip) << " ";
 					file_out << std::fixed 		<< std::setw(12) << std::setprecision(10) << LT_Grids.TPts(iT) << " ";
-					file_out << std::scientific << std::setw(17) << std::setprecision(10) << lnormTable[lnormIndex] << "\n";
+					file_out << std::scientific << std::setw(17) << std::setprecision(10) << lnormTable[itau][ip][iT] << "\n";
 				}
 			}
 		}
@@ -567,12 +557,9 @@ int exportLTables(const std::vector<double> &ldndxTable, const std::vector<doubl
 
 		for (size_t ip=0; ip<LT_Grids.pCollPtsLength(); ip++) {
 			for (size_t iT=0; iT<LT_Grids.TCollPtsLength(); iT++) {
-				size_t lcollIndex = ip*LT_Grids.TCollPtsLength() +
-									iT;
-
 				file_out << std::fixed 		<< std::setw(14) << std::setprecision(10) <<  LT_Grids.pCollPts(ip) << " ";
 				file_out << std::fixed 		<< std::setw(12) << std::setprecision(10) <<  LT_Grids.TCollPts(iT) << " ";
-				file_out << std::scientific << std::setw(17) << std::setprecision(10) << lcollTable[lcollIndex] << "\n";
+				file_out << std::scientific << std::setw(17) << std::setprecision(10) << lcollTable[ip][iT] << "\n";
 			}
 		}
 
