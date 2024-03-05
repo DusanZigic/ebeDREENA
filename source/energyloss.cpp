@@ -17,6 +17,8 @@
 
 energyLoss::energyLoss(int argc, const char *argv[])
 {
+	m_error = false;
+
 	std::vector<std::string> inputs; for (int i=2; i<argc; i++) inputs.push_back(argv[i]);
 
 	if ((inputs.size() == 1) && (inputs[0] == "-h")) {
@@ -84,8 +86,8 @@ energyLoss::energyLoss(int argc, const char *argv[])
 	m_TCRIT = 0.155; if (inputparams_f.count("TCRIT") > 0) m_TCRIT = stod(inputparams_f["TCRIT"]);
 					 if (  inputparams.count("TCRIT") > 0) m_TCRIT = stod(  inputparams["TCRIT"]);
 
-	m_BCPP = 0; if (inputparams_f.count("BCPSEED") > 0) m_BCPP = stoi(inputparams_f["BCPSEED"]);
-				if (  inputparams.count("BCPSEED") > 0) m_BCPP = stoi(  inputparams["BCPSEED"]);
+	m_BCPSEED = 0; if (inputparams_f.count("BCPSEED") > 0) m_BCPSEED = stoi(inputparams_f["BCPSEED"]);
+				   if (  inputparams.count("BCPSEED") > 0) m_BCPSEED = stoi(  inputparams["BCPSEED"]);
 
 	//checking if provided value of sNN is an option:
 	if ((m_sNN != "5440GeV") && (m_sNN != "5020GeV") && (m_sNN != "2760GeV") && (m_sNN != "200GeV")) {
@@ -93,7 +95,7 @@ energyLoss::energyLoss(int argc, const char *argv[])
 		m_error = true;
 	}
 
-	m_nf = m_sNN   == "200GeV" ? 2.5 : 3.0;
+	m_nf = m_sNN == "200GeV" ? 2.5 : 3.0;
 	double T = 3.0 / 2.0*m_TCRIT;
 	double mu = 0.197*std::sqrt((-8.0*(6.0+m_nf)*M_PI*M_PI*T*T)/(2.0*m_nf-33.0)/m_lambda/m_lambda/productLog((-8.0*(6.0+m_nf)*M_PI*M_PI*T*T)/(2.0*m_nf-33.0)/m_lambda/m_lambda));
 	m_mgC = mu / std::sqrt(2.0);
@@ -497,7 +499,7 @@ int energyLoss::generateInitPosPoints(size_t event_id, std::vector<double> &xPoi
 {
 	std::vector<std::vector<double>> bcpts; if (loadBinCollPoints(event_id, bcpts) != 1) return -1;
 
-	size_t bsptsNum = static_cast<size_t>(m_BCPP*bcpts.size());
+	size_t bsptsNum = static_cast<size_t>(m_BCPP*static_cast<double>(bcpts.size()));
 
 	if (bsptsNum < 1) bsptsNum = 1;
 
