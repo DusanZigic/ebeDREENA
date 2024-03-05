@@ -1,236 +1,256 @@
-#include "elossheader.hpp"
-#include "arsenal.hpp"
+#include "energyloss.hpp"
 #include "linearinterpolation.hpp"
 
 #include <vector>
 #include <cmath>
 
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-//FdA INTEGRALS:
-
-static size_t FdAMaxPoints2, FdAMaxPoints3, FdAMaxPoints4, FdAMaxPoints5; //number of points for dA integration
-static std::vector<double> FdAHS2, FdAHS3, FdAHS4, FdAHS5;				  //vectors that store Halton sequences for dA integrals
-
-//function that initializes Halton sequences for dA integrals calculations:
-void FdAHaltonSeqInit(size_t FdAMaxPts)
+double energyLoss::haltonSequence(int index, int base) const
 {
-	FdAMaxPoints2 = FdAMaxPts; 	  //setting values of dAMaxPoints
-	FdAMaxPoints3 = FdAMaxPts-25;
-	FdAMaxPoints4 = FdAMaxPts-50;
-	FdAMaxPoints5 = FdAMaxPts-75;
+	double f = 1.0;
+	double res = 0.0;
+
+	while (index > 0) {
+		f = f / static_cast<double>(base);
+		res += f * static_cast<double>(index % base);
+		index = index / base; // integer division
+	}
+
+	return res;
+}
+
+
+void energyLoss::FdAHaltonSeqInit(size_t FdAMaxPts)
+{
+	m_FdAMaxPoints2 = FdAMaxPts; 	  //setting values of dAMaxPoints
+	m_FdAMaxPoints3 = FdAMaxPts-25;
+	m_FdAMaxPoints4 = FdAMaxPts-50;
+	m_FdAMaxPoints5 = FdAMaxPts-75;
 	
 	for (size_t i=0; i<FdAMaxPts; i++) //generating Halton sequences
 	{
-		FdAHS2.push_back(haltonSequence((i+1)*409, 2));
-		FdAHS3.push_back(haltonSequence((i+1)*409, 3));
-		FdAHS4.push_back(haltonSequence((i+1)*409, 5));
-		FdAHS5.push_back(haltonSequence((i+1)*409, 7));
+		m_FdAHS2.push_back(haltonSequence((i+1)*409, 2));
+		m_FdAHS3.push_back(haltonSequence((i+1)*409, 3));
+		m_FdAHS4.push_back(haltonSequence((i+1)*409, 5));
+		m_FdAHS5.push_back(haltonSequence((i+1)*409, 7));
 	}
 }
 
-double dAp410(double ph, interpolationF &normint) {
-	return (1.0 / std::exp(normint.interpolation(ph)));
+double energyLoss::dAp410(double ph, const interpolationF &norm) const {
+	return (1.0 / std::exp(norm.interpolation(ph)));
 }
 
-double FdA411(double ph, double dp, interpolationF &normint, interpolationF &dndxint) {
-	return (1.0 / std::exp(normint.interpolation(ph + dp))*dndxint.interpolation(ph + dp, 1.0 - ph/(ph + dp)));
+double energyLoss::FdA411(double ph, double dp, const interpolationF &norm, const interpolationF &dndx) const {
+	return (1.0 / std::exp(norm.interpolation(ph + dp))*dndx.interpolation(ph + dp, 1.0 - ph/(ph + dp)));
 }
 
-double FdA412(double ph, double dp, interpolationF &normint, interpolationF &dndxint) {
-	if (dp < 2.0*mgC / 2.0) return 0.0;
+double energyLoss::FdA412(double ph, double dp, const interpolationF &norm, const interpolationF &dndx) const{
+	if (dp < 2.0*m_mgC / 2.0) return 0.0;
 	double p = ph + dp;
 	double yl, yh, yq, y;
 	double sum = 0.0;
-	for (size_t i=0; i<FdAMaxPoints2; i++) {
-		yl = mgC/(p + std::sqrt(MC*MC + p*p));
-		yh = 1.0 - ph/p - mgC/(p + std::sqrt(MC*MC + p*p));
+	for (size_t i=0; i<m_FdAMaxPoints2; i++) {
+		yl = m_mgC/(p + std::sqrt(m_MC*m_MC + p*p));
+		yh = 1.0 - ph/p - m_mgC/(p + std::sqrt(m_MC*m_MC + p*p));
 		yq = yh - yl;
-		y = yl + FdAHS2[i]*yq;
-		sum += 1.0 / std::exp(normint.interpolation(p))*(1.0 / 2.0)*dndxint.interpolation(p, 1.0 - ph/p - y)*
-			dndxint.interpolation(p, y)*(yh - yl);
+		y = yl + m_FdAHS2[i]*yq;
+		
+		sum += 1.0 / std::exp(norm.interpolation(p))*(1.0 / 2.0)*dndx.interpolation(p, 1.0 - ph/p - y)*
+			dndx.interpolation(p, y)*(yh - yl);
 	}
 
-	return (sum/FdAMaxPoints2);
+	return (sum/static_cast<double>(m_FdAMaxPoints2));
 }
 
-double FdA413(double ph, double dp, interpolationF &normint, interpolationF &dndxint) {
-	if (dp < 3.0*mgC / 2.0) return 0.0;
+double energyLoss::FdA413(double ph, double dp, const interpolationF &norm, const interpolationF &dndx) const {
+	if (dp < 3.0*m_mgC / 2.0) return 0.0;
 	double p = ph + dp;
 	double yl, yh, yq, y;
 	double zl, zh, zq, z;
 	double sum = 0.0;
-	for (size_t i=0; i<FdAMaxPoints3; i++) {
-		yl = mgC/(p + std::sqrt(MC*MC + p*p));
-		yh = 1.0 - ph/p - 2.0*mgC/(p + std::sqrt(MC*MC + p*p));
+	for (size_t i=0; i<m_FdAMaxPoints3; i++) {
+		yl = m_mgC/(p + std::sqrt(m_MC*m_MC + p*p));
+		yh = 1.0 - ph/p - 2.0*m_mgC/(p + std::sqrt(m_MC*m_MC + p*p));
 		yq = yh - yl;
-		y = yl + FdAHS2[i]*yq;
-		zl = mgC/(p + std::sqrt(MC*MC + p*p));
-		zh = 1.0 - ph/p - y - mgC/(p + std::sqrt(MC*MC + p*p));
+		y = yl + m_FdAHS2[i]*yq;
+		
+		zl = m_mgC/(p + std::sqrt(m_MC*m_MC + p*p));
+		zh = 1.0 - ph/p - y - m_mgC/(p + std::sqrt(m_MC*m_MC + p*p));
 		zq = zh - zl;
-		z = zl + FdAHS3[i]*zq;
-		sum += 1.0 / std::exp(normint.interpolation(p))*(1.0 / 2.0 / 3.0)*dndxint.interpolation(p, 1.0 - ph/p - y - z)*
-			dndxint.interpolation(p, y)*dndxint.interpolation(p, z)*(yh - yl)*(zh - zl);
+		z = zl + m_FdAHS3[i]*zq;
+		
+		sum += 1.0 / std::exp(norm.interpolation(p))*(1.0 / 2.0 / 3.0)*dndx.interpolation(p, 1.0 - ph/p - y - z)*
+			dndx.interpolation(p, y)*dndx.interpolation(p, z)*(yh - yl)*(zh - zl);
 	}
 
-	return (sum/FdAMaxPoints3);
+	return (sum/static_cast<double>(m_FdAMaxPoints3));
 }
 
-double FdA414(double ph, double dp, interpolationF &normint, interpolationF &dndxint) {
-	if (dp < 4.0*mgC / 2.0) return 0.0;
+double energyLoss::FdA414(double ph, double dp, const interpolationF &norm, const interpolationF &dndx) const {
+	if (dp < 4.0*m_mgC / 2.0) return 0.0;
 	double p = ph + dp;
 	double yl, yh, yq, y;
 	double zl, zh, zq, z;
 	double zzl, zzh, zzq, zz;
 	double sum = 0.0;
-	for (size_t i=0; i<FdAMaxPoints4; i++) {
-		yl = mgC/(p + std::sqrt(MC*MC + p*p));
-		yh = 1.0 - ph/p - 3.0*mgC/(p + std::sqrt(MC*MC + p*p));
+	for (size_t i=0; i<m_FdAMaxPoints4; i++) {
+		yl = m_mgC/(p + std::sqrt(m_MC*m_MC + p*p));
+		yh = 1.0 - ph/p - 3.0*m_mgC/(p + std::sqrt(m_MC*m_MC + p*p));
 		yq = yh - yl;
-		y = yl + FdAHS2[i]*yq;
-		zl = mgC/(p + std::sqrt(MC*MC + p*p));
-		zh = 1.0 - ph/p - y - 2.0*mgC/(p + std::sqrt(MC*MC + p*p));
+		y = yl + m_FdAHS2[i]*yq;
+		
+		zl = m_mgC/(p + std::sqrt(m_MC*m_MC + p*p));
+		zh = 1.0 - ph/p - y - 2.0*m_mgC/(p + std::sqrt(m_MC*m_MC + p*p));
 		zq = zh - zl;
-		z = zl + FdAHS3[i]*zq;
-		zzl = mgC/(p + std::sqrt(MC*MC + p*p));
-		zzh = 1.0 - ph/p - y - z - mgC/(p + std::sqrt(MC*MC + p*p));
+		z = zl + m_FdAHS3[i]*zq;
+		
+		zzl = m_mgC/(p + std::sqrt(m_MC*m_MC + p*p));
+		zzh = 1.0 - ph/p - y - z - m_mgC/(p + std::sqrt(m_MC*m_MC + p*p));
 		zzq = zzh - zzl;
-		zz = zzl + FdAHS4[i]*zzq;
-		sum += 1.0 / std::exp(normint.interpolation(p))*(1.0 / 2.0 / 3.0 / 4.0)*dndxint.interpolation(p, 1.0 - ph/p - y - z - zz)*
-			dndxint.interpolation(p, y)*dndxint.interpolation(p, z)*dndxint.interpolation(p, zz)*(yh - yl)*(zh - zl)*(zzh - zzl);
+		zz = zzl + m_FdAHS4[i]*zzq;
+		
+		sum += 1.0 / std::exp(norm.interpolation(p))*(1.0 / 2.0 / 3.0 / 4.0)*dndx.interpolation(p, 1.0 - ph/p - y - z - zz)*
+			dndx.interpolation(p, y)*dndx.interpolation(p, z)*dndx.interpolation(p, zz)*(yh - yl)*(zh - zl)*(zzh - zzl);
 	}
 
-	return (sum/FdAMaxPoints4);
+	return (sum/static_cast<double>(m_FdAMaxPoints4));
 }
 
-double FdA415(double ph, double dp, interpolationF &normint, interpolationF &dndxint) {
-	if (dp < 5.0*mgC / 2.0) return 0.0;
+double energyLoss::FdA415(double ph, double dp, const interpolationF &norm, const interpolationF &dndx) const {
+	if (dp < 5.0*m_mgC / 2.0) return 0.0;
 	double p = ph + dp;
 	double yl, yh, yq, y;
 	double zl, zh, zq, z;
 	double zzl, zzh, zzq, zz;
 	double zzzl, zzzh, zzzq, zzz;
 	double sum = 0.0;
-	for (size_t i=0; i<FdAMaxPoints5; i++) {
-		yl = mgC/(p + std::sqrt(MC*MC + p*p));
-		yh = 1.0 - ph/p - 4.0*mgC/(p + std::sqrt(MC*MC + p*p));
-		yq = yh - yl;
-		y = yl + FdAHS2[i]*yq;
-		zl = mgC/(p + std::sqrt(MC*MC + p*p));
-		zh = 1.0 - ph/p - y - 3.0*mgC/(p + std::sqrt(MC*MC + p*p));
+	for (size_t i=0; i<m_FdAMaxPoints5; i++) {
+		yl = m_mgC/(p + std::sqrt(m_MC*m_MC + p*p));
+		yh = 1.0 - ph/p - 4.0*m_mgC/(p + std::sqrt(m_MC*m_MC + p*p));
+		yq = yh - yl;		
+		y = yl + m_FdAHS2[i]*yq;
+		
+		zl = m_mgC/(p + std::sqrt(m_MC*m_MC + p*p));
+		zh = 1.0 - ph/p - y - 3.0*m_mgC/(p + std::sqrt(m_MC*m_MC + p*p));
 		zq = zh - zl;
-		z = zl + FdAHS3[i]*zq;
-		zzl = mgC/(p + std::sqrt(MC*MC + p*p));
-		zzh = 1.0 - ph/p - y - z - 2.0*mgC/(p + std::sqrt(MC*MC + p*p));
+		z = zl + m_FdAHS3[i]*zq;
+
+		zzl = m_mgC/(p + std::sqrt(m_MC*m_MC + p*p));
+		zzh = 1.0 - ph/p - y - z - 2.0*m_mgC/(p + std::sqrt(m_MC*m_MC + p*p));
 		zzq = zzh - zzl;
-		zz = zzl + FdAHS4[i]*zzq;
-		zzzl = mgC/(p + std::sqrt(MC*MC + p*p));
-		zzzh = 1.0 - ph/p - y - z - zz - mgC/(p + std::sqrt(MC*MC + p*p));
+		zz = zzl + m_FdAHS4[i]*zzq;
+
+		zzzl = m_mgC/(p + std::sqrt(m_MC*m_MC + p*p));
+		zzzh = 1.0 - ph/p - y - z - zz - m_mgC/(p + std::sqrt(m_MC*m_MC + p*p));
 		zzzq = zzzh - zzzl;
-		zzz = zzzl + FdAHS5[i]*zzzq;
-		sum += 1.0 / std::exp(normint.interpolation(p))*(1.0 / 2.0 / 3.0 / 4.0 / 5.0)*dndxint.interpolation(p, 1.0 - ph/p - y - z - zz - zzz)*
-			dndxint.interpolation(p, y)*dndxint.interpolation(p, z)*dndxint.interpolation(p, zz)*dndxint.interpolation(p, zzz)*(yh - yl)*(zh - zl)*(zzh - zzl)*(zzzh - zzzl);
+		zzz = zzzl + m_FdAHS5[i]*zzzq;
+
+		sum += 1.0 / std::exp(norm.interpolation(p))*(1.0 / 2.0 / 3.0 / 4.0 / 5.0)*dndx.interpolation(p, 1.0 - ph/p - y - z - zz - zzz)*
+			dndx.interpolation(p, y)*dndx.interpolation(p, z)*dndx.interpolation(p, zz)*dndx.interpolation(p, zzz)*(yh - yl)*(zh - zl)*(zzh - zzl)*(zzzh - zzzl);
 
 	}
 
-	return (sum/FdAMaxPoints5);
+	return (sum/static_cast<double>(m_FdAMaxPoints5));
+}
+
+double energyLoss::FdA(double ph, double dp, const interpolationF &currnorm, const interpolationF &currdndx) const {
+	return (FdA411(ph, dp, currnorm, currdndx) + FdA412(ph, dp, currnorm, currdndx) + FdA413(ph, dp, currnorm, currdndx) +
+				FdA414(ph, dp, currnorm, currdndx) + FdA415(ph, dp, currnorm, currdndx));
 }
 
 
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-//dA INTEGRALS:
-
-static size_t dAMaxPoints1, dAMaxPoints2, dAMaxPoints3, dAMaxPoints4, dAMaxPoints5, dAMaxPoints6, dAMaxPoints7; //number of points for dA integration
-static std::vector<double> dAHS1, dAHS2, dAHS3, dAHS4, dAHS5, dAHS6, dAHS7; 								 	//vectors that store Halton sequences for dA integrals
-
-//function that initializes Halton sequences for dA integrals calculations:
-void dAHaltonSeqInit(size_t dAMaxPts)
+void energyLoss::dAHaltonSeqInit(size_t dAMaxPts)
 {
-	dAMaxPoints1 = dAMaxPts;	 //setting values of dAMaxPoints
-	dAMaxPoints2 = dAMaxPts-100;
-	dAMaxPoints3 = dAMaxPts-200;
-	dAMaxPoints4 = dAMaxPts-300;
-	dAMaxPoints5 = dAMaxPts-400;
-	dAMaxPoints6 = dAMaxPts-500;
-	dAMaxPoints7 = dAMaxPts-600;
+	m_dAMaxPoints1 = dAMaxPts;	 //setting values of dAMaxPoints
+	m_dAMaxPoints2 = dAMaxPts-100;
+	m_dAMaxPoints3 = dAMaxPts-200;
+	m_dAMaxPoints4 = dAMaxPts-300;
+	m_dAMaxPoints5 = dAMaxPts-400;
+	m_dAMaxPoints6 = dAMaxPts-500;
+	m_dAMaxPoints7 = dAMaxPts-600;
 
 	for (size_t i=0; i<dAMaxPts; i++) //generating Halton sequences
 	{
-		dAHS1.push_back(haltonSequence((i+1)*409, 2));
-		dAHS2.push_back(haltonSequence((i+1)*409, 3));
-		dAHS3.push_back(haltonSequence((i+1)*409, 5));
-		dAHS4.push_back(haltonSequence((i+1)*409, 7));
-		dAHS5.push_back(haltonSequence((i+1)*409, 11));
-		dAHS6.push_back(haltonSequence((i+1)*409, 13));
-		dAHS7.push_back(haltonSequence((i+1)*409, 17));
+		m_dAHS1.push_back(haltonSequence((i+1)*409, 2));
+		m_dAHS2.push_back(haltonSequence((i+1)*409, 3));
+		m_dAHS3.push_back(haltonSequence((i+1)*409, 5));
+		m_dAHS4.push_back(haltonSequence((i+1)*409, 7));
+		m_dAHS5.push_back(haltonSequence((i+1)*409, 11));
+		m_dAHS6.push_back(haltonSequence((i+1)*409, 13));
+		m_dAHS7.push_back(haltonSequence((i+1)*409, 17));
 	}
 }
 
-double dA410(double ph, interpolationF &normint) {
-	return (dsdpti2.interpolation(ph)/exp(normint.interpolation(ph)));
+double energyLoss::dA410(double ph, const interpolationF &norm) const {
+	return (m_dsdpti2.interpolation(ph)/exp(norm.interpolation(ph)));
 }
 
-double dA411(double ph, interpolationF &normint, interpolationF &dndxint) {
-	double p1 = ph + mgC / 2.0;
+double energyLoss::dA411(double ph, const interpolationF &norm, const interpolationF &dndx) const {
+	double p1 = ph + m_mgC / 2.0;
 	double p2 = (((2.0*ph) < (ph + 30.0)) ? (2.0*ph) : (ph + 30.0));
 	double pq = p2 - p1;
 	double p;
 	double sum = 0.0;
-	for (size_t i=0; i<dAMaxPoints1; i++) {
-		p = p1 + dAHS1[i]*pq;
-		sum += dsdpti2.interpolation(p) / p / std::exp(normint.interpolation(p))*dndxint.interpolation(p, 1.0 - ph/p);
+	for (size_t i=0; i<m_dAMaxPoints1; i++) {
+		p = p1 + m_dAHS1[i]*pq;
+		
+		sum += m_dsdpti2.interpolation(p) / p / std::exp(norm.interpolation(p))*dndx.interpolation(p, 1.0 - ph/p);
 	}
 
-	return (sum*pq/dAMaxPoints1);
+	return (sum*pq/static_cast<double>(m_dAMaxPoints1));
 }
 
-double dA412(double ph, interpolationF &normint, interpolationF &dndxint) {
-	double p1 = ph + 2.0*mgC / 2.0;
+double energyLoss::dA412(double ph, const interpolationF &norm, const interpolationF &dndx) const {
+	double p1 = ph + 2.0*m_mgC / 2.0;
 	double p2 = (((2.0*ph) < (ph + 30.0)) ? (2.0*ph) : (ph + 30.0));
 	double pq = p2 - p1;
 	double p;
 	double yl, yh, yq, y;
 	double sum = 0.0;
-	for (size_t i=0; i<dAMaxPoints2; i++) {
-		p = p1 + dAHS1[i]*pq;
-		yl = mgC/(p + std::sqrt(MC*MC + p*p));
-		yh = 1.0 - ph/p - mgC/(p + std::sqrt(MC*MC + p*p));
+	for (size_t i=0; i<m_dAMaxPoints2; i++) {
+		p = p1 + m_dAHS1[i]*pq;
+		
+		yl = m_mgC/(p + std::sqrt(m_MC*m_MC + p*p));
+		yh = 1.0 - ph/p - m_mgC/(p + std::sqrt(m_MC*m_MC + p*p));
 		yq = yh - yl;
-		y = yl + dAHS2[i]*yq;
-		sum += dsdpti2.interpolation(p) / p / std::exp(normint.interpolation(p))*(1.0 / 2.0)*dndxint.interpolation(p, 1.0 - ph / p - y)*
-			dndxint.interpolation(p, y)*(yh - yl);
+		y = yl + m_dAHS2[i]*yq;
+		
+		sum += m_dsdpti2.interpolation(p) / p / std::exp(norm.interpolation(p))*(1.0 / 2.0)*dndx.interpolation(p, 1.0 - ph / p - y)*
+			dndx.interpolation(p, y)*(yh - yl);
 	}
 
-	return (sum*pq / dAMaxPoints2);
+	return (sum*pq/static_cast<double>(m_dAMaxPoints2));
 }
 
-double dA413(double ph, interpolationF &normint, interpolationF &dndxint)
-{
-	double p1 = ph + 3.0*mgC / 2.0;
+double energyLoss::dA413(double ph, const interpolationF &norm, const interpolationF &dndx) const {
+	double p1 = ph + 3.0*m_mgC / 2.0;
 	double p2 = (((2.0*ph) < (ph + 30.0)) ? (2.0*ph) : (ph + 30.0));
 	double pq = p2 - p1;
 	double p;
 	double yl, yh, yq, y;
 	double zl, zh, zq, z;
 	double sum = 0.0;
-	for (size_t i=0; i<dAMaxPoints3; i++) {
-		p = p1 + dAHS1[i]*pq;
-		yl = mgC/(p + std::sqrt(MC*MC + p*p));
-		yh = 1.0 - ph/p - 2.0*mgC/(p + std::sqrt(MC*MC + p*p));
+	for (size_t i=0; i<m_dAMaxPoints3; i++) {
+		p = p1 + m_dAHS1[i]*pq;
+		
+		yl = m_mgC/(p + std::sqrt(m_MC*m_MC + p*p));
+		yh = 1.0 - ph/p - 2.0*m_mgC/(p + std::sqrt(m_MC*m_MC + p*p));
 		yq = yh - yl;
-		y = yl + dAHS2[i]*yq;
-		zl = mgC/(p + std::sqrt(MC*MC + p*p));
-		zh = 1.0 - ph/p - y - mgC/(p + std::sqrt(MC*MC + p*p));
+		y = yl + m_dAHS2[i]*yq;
+
+		zl = m_mgC/(p + std::sqrt(m_MC*m_MC + p*p));
+		zh = 1.0 - ph/p - y - m_mgC/(p + std::sqrt(m_MC*m_MC + p*p));
 		zq = zh - zl;
-		z = zl + dAHS3[i]*zq;
-		sum += dsdpti2.interpolation(p) / p / std::exp(normint.interpolation(p))*(1.0 / 2.0 / 3.0)*dndxint.interpolation(p, 1.0 - ph/p - y - z)*
-			dndxint.interpolation(p, y)*dndxint.interpolation(p, z)*(yh - yl)*(zh - zl);
+		z = zl + m_dAHS3[i]*zq;
+
+		sum += m_dsdpti2.interpolation(p) / p / std::exp(norm.interpolation(p))*(1.0 / 2.0 / 3.0)*dndx.interpolation(p, 1.0 - ph/p - y - z)*
+			dndx.interpolation(p, y)*dndx.interpolation(p, z)*(yh - yl)*(zh - zl);
 	}
 
-	return (sum*pq/dAMaxPoints3);
+	return (sum*pq/static_cast<double>(m_dAMaxPoints3));
 }
 
-double dA414(double ph, interpolationF &normint, interpolationF &dndxint) {
-	double p1 = ph + 4.0*mgC / 2.0;
+double energyLoss::dA414(double ph, const interpolationF &norm, const interpolationF &dndx) const {
+	double p1 = ph + 4.0*m_mgC / 2.0;
 	double p2 = (((2.0*ph) < (ph + 30.0)) ? (2.0*ph) : (ph + 30.0));
 	double pq = p2 - p1;
 	double p;
@@ -238,29 +258,33 @@ double dA414(double ph, interpolationF &normint, interpolationF &dndxint) {
 	double zl, zh, zq, z;
 	double zzl, zzh, zzq, zz;
 	double sum = 0.0;
-	for (size_t i=0; i<dAMaxPoints4; i++) {
-		p = p1 + dAHS1[i]*pq;
-		yl = mgC/(p + std::sqrt(MC*MC + p*p));
-		yh = 1.0 - ph/p - 3.0*mgC/(p + std::sqrt(MC*MC + p*p));
+	for (size_t i=0; i<m_dAMaxPoints4; i++) {
+		p = p1 + m_dAHS1[i]*pq;
+		
+		yl = m_mgC/(p + std::sqrt(m_MC*m_MC + p*p));
+		yh = 1.0 - ph/p - 3.0*m_mgC/(p + std::sqrt(m_MC*m_MC + p*p));
 		yq = yh - yl;
-		y = yl + dAHS2[i]*yq;
-		zl = mgC/(p + std::sqrt(MC*MC + p*p));
-		zh = 1.0 - ph/p - y - 2.0*mgC/(p + std::sqrt(MC*MC + p*p));
+		y = yl + m_dAHS2[i]*yq;
+
+		zl = m_mgC/(p + std::sqrt(m_MC*m_MC + p*p));
+		zh = 1.0 - ph/p - y - 2.0*m_mgC/(p + std::sqrt(m_MC*m_MC + p*p));
 		zq = zh - zl;
-		z = zl + dAHS3[i]*zq;
-		zzl = mgC/(p + std::sqrt(MC*MC + p*p));
-		zzh = 1.0 - ph/p - y - z - mgC/(p + std::sqrt(MC*MC + p*p));
+		z = zl + m_dAHS3[i]*zq;
+
+		zzl = m_mgC/(p + std::sqrt(m_MC*m_MC + p*p));
+		zzh = 1.0 - ph/p - y - z - m_mgC/(p + std::sqrt(m_MC*m_MC + p*p));
 		zzq = zzh - zzl;
-		zz = zzl + dAHS4[i]*zzq;
-		sum += dsdpti2.interpolation(p) / p / std::exp(normint.interpolation(p))*(1.0 / 2.0 / 3.0 / 4.0)*dndxint.interpolation(p, 1.0 - ph/p - y - z - zz)*
-			dndxint.interpolation(p, y)*dndxint.interpolation(p, z)*dndxint.interpolation(p, zz)*(yh - yl)*(zh - zl)*(zzh - zzl);
+		zz = zzl + m_dAHS4[i]*zzq;
+
+		sum += m_dsdpti2.interpolation(p) / p / std::exp(norm.interpolation(p))*(1.0 / 2.0 / 3.0 / 4.0)*dndx.interpolation(p, 1.0 - ph/p - y - z - zz)*
+			dndx.interpolation(p, y)*dndx.interpolation(p, z)*dndx.interpolation(p, zz)*(yh - yl)*(zh - zl)*(zzh - zzl);
 	}
 
-	return (sum*pq/dAMaxPoints4);
+	return (sum*pq/static_cast<double>(m_dAMaxPoints4));
 }
 
-double dA415(double ph, interpolationF &normint, interpolationF &dndxint) {
-	double p1 = ph + 5.0*mgC / 2.0;
+double energyLoss::dA415(double ph, const interpolationF &norm, const interpolationF &dndx) const {
+	double p1 = ph + 5.0*m_mgC / 2.0;
 	double p2 = (((2.0*ph) < (ph + 30.0)) ? (2.0*ph) : (ph + 30.0));
 	double pq = p2 - p1;
 	double p;
@@ -269,33 +293,38 @@ double dA415(double ph, interpolationF &normint, interpolationF &dndxint) {
 	double zzl, zzh, zzq, zz;
 	double zzzl, zzzh, zzzq, zzz;
 	double sum = 0.0;
-	for (size_t i=0; i<dAMaxPoints5; i++) {
-		p = p1 + dAHS1[i]*pq;
-		yl = mgC/(p + std::sqrt(MC*MC + p*p));
-		yh = 1.0 - ph/p - 4.0*mgC/(p + std::sqrt(MC*MC + p*p));
+	for (size_t i=0; i<m_dAMaxPoints5; i++) {
+		p = p1 + m_dAHS1[i]*pq;
+		
+		yl = m_mgC/(p + std::sqrt(m_MC*m_MC + p*p));
+		yh = 1.0 - ph/p - 4.0*m_mgC/(p + std::sqrt(m_MC*m_MC + p*p));
 		yq = yh - yl;
-		y = yl + dAHS2[i]*yq;
-		zl = mgC/(p + std::sqrt(MC*MC + p*p));
-		zh = 1.0 - ph/p - y - 3.0*mgC/(p + std::sqrt(MC*MC + p*p));
+		y = yl + m_dAHS2[i]*yq;
+
+		zl = m_mgC/(p + std::sqrt(m_MC*m_MC + p*p));
+		zh = 1.0 - ph/p - y - 3.0*m_mgC/(p + std::sqrt(m_MC*m_MC + p*p));
 		zq = zh - zl;
-		z = zl + dAHS3[i]*zq;
-		zzl = mgC/(p + std::sqrt(MC*MC + p*p));
-		zzh = 1.0 - ph/p - y - z - 2.0*mgC/(p + std::sqrt(MC*MC + p*p));
+		z = zl + m_dAHS3[i]*zq;
+
+		zzl = m_mgC/(p + std::sqrt(m_MC*m_MC + p*p));
+		zzh = 1.0 - ph/p - y - z - 2.0*m_mgC/(p + std::sqrt(m_MC*m_MC + p*p));
 		zzq = zzh - zzl;
-		zz = zzl + dAHS4[i]*zzq;
-		zzzl = mgC/(p + std::sqrt(MC*MC + p*p));
-		zzzh = 1.0 - ph/p - y - z - zz - mgC/(p + std::sqrt(MC*MC + p*p));
+		zz = zzl + m_dAHS4[i]*zzq;
+
+		zzzl = m_mgC/(p + std::sqrt(m_MC*m_MC + p*p));
+		zzzh = 1.0 - ph/p - y - z - zz - m_mgC/(p + std::sqrt(m_MC*m_MC + p*p));
 		zzzq = zzzh - zzzl;
-		zzz = zzzl + dAHS5[i]*zzzq;
-		sum += dsdpti2.interpolation(p) / p / std::exp(normint.interpolation(p))*(1.0 / 2.0 / 3.0 / 4.0 / 5.0)*dndxint.interpolation(p, 1.0 - ph/p - y - z - zz - zzz)*
-			dndxint.interpolation(p, y)*dndxint.interpolation(p, z)*dndxint.interpolation(p, zz)*dndxint.interpolation(p, zzz)*(yh - yl)*(zh - zl)*(zzh - zzl)*(zzzh - zzzl);
+		zzz = zzzl + m_dAHS5[i]*zzzq;
+
+		sum += m_dsdpti2.interpolation(p) / p / std::exp(norm.interpolation(p))*(1.0 / 2.0 / 3.0 / 4.0 / 5.0)*dndx.interpolation(p, 1.0 - ph/p - y - z - zz - zzz)*
+			dndx.interpolation(p, y)*dndx.interpolation(p, z)*dndx.interpolation(p, zz)*dndx.interpolation(p, zzz)*(yh - yl)*(zh - zl)*(zzh - zzl)*(zzzh - zzzl);
 	}
 
-	return (sum*pq/dAMaxPoints5);
+	return (sum*pq/static_cast<double>(m_dAMaxPoints5));
 }
 
-double dA416(double ph, interpolationF &normint, interpolationF &dndxint) {
-	double p1 = ph + 6.0*mgC / 2.0;
+double energyLoss::dA416(double ph, const interpolationF &norm, const interpolationF &dndx) const {
+	double p1 = ph + 6.0*m_mgC / 2.0;
 	double p2 = (((2.0*ph) < (ph + 30.0)) ? (2.0*ph) : (ph + 30.0));
 	double pq = p2 - p1;
 	double p;
@@ -305,38 +334,44 @@ double dA416(double ph, interpolationF &normint, interpolationF &dndxint) {
 	double zzzl, zzzh, zzzq, zzz;
 	double zzzzl, zzzzh, zzzzq, zzzz;
 	double sum = 0.0;
-	for (size_t i=0; i<dAMaxPoints6; i++) {
-		p = p1 + dAHS1[i]*pq;
-		yl = mgC/(p + std::sqrt(MC*MC + p*p));
-		yh = 1.0 - ph/p - 5.0*mgC/(p + std::sqrt(MC*MC + p*p));
+	for (size_t i=0; i<m_dAMaxPoints6; i++) {
+		p = p1 + m_dAHS1[i]*pq;
+		
+		yl = m_mgC/(p + std::sqrt(m_MC*m_MC + p*p));
+		yh = 1.0 - ph/p - 5.0*m_mgC/(p + std::sqrt(m_MC*m_MC + p*p));
 		yq = yh - yl;
-		y = yl + dAHS2[i]*yq;
-		zl = mgC/(p + std::sqrt(MC*MC + p*p));
-		zh = 1.0 - ph/p - y - 4.0*mgC/(p + std::sqrt(MC*MC + p*p));
+		y = yl + m_dAHS2[i]*yq;
+
+		zl = m_mgC/(p + std::sqrt(m_MC*m_MC + p*p));
+		zh = 1.0 - ph/p - y - 4.0*m_mgC/(p + std::sqrt(m_MC*m_MC + p*p));
 		zq = zh - zl;
-		z = zl + dAHS3[i]*zq;
-		zzl = mgC/(p + std::sqrt(MC*MC + p*p));
-		zzh = 1.0 - ph/p - y - z - 3.0*mgC/(p + std::sqrt(MC*MC + p*p));
+		z = zl + m_dAHS3[i]*zq;
+
+		zzl = m_mgC/(p + std::sqrt(m_MC*m_MC + p*p));
+		zzh = 1.0 - ph/p - y - z - 3.0*m_mgC/(p + std::sqrt(m_MC*m_MC + p*p));
 		zzq = zzh - zzl;
-		zz = zzl + dAHS4[i]*zzq;
-		zzzl = mgC/(p + std::sqrt(MC*MC + p*p));
-		zzzh = 1.0 - ph/p - y - z - zz - 2.0*mgC/(p + std::sqrt(MC*MC + p*p));
+		zz = zzl + m_dAHS4[i]*zzq;
+
+		zzzl = m_mgC/(p + std::sqrt(m_MC*m_MC + p*p));
+		zzzh = 1.0 - ph/p - y - z - zz - 2.0*m_mgC/(p + std::sqrt(m_MC*m_MC + p*p));
 		zzzq = zzzh - zzzl;
-		zzz = zzzl + dAHS5[i]*zzzq;
-		zzzzl = mgC/(p + std::sqrt(MC*MC + p*p));
-		zzzzh = 1.0 - ph/p - y - z - zz - zzz - mgC/(p + std::sqrt(MC*MC + p*p));
+		zzz = zzzl + m_dAHS5[i]*zzzq;
+
+		zzzzl = m_mgC/(p + std::sqrt(m_MC*m_MC + p*p));
+		zzzzh = 1.0 - ph/p - y - z - zz - zzz - m_mgC/(p + std::sqrt(m_MC*m_MC + p*p));
 		zzzzq = zzzzh - zzzzl;
-		zzzz = zzzzl + dAHS6[i]*zzzzq;
-		sum += dsdpti2.interpolation(p) / p / std::exp(normint.interpolation(p))*(1.0 / 2.0 / 3.0 / 4.0 / 5.0 / 6.0)*dndxint.interpolation(p, 1.0 - ph/p - y - z - zz - zzz - zzzz)*
-			dndxint.interpolation(p, y)*dndxint.interpolation(p, z)*dndxint.interpolation(p, zz)*dndxint.interpolation(p, zzz)*dndxint.interpolation(p, zzzz)*(yh - yl)*(zh - zl)*
+		zzzz = zzzzl + m_dAHS6[i]*zzzzq;
+
+		sum += m_dsdpti2.interpolation(p) / p / std::exp(norm.interpolation(p))*(1.0 / 2.0 / 3.0 / 4.0 / 5.0 / 6.0)*dndx.interpolation(p, 1.0 - ph/p - y - z - zz - zzz - zzzz)*
+			dndx.interpolation(p, y)*dndx.interpolation(p, z)*dndx.interpolation(p, zz)*dndx.interpolation(p, zzz)*dndx.interpolation(p, zzzz)*(yh - yl)*(zh - zl)*
 			(zzh - zzl)*(zzzh - zzzl)*(zzzzh - zzzzl);
 	}
 
-	return (sum*pq/dAMaxPoints6);
+	return (sum*pq/static_cast<double>(m_dAMaxPoints6));
 }
 
-double dA417(double ph, interpolationF &normint, interpolationF &dndxint) {
-	double p1 = ph + 7.0*mgC / 2.0;
+double energyLoss::dA417(double ph, const interpolationF &norm, const interpolationF &dndx) const {
+	double p1 = ph + 7.0*m_mgC / 2.0;
 	double p2 = (((2.0*ph) < (ph + 30.0)) ? (2.0*ph) : (ph + 30.0));
 	double pq = p2 - p1;
 	double p;
@@ -347,36 +382,55 @@ double dA417(double ph, interpolationF &normint, interpolationF &dndxint) {
 	double zzzzl, zzzzh, zzzzq, zzzz;
 	double zzzzzl, zzzzzh, zzzzzq, zzzzz;
 	double sum = 0.0;
-	for (size_t i=0; i<dAMaxPoints7; i++) {
-		p = p1 + dAHS1[i]*pq;
-		yl = mgC/(p + std::sqrt(MC*MC + p*p));
-		yh = 1.0 - ph/p - 6.0*mgC/(p + std::sqrt(MC*MC + p*p));
+	for (size_t i=0; i<m_dAMaxPoints7; i++) {
+		p = p1 + m_dAHS1[i]*pq;
+
+		yl = m_mgC/(p + std::sqrt(m_MC*m_MC + p*p));
+		yh = 1.0 - ph/p - 6.0*m_mgC/(p + std::sqrt(m_MC*m_MC + p*p));
 		yq = yh - yl;
-		y = yl + dAHS2[i]*yq;
-		zl = mgC/(p + std::sqrt(MC*MC + p*p));
-		zh = 1.0 - ph/p - y - 5.0*mgC/(p + std::sqrt(MC*MC + p*p));
+		y = yl + m_dAHS2[i]*yq;
+
+		zl = m_mgC/(p + std::sqrt(m_MC*m_MC + p*p));
+		zh = 1.0 - ph/p - y - 5.0*m_mgC/(p + std::sqrt(m_MC*m_MC + p*p));
 		zq = zh - zl;
-		z = zl + dAHS3[i]*zq;
-		zzl = mgC/(p + std::sqrt(MC*MC + p*p));
-		zzh = 1.0 - ph/p - y - z - 4.0*mgC/(p + std::sqrt(MC*MC + p*p));
+		z = zl + m_dAHS3[i]*zq;
+
+		zzl = m_mgC/(p + std::sqrt(m_MC*m_MC + p*p));
+		zzh = 1.0 - ph/p - y - z - 4.0*m_mgC/(p + std::sqrt(m_MC*m_MC + p*p));
 		zzq = zzh - zzl;
-		zz = zzl + dAHS4[i]*zzq;
-		zzzl = mgC/(p + std::sqrt(MC*MC + p*p));
-		zzzh = 1.0 - ph/p - y - z - zz - 3.0*mgC/(p + std::sqrt(MC*MC + p*p));
+		zz = zzl + m_dAHS4[i]*zzq;
+
+		zzzl = m_mgC/(p + std::sqrt(m_MC*m_MC + p*p));
+		zzzh = 1.0 - ph/p - y - z - zz - 3.0*m_mgC/(p + std::sqrt(m_MC*m_MC + p*p));
 		zzzq = zzzh - zzzl;
-		zzz = zzzl + dAHS5[i]*zzzq;
-		zzzzl = mgC/(p + std::sqrt(MC*MC + p*p));
-		zzzzh = 1.0 - ph/p - y - z - zz - zzz - 2.0*mgC/(p + std::sqrt(MC*MC + p*p));
+		zzz = zzzl + m_dAHS5[i]*zzzq;
+
+		zzzzl = m_mgC/(p + std::sqrt(m_MC*m_MC + p*p));
+		zzzzh = 1.0 - ph/p - y - z - zz - zzz - 2.0*m_mgC/(p + std::sqrt(m_MC*m_MC + p*p));
 		zzzzq = zzzzh - zzzzl;
-		zzzz = zzzzl + dAHS6[i]*zzzzq;
-		zzzzzl = mgC/(p + std::sqrt(MC*MC + p*p));
-		zzzzzh = 1.0 - ph/p - y - z - zz - zzz - zzzz - mgC/(p + std::sqrt(MC*MC + p*p));
+		zzzz = zzzzl + m_dAHS6[i]*zzzzq;
+
+		zzzzzl = m_mgC/(p + std::sqrt(m_MC*m_MC + p*p));
+		zzzzzh = 1.0 - ph/p - y - z - zz - zzz - zzzz - m_mgC/(p + std::sqrt(m_MC*m_MC + p*p));
 		zzzzzq = zzzzzh - zzzzzl;
-		zzzzz = zzzzzl + dAHS7[i]*zzzzzq;
-		sum += dsdpti2.interpolation(p) / p / std::exp(normint.interpolation(p))*(1.0 / 2.0 / 3.0 / 4.0 / 5.0 / 6.0 / 7.0)*dndxint.interpolation(p, 1.0 - ph/p - y - z - zz - zzz - zzzz - zzzzz)*
-			dndxint.interpolation(p, y)*dndxint.interpolation(p, z)*dndxint.interpolation(p, zz)*dndxint.interpolation(p, zzz)*dndxint.interpolation(p, zzzz)*dndxint.interpolation(p, zzzzz)*
+		zzzzz = zzzzzl + m_dAHS7[i]*zzzzzq;
+
+		sum += m_dsdpti2.interpolation(p) / p / std::exp(norm.interpolation(p))*(1.0 / 2.0 / 3.0 / 4.0 / 5.0 / 6.0 / 7.0)*dndx.interpolation(p, 1.0 - ph/p - y - z - zz - zzz - zzzz - zzzzz)*
+			dndx.interpolation(p, y)*dndx.interpolation(p, z)*dndx.interpolation(p, zz)*dndx.interpolation(p, zzz)*dndx.interpolation(p, zzzz)*dndx.interpolation(p, zzzzz)*
 			(yh - yl)*(zh - zl)*(zzh - zzl)*(zzzh - zzzl)*(zzzzh - zzzzl)*(zzzzzh - zzzzzl);
 	}
 
-	return (sum*pq/dAMaxPoints7);
+	return (sum*pq/static_cast<double>(m_dAMaxPoints7));
+}
+
+double energyLoss::dA41(double ph, interpolationF &currnorm, interpolationF &currdndx) const {
+	if (m_pName == "Gluon") { //gluon needs 7 dA integrals
+		return (dA410(ph, currnorm) + dA411(ph, currnorm, currdndx) + dA412(ph, currnorm, currdndx) +dA413(ph, currnorm, currdndx) +
+					dA414(ph, currnorm, currdndx) + dA415(ph, currnorm, currdndx) + dA416(ph, currnorm, currdndx) +
+					dA417(ph, currnorm, currdndx));
+	}
+	else { //light quarks need 5 dA integrals
+		return (dA410(ph, currnorm) + dA411(ph, currnorm, currdndx) + dA412(ph, currnorm, currdndx) + dA413(ph, currnorm, currdndx) +
+					dA414(ph, currnorm, currdndx) + dA415(ph, currnorm, currdndx));
+	}
 }
