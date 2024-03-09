@@ -83,4 +83,16 @@ additional parameters are:
  when set to 0, no seed is set and every run will produce different results;
  to see all available parameters for energy loss calculation and their default values use: ./ebeDREENA AverageEL -h;  
 
- ## < 4 > outputs of ebeDREENA  
+## < 4 > outputs of ebeDREENA  
+Output of LTables run is in ./ltables/ directory; for single run, there are three output files - two for radiative and one for collisional. These tables are determined by effective number of flavours, i.e. collision energy, particle type and the value of xB. These tables are necessary for energy loss calculations and they are reused for different different events, centralitites hydro backgrounds obtained with different models,... As an example, tables for charm quark are given for LHC collision energy and for xB value of 0.6.  
+
+Output of energy loss run is in ./results/results[particleName]/, where particleName can be Bottom, Charm, Down, DownBar, Gluon, Strange, Up, UpBar. These are R_AA(pT,phi) distributions that are later used to calculate R_AA and v_n. These files also have headers, that contain various informations about the event such as event ID, value of xB, average jet path-length,... For file name pattern see file provided in this repository.  
+R_AA(pT,phi) distribution provided in ./results/resultsCharm/ is generated using initial pT distribution obtained from http://www.lpthe.jussieu.fr/~cacciari/fonll/fonllform.html, as well as binary collision points, temperature evolution and ltables provided in this repository with all default parameter values except BCPSEED, which is set to 1, so that users can check if they get the same results.  
+
+## < 5 > disclaimer  
+This version of the ebeDREENA framework is meant for high-pT energy loss calculation on event-by-event fluctuating hydro background.  
+ebeDREENA framework provides results for bare quarks and gluons. To obtain results comparable to experimental data, fragmentation functions such as DSS, BCFY and KLP have to be used.  
+Calculation time for LTables calculation is large (up to about hour and a half on 112 cores), however, they need to be calculated only once. Energy loss calculatio time for single event on single core is up to about 3 minutes, however calculation time vary for different particles.  
+
+---------------------------------------------------------------
+for aaditional questions contact Zigic Dusan at zigic@ipb.ac.rs
