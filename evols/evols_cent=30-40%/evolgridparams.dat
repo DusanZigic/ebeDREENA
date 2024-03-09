@@ -1,0 +1,6 @@
+##tau0 tau_step
+1.000 0.3000
+#x_min x_max x_step
+-24.80 24.80 0.20
+#y_min y_max y_step
+-24.80 24.80 0.20
