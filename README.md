@@ -2,7 +2,7 @@
 
 ebeDREENA is computational framework for generating high-pT predictions based on a dynamical energy loss formalism. The framework can include any, in principle arbitrary, event-by-event fluctuating temperature evolution within the dynamical energy loss formalism. This version is generalized to account for both LHC and RHIC energies and collision systems.
 
-<h2> < 1 > compilation</h2>
+## < 1 > compilation
 
 Compilation of the source code, performed using gcc compiler:
 
@@ -45,16 +45,42 @@ LTables files path relative to the executable should be: ./ltables/lnorm_nf=[nf]
 unlike previous files, ebeDREENA calculates LTables; however, these tables need to be calculated only once and can be reused while calculating high-pT energy loss with different temperature evolution backgrounds;
 within this repository there is an example of LTables files for Charm quark, nf=3.0 and xB=0.6;  
 
-## < 2 > running ebeDREENA  
+### d) phiGausPts  
+in ./phiGaussPts/ directory are textual tables containing jet's direction angles and weights that correspond to Gaussian quadrature integration method in range [0, 2Pi];  
+jet's direction angles are sampled in these points, so that afterwards, when integrating final pT,phi distribution over phi, which is nedeed to obtain R_AA, v_2, v_3,..., there is no need for angle resampling;
+
+## < 3 > running ebeDREENA  
 There are two possible calculation options within ebeDREENA framework: LTables calculation and energy loss calculation. Since ebeDREENA is parallelized using OpenMP, set OMP_NUM_THREADS environmental variable to desired value before running calculations.
 
 ### a) LTables calculation  
 to perform basic LTables calculation use command: ./ebeDREENA LTables --sNN=[sNN] --pName=[particleName] --xB=[xB]  
--sNN parameter: case sensitive string with possible options: 200GeV, 2760GeV, 5020GeV, 5440GeV;  
--particleName parameter: case sensitive string with possible options: Bottom, Charm, LQuarks, Gluon, where LQuarks stand for light quarks, since all light quarks (down, down-bar, strange, strange-bar, up and up-bar) use the same LTables;  
--xB parameter: float that represents magnetic to electric mass ratio; based on lattice calculation: xB=0.6;  
+-**sNN** parameter: case sensitive string with possible options: 200GeV, 2760GeV, 5020GeV, 5440GeV;  
+-**particleName** parameter: case sensitive string with possible options: Bottom, Charm, LQuarks, Gluon, where LQuarks stand for light quarks, since all light quarks (down, down-bar, strange, strange-bar, up and up-bar) use the same LTables;  
+-**xB** parameter: float that represents magnetic to electric mass ratio; based on lattice calculation: xB=0.6;  
 for example, to calculate LTables for charm quark for 5020GeV LHC collision and for xB=0.6, which are LTables provided in this demo, command should be: ./ebeDREENA LTables --sNN=5020GeV --pName=Charm --xB=0.6;  
 additional parameters are number of points used for QuasiMonteCarlo integration LdndxMaxPoints and LCollMaxPoints;  
 to see all available parameters for LTables calculation and their default values use: ./ebeDREENA LTables -h;  
 
-### b) energy loss calculation
+### b) energy loss calculation  
+to perform basic energy loss calculation use command: ./ebeDREENA AverageEL --collsys=[collisionSystem] --sNN=[sNN] --pName=[particleName] --centrality=[centrality] --xB=[xB] --eventN=[numberOfEvents] --BCPP=[bcpPercentage] --phiGridN=[numberOfAngles]  
+-**collisionSystem** parameter: case sensitive string with possible options: AuAu, PbPb, XeXe,...  
+-**sNN** parameter: case sensitive string with possible options: 200GeV, 2760GeV, 5020GeV, 5440GeV;  
+-**particleName** parameter: case sensitive string with possible options: Bottom, Charm, Gluon, Down, DownBar, Strange, Up, UpBar, LQuarks;  
+ the calculation can be done for each parton individualy, however there is an option to calculate all light quarks at the same time using modified algorithm since the only thing differentiating light quarks is initial pT distribution; this leads to 4x speed-up of the calculation time compared to calculationg each light quark individually;  
+-**centrality** parameter: string in format 'xx-xx%' (ie 0-5%, 10-20%,...);  
+-**xB** parameter: float that represents magnetic to electric mass ratio; based on lattice calculation: xB=0.6;  
+-**numberOfEvents** parameter: non-negative integer representing number of events;  
+number of binary collision points and temperature evolutions should match this number; event loop goes from 0 up to not including numberOfEvents;  
+-**bcpPercentage** parameter: string representing binary collision points percentage, for example 20%;  
+this parameter determines the percentage of binary collision points that will be used as jet's initial points, meaning that events with larger number of binary collisions will have more jet's since the percentage is the same;  
+-**numberOfAngles** parameter: non-negative integer representing number of jet's direction angles;  
+for each initial position, numberOfAngles jets are generated;  
+based on numberOfAngles parameter, angle values are imported from ./phiGaussPts/phiptsgauss[numberOfAngles].dat  
+additional parameters are:  
+-**TIMESTEP** parameter: positive float, that represents the timestep of jet traversing qgp medium;  
+-**TCRIT** parameter: positive float, that represents critical temperature, i.e. the temperature value for which the energy loss stops;  
+-**BCPSEED** parameter: non-negative integer that represents seed for random engine that samples binary collision points as jet's initial positions;  
+ when set to 0, no seed is set and every run will produce different results;
+ to see all available parameters for energy loss calculation and their default values use: ./ebeDREENA AverageEL -h;  
+
+ ## < 4 > outputs of ebeDREENA  
