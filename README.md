@@ -2,7 +2,7 @@
 
 ebeDREENA is computational framework for generating high-pT predictions based on a dynamical energy loss formalism. The framework can include any, in principle arbitrary, event-by-event fluctuating temperature evolution within the dynamical energy loss formalism. This version is generalized to account for both LHC and RHIC energies and collision systems.
 
-<h2> < 1 > compilation</h2>
+## < 1 > compilation
 
 Compilation of the source code, performed using gcc compiler:
 
