@@ -250,7 +250,7 @@ void lTables::RadLTables()
 				if (m_pName == "Gluon") xIntegLimitHigh = 0.5;
 				else xIntegLimitHigh = 1.0 - M/(std::sqrt(p*p + M*M) + p);
 
-				m_LNormTbl[itau][ip][iT] = cubicIntegrate(m_Grids.xPts(), m_LdndxTbl[itau][ip][iT], xIntegLimitLow, xIntegLimitHigh);
+				m_LNormTbl[itau][ip][iT] = poly::cubicIntegrate(m_Grids.xPts(), m_LdndxTbl[itau][ip][iT], xIntegLimitLow, xIntegLimitHigh);
 			}
 		}
 	}

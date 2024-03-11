@@ -576,12 +576,12 @@ void energyLoss::generateGaussTab(std::vector<double> &qGTab, std::vector<double
 void energyLoss::calculateAvgPathlenTemps(const std::vector<double> &pathLenghDist, const std::vector<double> &temperatureDist, std::vector<double> &avgPathLength, std::vector<double> &avgTemp) const
 {
 	interpolationF pathLenghDistInt(m_phiGridPts, pathLenghDist);
-	avgPathLength.push_back(cubicIntegrate(m_phiGridPts, pathLenghDist)/2.0/M_PI);
+	avgPathLength.push_back(poly::cubicIntegrate(m_phiGridPts, pathLenghDist)/2.0/M_PI);
 	avgPathLength.push_back((pathLenghDistInt.interpolation(m_phiGridPts.front()) + pathLenghDistInt.interpolation(m_phiGridPts.back()))/2.0);
 	avgPathLength.push_back((pathLenghDistInt.interpolation(M_PI/2.0)             + pathLenghDistInt.interpolation(3.0*M_PI/2.0))       /2.0);
 
 	interpolationF temperatureDistInt(m_phiGridPts, temperatureDist);
-	avgTemp.push_back(cubicIntegrate(m_phiGridPts, temperatureDist)/2.0/M_PI);
+	avgTemp.push_back(poly::cubicIntegrate(m_phiGridPts, temperatureDist)/2.0/M_PI);
 	avgTemp.push_back((temperatureDistInt.interpolation(m_phiGridPts.front()) + temperatureDistInt.interpolation(m_phiGridPts.back()))/2.0);
 	avgTemp.push_back((temperatureDistInt.interpolation(M_PI/2.0)             + temperatureDistInt.interpolation(3.0*M_PI/2.0))       /2.0);
 }
@@ -729,7 +729,7 @@ void energyLoss::RadCollEL(double X0, double Y0, double phi0, const interpolatio
 			}
 
 			NormSparseP.push_back(p);												//setting p of current norm table
-			NormSparseV.push_back(linearIntegrate(currNormTabTau, currNormTabVal)); //setting value of current norm table
+			NormSparseV.push_back(poly::linearIntegrate(currNormTabTau, currNormTabVal)); //setting value of current norm table
 
 			for (const auto &x : m_Grids.xPts()) //loop over xpts
 			{
@@ -741,7 +741,7 @@ void energyLoss::RadCollEL(double X0, double Y0, double phi0, const interpolatio
 
 				dndxSparseP.push_back(p); 												//setting p of current dndx table
 				dndxSparseX.push_back(x);												//setting x of current dndx table
-				dndxSparseV.push_back(linearIntegrate(currDndxTabTau, currDndxTabVal)); //setting curernt dndx values by integrating over time
+				dndxSparseV.push_back(poly::linearIntegrate(currDndxTabTau, currDndxTabVal)); //setting curernt dndx values by integrating over time
 			}
 		}
 		
@@ -772,7 +772,7 @@ void energyLoss::RadCollEL(double X0, double Y0, double phi0, const interpolatio
 				currCollTabVal[iL] = m_LColl.interpolation(p, currLTTabT[iL]); //setting LColl values
 			}
 
-			collisionalEL.push_back(linearIntegrate(currCollTabTau, currCollTabVal)); //calculating collisional energy loss by integrating over time
+			collisionalEL.push_back(poly::linearIntegrate(currCollTabTau, currCollTabVal)); //calculating collisional energy loss by integrating over time
 		}
 		
 		pathLength = currLTTabL.back(); //setting value of path-length for single trajectory
@@ -826,7 +826,7 @@ void energyLoss::RadCollEL(double X0, double Y0, double phi0, const interpolatio
 			}
 
 			NormSparseP.push_back(p);												//setting p of current norm table
-			NormSparseV.push_back(linearIntegrate(currNormTabTau, currNormTabVal)); //setting value of current norm table
+			NormSparseV.push_back(poly::linearIntegrate(currNormTabTau, currNormTabVal)); //setting value of current norm table
 
 			for (const auto &x : m_Grids.xPts()) //loop over xpts
 			{
@@ -838,7 +838,7 @@ void energyLoss::RadCollEL(double X0, double Y0, double phi0, const interpolatio
 
 				dndxSparseP.push_back(p); 												//setting p of current dndx table
 				dndxSparseX.push_back(x);												//setting x of current dndx table
-				dndxSparseV.push_back(linearIntegrate(currDndxTabTau, currDndxTabVal)); //setting curernt dndx values by integrating over time
+				dndxSparseV.push_back(poly::linearIntegrate(currDndxTabTau, currDndxTabVal)); //setting curernt dndx values by integrating over time
 			}
 		}
 		
@@ -861,7 +861,7 @@ void energyLoss::RadCollEL(double X0, double Y0, double phi0, const interpolatio
 				currCollTabVal[iL] = m_LColl.interpolation(p, currLTTabT[iL]); //setting LColl values
 			}
 
-			collisionalEL.push_back(linearIntegrate(currCollTabTau, currCollTabVal)); //calculating collisional energy loss by integrating over time
+			collisionalEL.push_back(poly::linearIntegrate(currCollTabTau, currCollTabVal)); //calculating collisional energy loss by integrating over time
 		}
 		
 		pathLenght = currLTTabL.back(); //setting value of path-length for single trajectory
@@ -951,7 +951,7 @@ void energyLoss::runELossHeavyFlavour()
 
 			//setting RAA(pT,phi) value by integrating over p:
 			for (size_t iFinPts=0; iFinPts<m_Grids.finPtsLength(); iFinPts++)
-				RAAdist[iFinPts][iPhi] = sumRAA1[iFinPts] + cubicIntegrate(m_Grids.FdpPts(), sumRAA2[iFinPts])/m_Grids.finPts(iFinPts);
+				RAAdist[iFinPts][iPhi] = sumRAA1[iFinPts] + poly::cubicIntegrate(m_Grids.FdpPts(), sumRAA2[iFinPts])/m_Grids.finPts(iFinPts);
 
 			pathLenghDist[iPhi] /= static_cast<double>(pltCNT); temperatureDist[iPhi] /= static_cast<double>(pltCNT);
 		}
@@ -1154,7 +1154,7 @@ void energyLoss::runELossLightQuarks()
 			//setting RAA(pT,phi) value by integrating over p:
 			for (size_t iLQ=0; iLQ<lightQuarksList.size(); iLQ++)
 				for (size_t iFinPts=0; iFinPts<m_Grids.finPtsLength(); iFinPts++)
-					RAAdist[iLQ][iFinPts][iPhi] = sumRAA1[iLQ][iFinPts] + cubicIntegrate(m_Grids.FdpPts(), sumRAA2[iLQ][iFinPts])/m_Grids.finPts(iFinPts);
+					RAAdist[iLQ][iFinPts][iPhi] = sumRAA1[iLQ][iFinPts] + poly::cubicIntegrate(m_Grids.FdpPts(), sumRAA2[iLQ][iFinPts])/m_Grids.finPts(iFinPts);
 
 			pathLenghDist[iPhi] /= static_cast<double>(pltCNT); temperatureDist[iPhi] /= static_cast<double>(pltCNT);
 		}
