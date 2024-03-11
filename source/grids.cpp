@@ -472,7 +472,7 @@ void gridPoints::generateGrids(const std::vector<std::vector<double>> &density, 
 	inttabX.push_back(linearIntegrate(densityX, densityF, xxx));
 	inttabF.push_back(xxx);
 
-	interpolationF inttabInt(inttabX, inttabF);
+	interpolationF<double> inttabInt(inttabX, inttabF);
 
 	gridpoints.resize(0);
 
