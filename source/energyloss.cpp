@@ -35,7 +35,7 @@ energyLoss::energyLoss(int argc, const char *argv[])
 		inputParams[key] = val;
 	}
 
-	std::vector<std::string> arguments = {"collsys", "sNN", "pName", "centrality", "xB", "eventN", "BCPP", "phiGridN", "TIMESTEP", "TCRIT", "BCPSEED"};
+	std::vector<std::string> arguments = {"collsys", "sNN", "pName", "centrality", "xB", "eventN", "BCPP", "phiGridN", "TIMESTEP", "TCRIT", "BCPSEED", "c", "config"};
 	for (const auto &inputParam : inputParams) {
 		if(std::find(arguments.begin(), arguments.end(), inputParam.first) == arguments.end()) {
 			std::cerr << "Error: provide argument flag: " << inputParam.first << " is not an option." << std::endl;
@@ -47,7 +47,7 @@ energyLoss::energyLoss(int argc, const char *argv[])
 
 	//checking if configuration file is provided:
 	std::map<std::string, std::string> inputParamsFile;
-	if (inputParams.count("c") > 0) {
+	if ((inputParams.count("c") > 0) || ((inputParams.count("conf") > 0))) {
 		if (loadInputsFromFile(inputParams.at("c"), inputParamsFile) != 1) {
 			m_error = true;
 		}
