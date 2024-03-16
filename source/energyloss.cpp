@@ -162,36 +162,6 @@ double energyLoss::productLog(double x) const
 	return w1;
 }
 
-int energyLoss::loaddsdpti2()
-{
-	const std::string path_in = "./ptDists/ptDist" + m_sNN + "/ptDist_" + m_sNN + "_" + m_pName + ".dat";
-
-	std::ifstream file_in(path_in);
-	if (!file_in.is_open()) {
-		std::cerr << "Error: unable to open initial pT distribution file." << std::endl;
-		return -1;
-	}
-
-	std::vector<double> pTdistX, pTdistF; //defining vectors that store dsdpti2 values
-
-	std::string line; double buffer;
-
-	while (std::getline(file_in, line))
-	{
-        if (line.at(0) == '#')
-            continue;
-
-		std::stringstream ss(line);
-		ss >> buffer; pTdistX.push_back(buffer);
-		ss >> buffer; pTdistF.push_back(buffer);
-	}
-
-	m_dsdpti2.setData(pTdistX, pTdistF);
-
-	file_in.close();
-
-	return 1;
-}
 
 int energyLoss::loaddsdpti2(const std::string &pname, interpolationF<double> &dsdpti2int)const 
 {
@@ -881,7 +851,7 @@ void energyLoss::RadCollEL(double X0, double Y0, double phi0, const interpolatio
 
 void energyLoss::runELossHeavyFlavour()
 {
-	if (loaddsdpti2() != 1) return;
+	if (loaddsdpti2(m_pName, m_dsdpti2) != 1) return;
 
 	FdAHaltonSeqInit(150);
 
@@ -1276,7 +1246,7 @@ void energyLoss::gaussFilterIntegrate(const interpolationF<double> &dsdpti2lquar
 
 void energyLoss::runELossLightFlavour()
 {
-	if (loaddsdpti2()  != 1) return;
+	if (loaddsdpti2(m_pName, m_dsdpti2)  != 1) return;
 
 	dAHaltonSeqInit(1000);
 

@@ -58,7 +58,6 @@ private:
 
     double productLog(double x) const;
 
-    int loaddsdpti2();
     int loaddsdpti2(const std::string &pname, interpolationF<double> &dsdpti2int) const;
     int loadLdndx();
     int loadLNorm();
