@@ -35,20 +35,21 @@ energyLoss::energyLoss(int argc, const char *argv[])
 		inputParams[key] = val;
 	}
 
-	std::vector<std::string> arguments = {"collsys", "sNN", "pName", "centrality", "xB", "eventN", "BCPP", "phiGridN", "TIMESTEP", "TCRIT", "BCPSEED", "c", "config"};
+	std::vector<std::string> arguments = {"collsys", "sNN", "pName", "centrality", "xB", "eventN", "BCPP", "phiGridN", "TIMESTEP", "TCRIT", "BCPSEED", "config"};
 	for (const auto &inputParam : inputParams) {
 		if(std::find(arguments.begin(), arguments.end(), inputParam.first) == arguments.end()) {
 			std::cerr << "Error: provide argument flag: " << inputParam.first << " is not an option." << std::endl;
 			std::cerr << "Valid parameters and default values are: ";
 			std::cerr << "--collsys=PbPb --sNN=5020GeV --pName=Charm --centrality=30-40% --xB=0.6 --eventN=1000 --BCPP=20% --phiGridN=25 --TIMESTEP=0.1 --TCRIT=0.155 --BCPSEED=0" << std::endl;
+			std::cerr << "For congiguration file use: --config=[pathToConfFile]" << std::endl;
 			m_error = true;
 		}
 	}
 
 	//checking if configuration file is provided:
 	std::map<std::string, std::string> inputParamsFile;
-	if ((inputParams.count("c") > 0) || ((inputParams.count("conf") > 0))) {
-		if (loadInputsFromFile(inputParams.at("c"), inputParamsFile) != 1) {
+	if (inputParams.count("config") > 0) {
+		if (loadInputsFromFile(inputParams.at("config"), inputParamsFile) != 1) {
 			m_error = true;
 		}
 	}
