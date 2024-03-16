@@ -46,58 +46,48 @@ energyLoss::energyLoss(int argc, const char *argv[])
 	}
 
 	//checking if configuration file is provided:
-	std::map<std::string, std::string> inputparams_f;
+	std::map<std::string, std::string> inputParamsFile;
 	if (inputParams.count("c") > 0) {
-		std::ifstream file_in(inputParams["c"]);
-		if (!file_in.is_open()) {
-			std::cerr << "Error: unable to open configuration file. Aborting..." << std::endl;
+		if (loadInputsFromFile(inputParams.at("c"), inputParamsFile) != 1) {
 			m_error = true;
 		}
-		std::string line, key, sep, val;
-		while (std::getline(file_in, line))
-		{
-			std::stringstream ss(line);
-			ss >> key; ss >> sep; ss >> val;
-			inputparams_f[key] = val;
-		}
-		file_in.close();
 	}
 
 	//setting parameter values based on config file values and overwriting with command line values:
 	//
-	m_collsys = "PbPb"; if (inputparams_f.count("collsys") > 0) m_collsys = inputparams_f["collsys"];
-						if (  inputParams.count("collsys") > 0) m_collsys =   inputParams["collsys"];
+	m_collsys = "PbPb"; if (inputParamsFile.count("collsys") > 0) m_collsys = inputParamsFile["collsys"];
+						if (    inputParams.count("collsys") > 0) m_collsys =     inputParams["collsys"];
 	
-	m_sNN = "5020GeV"; if (inputparams_f.count("sNN") > 0) m_sNN = inputparams_f["sNN"];
-					   if (  inputParams.count("sNN") > 0) m_sNN =   inputParams["sNN"];
+	m_sNN = "5020GeV"; if (inputParamsFile.count("sNN") > 0) m_sNN = inputParamsFile["sNN"];
+					   if (    inputParams.count("sNN") > 0) m_sNN =     inputParams["sNN"];
 
-	m_pName = "Charm"; if (inputparams_f.count("pName") > 0) m_pName = inputparams_f["pName"];
-					   if (  inputParams.count("pName") > 0) m_pName =   inputParams["pName"];
+	m_pName = "Charm"; if (inputParamsFile.count("pName") > 0) m_pName = inputParamsFile["pName"];
+					   if (    inputParams.count("pName") > 0) m_pName =     inputParams["pName"];
 
-	m_centrality = "30-40%"; if (inputparams_f.count("centrality") > 0) m_centrality = inputparams_f["centrality"];
-						     if (  inputParams.count("centrality") > 0) m_centrality =   inputParams["centrality"];
+	m_centrality = "30-40%"; if (inputParamsFile.count("centrality") > 0) m_centrality = inputParamsFile["centrality"];
+						     if (    inputParams.count("centrality") > 0) m_centrality =     inputParams["centrality"];
 
-	m_xB = 0.6; if (inputparams_f.count("xB") > 0) m_xB = stod(inputparams_f["xB"]);
-				if (  inputParams.count("xB") > 0) m_xB = stod(  inputParams["xB"]);
+	m_xB = 0.6; if (inputParamsFile.count("xB") > 0) m_xB = stod(inputParamsFile["xB"]);
+				if (    inputParams.count("xB") > 0) m_xB = stod(    inputParams["xB"]);
 
-	m_eventN = 1000; if (inputparams_f.count("eventN") > 0) m_eventN = stoi(inputparams_f["eventN"]);
-					 if (  inputParams.count("eventN") > 0) m_eventN = stoi(  inputParams["eventN"]);
+	m_eventN = 1000; if (inputParamsFile.count("eventN") > 0) m_eventN = stoi(inputParamsFile["eventN"]);
+					 if (    inputParams.count("eventN") > 0) m_eventN = stoi(    inputParams["eventN"]);
 
-	std::string bcppstr = "20%"; if (inputparams_f.count("BCPP") > 0) bcppstr = inputparams_f["BCPP"];
-						         if (  inputParams.count("BCPP") > 0) bcppstr =   inputParams["BCPP"];
+	std::string bcppstr = "20%"; if (inputParamsFile.count("BCPP") > 0) bcppstr = inputParamsFile["BCPP"];
+						         if (    inputParams.count("BCPP") > 0) bcppstr =     inputParams["BCPP"];
 	bcppstr.replace(bcppstr.find("%"), 1, ""); m_BCPP = stod(bcppstr)/100.0;
 
-	m_phiGridN = 25; if (inputparams_f.count("phiGridN") > 0) m_phiGridN = stoi(inputparams_f["phiGridN"]);
-					 if (  inputParams.count("phiGridN") > 0) m_phiGridN = stoi(  inputParams["phiGridN"]);
+	m_phiGridN = 25; if (inputParamsFile.count("phiGridN") > 0) m_phiGridN = stoi(inputParamsFile["phiGridN"]);
+					 if (    inputParams.count("phiGridN") > 0) m_phiGridN = stoi(    inputParams["phiGridN"]);
 
-	m_TIMESTEP = 0.1; if (inputparams_f.count("TIMESTEP") > 0) m_TIMESTEP = stod(inputparams_f["TIMESTEP"]);
-					  if (  inputParams.count("TIMESTEP") > 0) m_TIMESTEP = stod(  inputParams["TIMESTEP"]);
+	m_TIMESTEP = 0.1; if (inputParamsFile.count("TIMESTEP") > 0) m_TIMESTEP = stod(inputParamsFile["TIMESTEP"]);
+					  if (    inputParams.count("TIMESTEP") > 0) m_TIMESTEP = stod(    inputParams["TIMESTEP"]);
 
-	m_TCRIT = 0.155; if (inputparams_f.count("TCRIT") > 0) m_TCRIT = stod(inputparams_f["TCRIT"]);
-					 if (  inputParams.count("TCRIT") > 0) m_TCRIT = stod(  inputParams["TCRIT"]);
+	m_TCRIT = 0.155; if (inputParamsFile.count("TCRIT") > 0) m_TCRIT = stod(inputParamsFile["TCRIT"]);
+					 if (    inputParams.count("TCRIT") > 0) m_TCRIT = stod(    inputParams["TCRIT"]);
 
-	m_BCPSEED = 0; if (inputparams_f.count("BCPSEED") > 0) m_BCPSEED = stoi(inputparams_f["BCPSEED"]);
-				   if (  inputParams.count("BCPSEED") > 0) m_BCPSEED = stoi(  inputParams["BCPSEED"]);
+	m_BCPSEED = 0; if (inputParamsFile.count("BCPSEED") > 0) m_BCPSEED = stoi(inputParamsFile["BCPSEED"]);
+				   if (    inputParams.count("BCPSEED") > 0) m_BCPSEED = stoi(    inputParams["BCPSEED"]);
 
 	//checking if provided value of sNN is an option:
 	if ((m_sNN != "5440GeV") && (m_sNN != "5020GeV") && (m_sNN != "2760GeV") && (m_sNN != "200GeV")) {
@@ -114,6 +104,24 @@ energyLoss::energyLoss(int argc, const char *argv[])
 	else if (m_pName == "Gluon") m_MC = mu/std::sqrt(2.0);
 	else m_MC = mu/sqrt(6.0);
 	m_TCollConst = T;
+}
+
+int energyLoss::loadInputsFromFile(const std::string &filePath, std::map<std::string, std::string> &inputParamsFile)
+{
+	std::ifstream file_in(filePath);
+	if (!file_in.is_open()) {
+		std::cerr << "Error: unable to open configuration file. Aborting..." << std::endl;
+		return -1;
+	}
+	std::string line, key, sep, val;
+	while (std::getline(file_in, line))
+	{
+		std::stringstream ss(line);
+		ss >> key; ss >> sep; ss >> val;
+		inputParamsFile[key] = val;
+	}
+	file_in.close();
+	return 1;
 }
 
 energyLoss::~energyLoss() {}
