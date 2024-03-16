@@ -26,19 +26,29 @@ energyLoss::energyLoss(int argc, const char *argv[])
 		m_error = true;
 	}
 
-	std::map<std::string, std::string> inputparams;
+	std::map<std::string, std::string> inputParams;
 	for (const auto &in : inputs)
 	{
  	   	std::string key = in.substr(0, in.find("="));
  	   	std::string::size_type n = 0; while ((n = key.find("-", n)) != std::string::npos) {key.replace(n, 1, ""); n += 0;} //replacing all '-'
 		std::string val = in.substr(in.find("=")+1, in.length());
-		inputparams[key] = val;
+		inputParams[key] = val;
+	}
+
+	std::vector<std::string> arguments = {"collsys", "sNN", "pName", "centrality", "xB", "eventN", "BCPP", "phiGridN", "TIMESTEP", "TCRIT", "BCPSEED"};
+	for (const auto &inputParam : inputParams) {
+		if(std::find(arguments.begin(), arguments.end(), inputParam.first) == arguments.end()) {
+			std::cerr << "Error: provide argument flag: " << inputParam.first << " is not an option." << std::endl;
+			std::cerr << "Valid parameters and default values are: ";
+			std::cerr << "--collsys=PbPb --sNN=5020GeV --pName=Charm --centrality=30-40% --xB=0.6 --eventN=1000 --BCPP=20% --phiGridN=25 --TIMESTEP=0.1 --TCRIT=0.155 --BCPSEED=0" << std::endl;
+			m_error = true;
+		}
 	}
 
 	//checking if configuration file is provided:
 	std::map<std::string, std::string> inputparams_f;
-	if (inputparams.count("c") > 0) {
-		std::ifstream file_in(inputparams["c"]);
+	if (inputParams.count("c") > 0) {
+		std::ifstream file_in(inputParams["c"]);
 		if (!file_in.is_open()) {
 			std::cerr << "Error: unable to open configuration file. Aborting..." << std::endl;
 			m_error = true;
@@ -56,38 +66,38 @@ energyLoss::energyLoss(int argc, const char *argv[])
 	//setting parameter values based on config file values and overwriting with command line values:
 	//
 	m_collsys = "PbPb"; if (inputparams_f.count("collsys") > 0) m_collsys = inputparams_f["collsys"];
-						if (  inputparams.count("collsys") > 0) m_collsys =   inputparams["collsys"];
+						if (  inputParams.count("collsys") > 0) m_collsys =   inputParams["collsys"];
 	
 	m_sNN = "5020GeV"; if (inputparams_f.count("sNN") > 0) m_sNN = inputparams_f["sNN"];
-					   if (  inputparams.count("sNN") > 0) m_sNN =   inputparams["sNN"];
+					   if (  inputParams.count("sNN") > 0) m_sNN =   inputParams["sNN"];
 
 	m_pName = "Charm"; if (inputparams_f.count("pName") > 0) m_pName = inputparams_f["pName"];
-					   if (  inputparams.count("pName") > 0) m_pName =   inputparams["pName"];
+					   if (  inputParams.count("pName") > 0) m_pName =   inputParams["pName"];
 
 	m_centrality = "30-40%"; if (inputparams_f.count("centrality") > 0) m_centrality = inputparams_f["centrality"];
-						     if (  inputparams.count("centrality") > 0) m_centrality =   inputparams["centrality"];
+						     if (  inputParams.count("centrality") > 0) m_centrality =   inputParams["centrality"];
 
 	m_xB = 0.6; if (inputparams_f.count("xB") > 0) m_xB = stod(inputparams_f["xB"]);
-				if (  inputparams.count("xB") > 0) m_xB = stod(  inputparams["xB"]);
+				if (  inputParams.count("xB") > 0) m_xB = stod(  inputParams["xB"]);
 
 	m_eventN = 1000; if (inputparams_f.count("eventN") > 0) m_eventN = stoi(inputparams_f["eventN"]);
-					 if (  inputparams.count("eventN") > 0) m_eventN = stoi(  inputparams["eventN"]);
+					 if (  inputParams.count("eventN") > 0) m_eventN = stoi(  inputParams["eventN"]);
 
 	std::string bcppstr = "20%"; if (inputparams_f.count("BCPP") > 0) bcppstr = inputparams_f["BCPP"];
-						         if (  inputparams.count("BCPP") > 0) bcppstr =   inputparams["BCPP"];
+						         if (  inputParams.count("BCPP") > 0) bcppstr =   inputParams["BCPP"];
 	bcppstr.replace(bcppstr.find("%"), 1, ""); m_BCPP = stod(bcppstr)/100.0;
 
 	m_phiGridN = 25; if (inputparams_f.count("phiGridN") > 0) m_phiGridN = stoi(inputparams_f["phiGridN"]);
-					 if (  inputparams.count("phiGridN") > 0) m_phiGridN = stoi(  inputparams["phiGridN"]);
+					 if (  inputParams.count("phiGridN") > 0) m_phiGridN = stoi(  inputParams["phiGridN"]);
 
 	m_TIMESTEP = 0.1; if (inputparams_f.count("TIMESTEP") > 0) m_TIMESTEP = stod(inputparams_f["TIMESTEP"]);
-					  if (  inputparams.count("TIMESTEP") > 0) m_TIMESTEP = stod(  inputparams["TIMESTEP"]);
+					  if (  inputParams.count("TIMESTEP") > 0) m_TIMESTEP = stod(  inputParams["TIMESTEP"]);
 
 	m_TCRIT = 0.155; if (inputparams_f.count("TCRIT") > 0) m_TCRIT = stod(inputparams_f["TCRIT"]);
-					 if (  inputparams.count("TCRIT") > 0) m_TCRIT = stod(  inputparams["TCRIT"]);
+					 if (  inputParams.count("TCRIT") > 0) m_TCRIT = stod(  inputParams["TCRIT"]);
 
 	m_BCPSEED = 0; if (inputparams_f.count("BCPSEED") > 0) m_BCPSEED = stoi(inputparams_f["BCPSEED"]);
-				   if (  inputparams.count("BCPSEED") > 0) m_BCPSEED = stoi(  inputparams["BCPSEED"]);
+				   if (  inputParams.count("BCPSEED") > 0) m_BCPSEED = stoi(  inputParams["BCPSEED"]);
 
 	//checking if provided value of sNN is an option:
 	if ((m_sNN != "5440GeV") && (m_sNN != "5020GeV") && (m_sNN != "2760GeV") && (m_sNN != "200GeV")) {
