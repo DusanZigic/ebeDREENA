@@ -609,6 +609,8 @@ int energyLoss::exportResults(const std::string &particleName, size_t event_id, 
 	header.push_back("#total_number_of_trajectories:    " + std::to_string(trajecNum));
 	header.push_back("#total_number_of_jet_energy_loss: " + std::to_string(elossNum));
 
+	header.push_back("#BCPSEED: " + std::to_string(m_BCPSEED));
+
 	header.push_back("#-------------------------------------------------------");
 	header.push_back("#   pT [GeV]       phi          R_AA   ");
 
