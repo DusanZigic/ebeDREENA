@@ -34,11 +34,10 @@ energyLoss::energyLoss(int argc, const char *argv[])
 		std::string val = in.substr(in.find("=")+1, in.length());
 		inputParams[key] = val;
 	}
-
 	std::vector<std::string> arguments = {"collsys", "sNN", "pName", "centrality", "xB", "eventN", "BCPP", "phiGridN", "TIMESTEP", "TCRIT", "BCPSEED", "config"};
 	for (const auto &inputParam : inputParams) {
 		if(std::find(arguments.begin(), arguments.end(), inputParam.first) == arguments.end()) {
-			std::cerr << "Error: provide argument flag: " << inputParam.first << " is not an option." << std::endl;
+			std::cerr << "Error: provided argument flag: '" << inputParam.first << "' is not an option." << std::endl;
 			std::cerr << "Valid parameters and default values are: ";
 			std::cerr << "--collsys=PbPb --sNN=5020GeV --pName=Charm --centrality=30-40% --xB=0.6 --eventN=1000 --BCPP=20% --phiGridN=25 --TIMESTEP=0.1 --TCRIT=0.155 --BCPSEED=0" << std::endl;
 			std::cerr << "For congiguration file use: --config=[pathToConfFile]" << std::endl;
@@ -50,6 +49,15 @@ energyLoss::energyLoss(int argc, const char *argv[])
 	std::map<std::string, std::string> inputParamsFile;
 	if (inputParams.count("config") > 0) {
 		if (loadInputsFromFile(inputParams.at("config"), inputParamsFile) != 1) {
+			m_error = true;
+		}
+	}
+	std::vector<std::string> argumentsFile = {"collsys", "sNN", "pName", "centrality", "xB", "eventN", "BCPP", "phiGridN", "TIMESTEP", "TCRIT", "BCPSEED"};
+	for (const auto &inputParam : inputParamsFile) {
+		if(std::find(argumentsFile.begin(), argumentsFile.end(), inputParam.first) == argumentsFile.end()) {
+			std::cerr << "Error: in configration file provided argument: '" << inputParam.first << "' is not an option." << std::endl;
+			std::cerr << "Valid parameters and default values are: \n";
+			std::cerr << "collsys = PbPb\nsNN = 5020GeV\npName = Charm\ncentrality = 30-40%\nxB = 0.6\neventN = 1000\nBCPP = 20%\nphiGridN = 25\nTIMESTEP = 0.1\nTCRIT = 0.155\nBCPSEED = 0" << std::endl;
 			m_error = true;
 		}
 	}
