@@ -103,8 +103,8 @@ this table is also a function of particle mass (particle name is in file name) a
 
 LTables files path relative to the executable should be:
 
-+ `./ltables/lnorm_nf=[nf]\_[particleName]\_xB=[xB].dat`,
-+ `./ltables/ldndx_nf=[nf]\_[particleName]\_xB=[xB].dat` and
++ `./ltables/lnorm_nf=[nf]_[particleName]_xB=[xB].dat`,
++ `./ltables/ldndx_nf=[nf]_[particleName]_xB=[xB].dat` and
 + `./ltables/lcoll_nf=[nf]_[particleName].dat`,
 
 where *nf* is the effective number of flavours that can be 2.5 for 200GeV or 3.0 for LHC energy collisions, *particleName* is the name of the particle that can be Bottom, Charm, LQuarks or Gluon (all light quarks are taken to have same mass, so their LTables are the same), and *xB* is the chromo-magnetic to electric mass ratio;
