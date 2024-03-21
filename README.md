@@ -56,29 +56,7 @@ temperature evolution grid parameters file is located in the same directory as t
 
 this file contains temperature evolution grid parameters sush as tau0, x and y grid ranges and steps; this format for evolutions is chosen to save storage space and import time; within this repository there is an example temperature evolution grid parameter file that corresponds to provided temperature evolution;
 
-### e) LTables
-
-> [!CAUTION]
-> note that the default output of this web interface is dsigma/dpT, while ebeDREENA initial pT distribution input needs to be dsigma/d(pT^2), so these distributions need to be modified;  
-
-to avoid modifying different parameters that are hard-coded, initial pT distribution for heavy flavour should be in the range of 1GeV to at least 200GeV and for light flavour from 1GeV to at least 450GeV; for most distributions pT step of 1GeV seems to be sufficient;  
-initial pT distribution file path relative to the executable should be: ./pTDists/ptDists[sNN]/ptDist_[sNN]_[particleName].dat, where [sNN] is collision energy that can be 200GeV, 2760GeV, 5020GeV and [particleName] is the name of the particle that can be Bottom, Charm, Down, DownBar, Gluon, Strange, Up, UpBar; 
-
-#### c) binary collision density
-
-binary collision density file contains jet creation probability in transverse plane as a function of x and y; x and y need to form ordered grid with run order y > x, while probability is the 3rd column in the table;  
-the binary collision density can be given only in the 1st quadrant of the transverse plane (x>=0, y>=0) if initial conditions have this symmetry;  
-binary collision density needs to be consistent with initial conditions used to generate temperature evolution;  
-binary collision density provided in this demo (./binarycolldensities/binarycolldensity_cent=30-40%.dat) is generated using optical Glauber model (see [arxiv:2110.01544](https://inspirehep.net/literature/2606181) for more details) and it corresponds to provided temperature evolution;
-
-#### b) temperature evolution
-
-temperature evolution file contains temperature as a function of proper time, tau, and x and y spatial coordinates in the transverse plane in that order; tau, x and y need to form an ordered grid with run order y > x > tau;  
-temperature evolution file can contain an additional column with energy density evolution; if the file contains temperature and energy density evolution, the order of these two columns can be arbitrary (energy density can be 4th column and temperature 5th, or vice versa);  
-the evolution can be given only in the 1st quadrant of the transverse plane (x>=0, y>=0) if initial conditions have this symmetry;  
-the evolution provided in this demo (./evols/tempevol_cent=30-40%.dat) is generated evolvong optical Glauber initial conditions using 3D hydro model (see [arxiv:2110.01544](https://inspirehep.net/literature/2606181) for more details);
-
-#### d) LTables
+#### e) LTables
 
 LTables files contain pre-generated radiated gluon rates and collisional energy loss; for radiative energy loss, there are 2 tables lnorm table with column format:
 
@@ -111,9 +89,9 @@ where *nf* is the effective number of flavours that can be 2.5 for 200GeV or 3.0
 
 unlike previous files, ebeDREENA calculates LTables; however, these tables need to be calculated only once and can be reused while calculating high-pT energy loss with different temperature evolution backgrounds;
 
-within this repository there is an example of LTables files for Charm quark, nf=3.0 and xB=0.6;  
+within this repository there is an example of LTables files for Charm quark, nf=3.0 and xB=0.6;
 
-#### d) phiGausPts
+#### f) phiGausPts
 
 in `./phiGaussPts/` directory are textual tables containing jet's direction angles and weights that correspond to Gaussian quadrature integration method in range [0, 2Pi];
 
