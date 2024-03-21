@@ -126,14 +126,12 @@ to generate LTables provided in this demo, that are for 5020GeV collision energy
 
 ```
 ./ebeDREENA LTables --sNN=5020GeV --pName=Charm --xB=0.6
-
 ```
 
 or just:
 
 ```
 ./ebeDREENA LTables
-
 ```
 
 since these are all default parameter values;
