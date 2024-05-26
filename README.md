@@ -32,6 +32,8 @@ to avoid modifying different parameters that are hard-coded, initial pT distribu
 
 initial pT distribution file path relative to the executable should be: `./pTDists/ptDists[sNN]/ptDist_[sNN]_[particleName].dat`, where *sNN* is collision energy that can be 200GeV, 2760GeV, 5020GeV and *particleName* is the name of the particle that can be Bottom, Charm, Down, DownBar, Gluon, Strange, Up, UpBar;  
 
+a script that can automatically download heavy flavour initial pT distribution with appropriate ranges and paths can be downloaded from [here](https://github.com/DusanZigic/heavyQuarkProduction);  
+
 #### b) binary collision points
 
 binary collision points path relative to the executable should be: `./binarycollpts/binarycollpts_cent=[centrality]/binarycollpts[eventID].dat`, where *centrality* is centrality parameter in format 'xx-xx%' (ie 0-5%, 10-20%,...), and *eventID* is non negative integer that represents event's ID;
