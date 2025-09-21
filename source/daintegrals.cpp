@@ -19,14 +19,14 @@ double energyLoss::haltonSequence(int index, int base) const
 }
 
 
-void energyLoss::FdAHaltonSeqInit(size_t FdAMaxPts)
+void energyLoss::FdAHaltonSeqInit(std::size_t FdAMaxPts)
 {
 	m_FdAMaxPoints2 = FdAMaxPts; 	  //setting values of dAMaxPoints
 	m_FdAMaxPoints3 = FdAMaxPts-25;
 	m_FdAMaxPoints4 = FdAMaxPts-50;
 	m_FdAMaxPoints5 = FdAMaxPts-75;
 	
-	for (size_t i=0; i<FdAMaxPts; i++) //generating Halton sequences
+	for (std::size_t i=0; i<FdAMaxPts; i++) //generating Halton sequences
 	{
 		m_FdAHS2.push_back(haltonSequence((i+1)*409, 2));
 		m_FdAHS3.push_back(haltonSequence((i+1)*409, 3));
@@ -48,7 +48,7 @@ double energyLoss::FdA412(double ph, double dp, const interpolationF<double> &no
 	double p = ph + dp;
 	double yl, yh, yq, y;
 	double sum = 0.0;
-	for (size_t i=0; i<m_FdAMaxPoints2; i++) {
+	for (std::size_t i=0; i<m_FdAMaxPoints2; i++) {
 		yl = m_mgC/(p + std::sqrt(m_MC*m_MC + p*p));
 		yh = 1.0 - ph/p - m_mgC/(p + std::sqrt(m_MC*m_MC + p*p));
 		yq = yh - yl;
@@ -67,7 +67,7 @@ double energyLoss::FdA413(double ph, double dp, const interpolationF<double> &no
 	double yl, yh, yq, y;
 	double zl, zh, zq, z;
 	double sum = 0.0;
-	for (size_t i=0; i<m_FdAMaxPoints3; i++) {
+	for (std::size_t i=0; i<m_FdAMaxPoints3; i++) {
 		yl = m_mgC/(p + std::sqrt(m_MC*m_MC + p*p));
 		yh = 1.0 - ph/p - 2.0*m_mgC/(p + std::sqrt(m_MC*m_MC + p*p));
 		yq = yh - yl;
@@ -92,7 +92,7 @@ double energyLoss::FdA414(double ph, double dp, const interpolationF<double> &no
 	double zl, zh, zq, z;
 	double zzl, zzh, zzq, zz;
 	double sum = 0.0;
-	for (size_t i=0; i<m_FdAMaxPoints4; i++) {
+	for (std::size_t i=0; i<m_FdAMaxPoints4; i++) {
 		yl = m_mgC/(p + std::sqrt(m_MC*m_MC + p*p));
 		yh = 1.0 - ph/p - 3.0*m_mgC/(p + std::sqrt(m_MC*m_MC + p*p));
 		yq = yh - yl;
@@ -123,7 +123,7 @@ double energyLoss::FdA415(double ph, double dp, const interpolationF<double> &no
 	double zzl, zzh, zzq, zz;
 	double zzzl, zzzh, zzzq, zzz;
 	double sum = 0.0;
-	for (size_t i=0; i<m_FdAMaxPoints5; i++) {
+	for (std::size_t i=0; i<m_FdAMaxPoints5; i++) {
 		yl = m_mgC/(p + std::sqrt(m_MC*m_MC + p*p));
 		yh = 1.0 - ph/p - 4.0*m_mgC/(p + std::sqrt(m_MC*m_MC + p*p));
 		yq = yh - yl;		
@@ -158,7 +158,7 @@ double energyLoss::FdA(double ph, double dp, const interpolationF<double> &currn
 }
 
 
-void energyLoss::dAHaltonSeqInit(size_t dAMaxPts)
+void energyLoss::dAHaltonSeqInit(std::size_t dAMaxPts)
 {
 	m_dAMaxPoints1 = dAMaxPts;	 //setting values of dAMaxPoints
 	m_dAMaxPoints2 = dAMaxPts-100;
@@ -168,7 +168,7 @@ void energyLoss::dAHaltonSeqInit(size_t dAMaxPts)
 	m_dAMaxPoints6 = dAMaxPts-500;
 	m_dAMaxPoints7 = dAMaxPts-600;
 
-	for (size_t i=0; i<dAMaxPts; i++) //generating Halton sequences
+	for (std::size_t i=0; i<dAMaxPts; i++) //generating Halton sequences
 	{
 		m_dAHS1.push_back(haltonSequence((i+1)*409, 2));
 		m_dAHS2.push_back(haltonSequence((i+1)*409, 3));
@@ -190,7 +190,7 @@ double energyLoss::dA411(double ph, const interpolationF<double> &norm, const in
 	double pq = p2 - p1;
 	double p;
 	double sum = 0.0;
-	for (size_t i=0; i<m_dAMaxPoints1; i++) {
+	for (std::size_t i=0; i<m_dAMaxPoints1; i++) {
 		p = p1 + m_dAHS1[i]*pq;
 		
 		sum += m_dsdpti2.interpolation(p) / p / std::exp(norm.interpolation(p))*dndx.interpolation(p, 1.0 - ph/p);
@@ -206,7 +206,7 @@ double energyLoss::dA412(double ph, const interpolationF<double> &norm, const in
 	double p;
 	double yl, yh, yq, y;
 	double sum = 0.0;
-	for (size_t i=0; i<m_dAMaxPoints2; i++) {
+	for (std::size_t i=0; i<m_dAMaxPoints2; i++) {
 		p = p1 + m_dAHS1[i]*pq;
 		
 		yl = m_mgC/(p + std::sqrt(m_MC*m_MC + p*p));
@@ -229,7 +229,7 @@ double energyLoss::dA413(double ph, const interpolationF<double> &norm, const in
 	double yl, yh, yq, y;
 	double zl, zh, zq, z;
 	double sum = 0.0;
-	for (size_t i=0; i<m_dAMaxPoints3; i++) {
+	for (std::size_t i=0; i<m_dAMaxPoints3; i++) {
 		p = p1 + m_dAHS1[i]*pq;
 		
 		yl = m_mgC/(p + std::sqrt(m_MC*m_MC + p*p));
@@ -258,7 +258,7 @@ double energyLoss::dA414(double ph, const interpolationF<double> &norm, const in
 	double zl, zh, zq, z;
 	double zzl, zzh, zzq, zz;
 	double sum = 0.0;
-	for (size_t i=0; i<m_dAMaxPoints4; i++) {
+	for (std::size_t i=0; i<m_dAMaxPoints4; i++) {
 		p = p1 + m_dAHS1[i]*pq;
 		
 		yl = m_mgC/(p + std::sqrt(m_MC*m_MC + p*p));
@@ -293,7 +293,7 @@ double energyLoss::dA415(double ph, const interpolationF<double> &norm, const in
 	double zzl, zzh, zzq, zz;
 	double zzzl, zzzh, zzzq, zzz;
 	double sum = 0.0;
-	for (size_t i=0; i<m_dAMaxPoints5; i++) {
+	for (std::size_t i=0; i<m_dAMaxPoints5; i++) {
 		p = p1 + m_dAHS1[i]*pq;
 		
 		yl = m_mgC/(p + std::sqrt(m_MC*m_MC + p*p));
@@ -334,7 +334,7 @@ double energyLoss::dA416(double ph, const interpolationF<double> &norm, const in
 	double zzzl, zzzh, zzzq, zzz;
 	double zzzzl, zzzzh, zzzzq, zzzz;
 	double sum = 0.0;
-	for (size_t i=0; i<m_dAMaxPoints6; i++) {
+	for (std::size_t i=0; i<m_dAMaxPoints6; i++) {
 		p = p1 + m_dAHS1[i]*pq;
 		
 		yl = m_mgC/(p + std::sqrt(m_MC*m_MC + p*p));
@@ -382,7 +382,7 @@ double energyLoss::dA417(double ph, const interpolationF<double> &norm, const in
 	double zzzzl, zzzzh, zzzzq, zzzz;
 	double zzzzzl, zzzzzh, zzzzzq, zzzzz;
 	double sum = 0.0;
-	for (size_t i=0; i<m_dAMaxPoints7; i++) {
+	for (std::size_t i=0; i<m_dAMaxPoints7; i++) {
 		p = p1 + m_dAHS1[i]*pq;
 
 		yl = m_mgC/(p + std::sqrt(m_MC*m_MC + p*p));

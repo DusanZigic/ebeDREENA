@@ -11,13 +11,13 @@ interpolationF<T>::interpolationF() {}
 
 //input is 2 1D arrays:
 template <typename T>
-interpolationF<T>::interpolationF(const T *xData, const T *fData, size_t NofElements)
+interpolationF<T>::interpolationF(const T *xData, const T *fData, std::size_t NofElements)
 {
 	setData(xData, fData, NofElements);
 }
 
 template <typename T>
-void interpolationF<T>::setData(const T *xData, const T *fData, size_t NofElements)
+void interpolationF<T>::setData(const T *xData, const T *fData, std::size_t NofElements)
 {
 	m_variableN = 1;
 	m_dataLength = NofElements;
@@ -29,7 +29,7 @@ void interpolationF<T>::setData(const T *xData, const T *fData, size_t NofElemen
 
 	createGrids();
 
-	for (size_t iv=0; iv<m_variableN; iv++)
+	for (std::size_t iv=0; iv<m_variableN; iv++)
 		if (m_data[iv].size() < 2)
 			std::cerr << "Error: not enough data for interplation for variable " + std::to_string(iv) + "." << std::endl;
 }
@@ -54,20 +54,20 @@ void interpolationF<T>::setData(const std::vector<T> &xData, const std::vector<T
 
 	createGrids();
 
-	for (size_t iv=0; iv<m_variableN; iv++)
+	for (std::size_t iv=0; iv<m_variableN; iv++)
 		if (m_data[iv].size() < 2)
 			std::cerr << "Error: not enough data for interplation for variable " + std::to_string(iv) + "." << std::endl;
 }
 
 //input is 3 1D arrays:
 template <typename T>
-interpolationF<T>::interpolationF(const T *x1Data, const T *x2Data, const T *fData, size_t NofElements)
+interpolationF<T>::interpolationF(const T *x1Data, const T *x2Data, const T *fData, std::size_t NofElements)
 {
 	setData(x1Data, x2Data, fData, NofElements);
 }
 
 template <typename T>
-void interpolationF<T>::setData(const T *x1Data, const T *x2Data, const T *fData, size_t NofElements)
+void interpolationF<T>::setData(const T *x1Data, const T *x2Data, const T *fData, std::size_t NofElements)
 {
 	m_variableN = 2;
 	m_dataLength = NofElements;
@@ -80,7 +80,7 @@ void interpolationF<T>::setData(const T *x1Data, const T *x2Data, const T *fData
 
 	createGrids();
 
-	for (size_t iv=0; iv<m_variableN; iv++)
+	for (std::size_t iv=0; iv<m_variableN; iv++)
 		if (m_data[iv].size() < 2)
 			std::cerr << "Error: not enough data for interplation for variable " + std::to_string(iv) + "." << std::endl;
 }
@@ -106,7 +106,7 @@ void interpolationF<T>::setData(const std::vector<T> &x1Data, const std::vector<
 
 	createGrids();
 
-	for (size_t iv=0; iv<m_variableN; iv++)
+	for (std::size_t iv=0; iv<m_variableN; iv++)
 		if (m_data[iv].size() < 2)
 			std::cerr << "Error: not enough data for interplation for variable " + std::to_string(iv) + "." << std::endl;
 }
@@ -134,20 +134,20 @@ void interpolationF<T>::setData(const std::vector<T> &x1Data, const std::vector<
 
 	createGrids();
 
-	for (size_t iv=0; iv<m_variableN; iv++)
+	for (std::size_t iv=0; iv<m_variableN; iv++)
 		if (m_data[iv].size() < 2)
 			std::cerr << "Error: not enough data for interplation for variable " + std::to_string(iv) + "." << std::endl;
 }
 
 //input is 4 1D arrays:
 template <typename T>
-interpolationF<T>::interpolationF(const T *x1Data, const T *x2Data, const T *x3Data, const T *fData, size_t NofElements)
+interpolationF<T>::interpolationF(const T *x1Data, const T *x2Data, const T *x3Data, const T *fData, std::size_t NofElements)
 {
 	setData(x1Data, x2Data, x3Data, fData, NofElements);
 }
 
 template <typename T>
-void interpolationF<T>::setData(const T *x1Data, const T *x2Data, const T *x3Data, const T *fData, size_t NofElements)
+void interpolationF<T>::setData(const T *x1Data, const T *x2Data, const T *x3Data, const T *fData, std::size_t NofElements)
 {
 	m_variableN = 3;
 	m_dataLength = NofElements;
@@ -161,7 +161,7 @@ void interpolationF<T>::setData(const T *x1Data, const T *x2Data, const T *x3Dat
 
 	createGrids();
 
-	for (size_t iv=0; iv<m_variableN; iv++)
+	for (std::size_t iv=0; iv<m_variableN; iv++)
 		if (m_data[iv].size() < 2)
 			std::cerr << "Error: not enough data for interplation for variable " + std::to_string(iv) + "." << std::endl;
 }
@@ -188,20 +188,20 @@ void interpolationF<T>::setData(const std::vector<T> &x1Data, const std::vector<
 
 	createGrids();
 
-	for (size_t iv=0; iv<m_variableN; iv++)
+	for (std::size_t iv=0; iv<m_variableN; iv++)
 		if (m_data[iv].size() < 2)
 			std::cerr << "Error: not enough data for interplation for variable " + std::to_string(iv) + "." << std::endl;
 }
 
 //input is 5 1D arrays:
 template <typename T>
-interpolationF<T>::interpolationF(const T *x1Data, const T *x2Data, const T *x3Data, const T *x4Data, const T *fData, size_t NofElements)
+interpolationF<T>::interpolationF(const T *x1Data, const T *x2Data, const T *x3Data, const T *x4Data, const T *fData, std::size_t NofElements)
 {
 	setData(x1Data, x2Data, x3Data, x4Data, fData, NofElements);
 }
 
 template <typename T>
-void interpolationF<T>::setData(const T *x1Data, const T *x2Data, const T *x3Data, const T *x4Data, const T *fData, size_t NofElements)
+void interpolationF<T>::setData(const T *x1Data, const T *x2Data, const T *x3Data, const T *x4Data, const T *fData, std::size_t NofElements)
 {
 	m_variableN = 4;
 	m_dataLength = NofElements;
@@ -216,7 +216,7 @@ void interpolationF<T>::setData(const T *x1Data, const T *x2Data, const T *x3Dat
 
 	createGrids();
 
-	for (size_t iv=0; iv<m_variableN; iv++)
+	for (std::size_t iv=0; iv<m_variableN; iv++)
 		if (m_data[iv].size() < 2)
 			std::cerr << "Error: not enough data for interplation for variable " + std::to_string(iv) + "." << std::endl;
 }
@@ -244,7 +244,7 @@ void interpolationF<T>::setData(const std::vector<T> &x1Data, const std::vector<
 
 	createGrids();
 
-	for (size_t iv=0; iv<m_variableN; iv++)
+	for (std::size_t iv=0; iv<m_variableN; iv++)
 		if (m_data[iv].size() < 2)
 			std::cerr << "Error: not enough data for interplation for variable " + std::to_string(iv) + "." << std::endl;
 }
@@ -415,7 +415,7 @@ const std::vector<T> & interpolationF<T>::codomain() const
 template <typename T>
 void interpolationF<T>::createGrids()
 {
-	for (size_t iv=0; iv<m_variableN; iv++) {
+	for (std::size_t iv=0; iv<m_variableN; iv++) {
 		std::sort(m_data[iv].begin(), m_data[iv].end());
 		m_data[iv].erase(std::unique(m_data[iv].begin(), m_data[iv].end()), m_data[iv].end());
 		m_domain.push_back({m_data[iv].front(), m_data[iv].back()});
@@ -425,12 +425,12 @@ void interpolationF<T>::createGrids()
 }
 
 template <typename T>
-void interpolationF<T>::locatePointF(const std::vector<T> &points, std::vector<size_t> &positions) const
+void interpolationF<T>::locatePointF(const std::vector<T> &points, std::vector<std::size_t> &positions) const
 {
 	positions.resize(points.size(), 0);
     int ju, jm, jl, mm = 1 + 1;
 	bool ascnd;
-	for (size_t iv=0; iv<m_data.size()-1; iv++)
+	for (std::size_t iv=0; iv<m_data.size()-1; iv++)
 	{
 		jl = 0;
 		ju = m_data[iv].size() - 1;
@@ -446,7 +446,7 @@ void interpolationF<T>::locatePointF(const std::vector<T> &points, std::vector<s
 			}
 		}
 		int n = static_cast<int>(m_data[iv].size());
-		positions[iv] = static_cast<size_t>(std::max(0, std::min(n - mm, jl - ((mm - 2) >> 1))));
+		positions[iv] = static_cast<std::size_t>(std::max(0, std::min(n - mm, jl - ((mm - 2) >> 1))));
 	}
 }
 
@@ -463,7 +463,7 @@ T interpolationF<T>::interpolation1D(T pointValue) const
 {
 	//searching for position
 	const std::vector<T> points{pointValue};
-	std::vector<size_t> positions;
+	std::vector<std::size_t> positions;
 	locatePointF(points, positions);
 
 	//setting x and Q values
@@ -479,15 +479,15 @@ T interpolationF<T>::interpolation2D(T pointValue1, T pointValue2) const
 {
 	//searching for position
 	const std::vector<T> points{pointValue1, pointValue2};
-	std::vector<size_t> positions;
+	std::vector<std::size_t> positions;
 	locatePointF(points, positions);
 
 	T x1[] = {m_data[0][positions[0]], m_data[0][positions[0] + 1]};
 	T x2[] = {m_data[1][positions[1]], m_data[1][positions[1] + 1]};	
 
 	T Q2[2][2];
-	for (size_t i1=0; i1<2; i1++)
-		for (size_t i2=0; i2<2; i2++)
+	for (std::size_t i1=0; i1<2; i1++)
+		for (std::size_t i2=0; i2<2; i2++)
 			Q2[i1][i2] = m_data[2][(positions[0] + i1)*m_data[1].size() + (positions[1] + i2)];
 
 	T Q1[2];
@@ -503,7 +503,7 @@ T interpolationF<T>::interpolation3D(T pointValue1, T pointValue2, T pointValue3
 {
 	//searching for position
 	const std::vector<T> points{pointValue1, pointValue2, pointValue3};
-	std::vector<size_t> positions;
+	std::vector<std::size_t> positions;
 	locatePointF(points, positions);
 	
 	T x1[] = {m_data[0][positions[0]], m_data[0][positions[0] + 1]};
@@ -511,20 +511,20 @@ T interpolationF<T>::interpolation3D(T pointValue1, T pointValue2, T pointValue3
 	T x3[] = {m_data[2][positions[2]], m_data[2][positions[2] + 1]};
 
 	T Q3[2][2][2];
-	for (size_t i1=0; i1<2; i1++)
-		for (size_t i2=0; i2<2; i2++)
-			for (size_t i3=0; i3<2; i3++)
+	for (std::size_t i1=0; i1<2; i1++)
+		for (std::size_t i2=0; i2<2; i2++)
+			for (std::size_t i3=0; i3<2; i3++)
 				Q3[i1][i2][i3] = m_data[3][(positions[0] + i1)*m_data[2].size()*m_data[1].size() + 
 										   (positions[1] + i2)*m_data[2].size() +
 										   (positions[2] + i3)]; 
 
 	T Q2[2][2];
-	for (size_t i1=0; i1<2; i1++)
-		for (size_t i2=0; i2<2; i2++)
+	for (std::size_t i1=0; i1<2; i1++)
+		for (std::size_t i2=0; i2<2; i2++)
 			Q2[i1][i2] = lin1DInterpolation(x3, Q3[i1][i2], pointValue3);
 
 	T Q1[2];
-	for (size_t i1=0; i1<2; i1++)
+	for (std::size_t i1=0; i1<2; i1++)
 		Q1[i1] = lin1DInterpolation(x2, Q2[i1], pointValue2);
 
 	return lin1DInterpolation(x1, Q1, pointValue1);
@@ -536,7 +536,7 @@ T interpolationF<T>::interpolation4D(T pointValue1, T pointValue2, T pointValue3
 {
 	//searching for position
 	const std::vector<T> points{pointValue1, pointValue2, pointValue3, pointValue4};
-	std::vector<size_t> positions;
+	std::vector<std::size_t> positions;
 	locatePointF(points, positions);
 
 	T x1[] = {m_data[0][positions[0]], m_data[0][positions[0] + 1]};
@@ -545,29 +545,29 @@ T interpolationF<T>::interpolation4D(T pointValue1, T pointValue2, T pointValue3
 	T x4[] = {m_data[3][positions[3]], m_data[3][positions[3] + 1]};
 
 	T Q4[2][2][2][2];
-	for (size_t i1=0; i1<2; i1++)
-		for (size_t i2=0; i2<2; i2++)
-			for (size_t i3=0; i3<2; i3++)
-				for (size_t i4=0; i4<2; i4++)
+	for (std::size_t i1=0; i1<2; i1++)
+		for (std::size_t i2=0; i2<2; i2++)
+			for (std::size_t i3=0; i3<2; i3++)
+				for (std::size_t i4=0; i4<2; i4++)
 					Q4[i1][i2][i3][i4] = m_data[4][(positions[0] + i1)*m_data[3].size()*m_data[2].size()*m_data[1].size() +
 												   (positions[1] + i2)*m_data[3].size()*m_data[2].size() +
 												   (positions[2] + i3)*m_data[3].size() +
 												   (positions[3] + i4)];
 
 	T Q3[2][2][2];
-	for (size_t i1=0; i1<2; i1++)
-		for (size_t i2=0; i2<2; i2++)
-			for (size_t i3=0; i3<2; i3++)
+	for (std::size_t i1=0; i1<2; i1++)
+		for (std::size_t i2=0; i2<2; i2++)
+			for (std::size_t i3=0; i3<2; i3++)
 				Q3[i1][i2][i3] = lin1DInterpolation(x4, Q4[i1][i2][i3], pointValue4);
 	
 	T Q2[2][2];
-	for (size_t i1=0; i1<2; i1++)
-		for (size_t i2=0; i2<2; i2++)
+	for (std::size_t i1=0; i1<2; i1++)
+		for (std::size_t i2=0; i2<2; i2++)
 			Q2[i1][i2] = lin1DInterpolation(x3, Q3[i1][i2], pointValue3);
 	
 	
 	T Q1[2];
-	for (size_t i1=0; i1<2; i1++)
+	for (std::size_t i1=0; i1<2; i1++)
 		Q1[i1] = lin1DInterpolation(x2, Q2[i1], pointValue2);
 
 	return lin1DInterpolation(x1, Q1, pointValue1);

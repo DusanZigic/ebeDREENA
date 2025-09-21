@@ -111,7 +111,7 @@ double lTables::haltonSequence(int index, int base) const
 
 void lTables::LdndxHSeqInit()
 {
-	for (size_t i=0; i<m_LdndxMaxPoints; i++) {
+	for (std::size_t i=0; i<m_LdndxMaxPoints; i++) {
 		m_LdndxHSeq1.push_back(haltonSequence((i+1)*409, 2));
 		m_LdndxHSeq2.push_back(haltonSequence((i+1)*409, 3));
 		m_LdndxHSeq3.push_back(haltonSequence((i+1)*409, 5));
@@ -207,7 +207,7 @@ double lTables::Ldndx(double tau, double p, double T, double x) const
 	double k, q, phi; //integration variables
 
 	#pragma omp parallel for reduction(+:sum) private(k,q,phi)
-	for (size_t i = 0; i<m_LdndxMaxPoints; i++) {
+	for (std::size_t i = 0; i<m_LdndxMaxPoints; i++) {
 		  k  =   kl + m_LdndxHSeq1[i]*kq;
 		  q  =   ql + m_LdndxHSeq2[i]*qq;
 		phi  = phil + m_LdndxHSeq3[i]*phiq;
@@ -226,16 +226,16 @@ void lTables::RadLTables()
 
 	double tau, p, T, x, mu, M, xIntegLimitLow, xIntegLimitHigh;
 
-	for (size_t itau=0; itau<m_Grids.tauPtsLength(); itau++) {
+	for (std::size_t itau=0; itau<m_Grids.tauPtsLength(); itau++) {
 		tau = m_Grids.tauPts(itau);
 
-		for (size_t ip=0; ip<m_Grids.pPtsLength(); ip++) {
+		for (std::size_t ip=0; ip<m_Grids.pPtsLength(); ip++) {
 			p = m_Grids.pPts(ip);
 
-			for (size_t iT=0; iT<m_Grids.TPtsLength(); iT++) {
+			for (std::size_t iT=0; iT<m_Grids.TPtsLength(); iT++) {
 				T = m_Grids.TPts(iT);
 				
-				for (size_t ix=0; ix<m_Grids.xPtsLength(); ix++) {
+				for (std::size_t ix=0; ix<m_Grids.xPtsLength(); ix++) {
 					x = m_Grids.xPts(ix);
 					m_LdndxTbl[itau][ip][iT][ix] = Ldndx(tau, p, T, x);
 				}
@@ -258,7 +258,7 @@ void lTables::RadLTables()
 
 void lTables::LCollHSeqInit()
 {
-	for (size_t i=0; i<m_LCollMaxPoints; i++) {
+	for (std::size_t i=0; i<m_LCollMaxPoints; i++) {
 		m_LCollHSeq1.push_back(haltonSequence((i+1)*409, 2));
 		m_LCollHSeq2.push_back(haltonSequence((i+1)*409, 3));
 		m_LCollHSeq3.push_back(haltonSequence((i+1)*409, 5));
@@ -324,7 +324,7 @@ double lTables::ENumFinite(double p, double T) const
 	double wl, wh, wq, w;
 
 	#pragma omp parallel for reduction(+:ENumFiniteSum1) private(k,nfCol, qh,qq,q,qmaxCol, wl,wh,wq,w)
-	for (size_t i=0; i<m_LCollMaxPoints; i++) {
+	for (std::size_t i=0; i<m_LCollMaxPoints; i++) {
 		std::complex<double> fn_comp;
 
 		k = kl + m_LCollHSeq1[i]*kq;
@@ -352,7 +352,7 @@ double lTables::ENumFinite(double p, double T) const
 	double ENumFiniteSum2 = 0.0;
 
 	#pragma omp parallel for reduction(+:ENumFiniteSum2) private(k,nfCol, ql,qh,qh1,qh2,qq,q,qmaxCol, wl,wh,wq,w)
-	for (size_t i=0; i<m_LCollMaxPoints; i++) {
+	for (std::size_t i=0; i<m_LCollMaxPoints; i++) {
 		std::complex<double> fn_comp;
 
 		k = kl + m_LCollHSeq1[i]*kq;
@@ -388,8 +388,8 @@ void lTables::CollLTables()
 
 	m_LCollTbl.resize(m_Grids.pCollPtsLength(), std::vector<double>(m_Grids.TCollPtsLength(), 0.0));
 
-	for (size_t ip=0; ip<m_Grids.pCollPtsLength(); ip++) {
-		for (size_t iT=0; iT<m_Grids.TCollPtsLength(); iT++) {
+	for (std::size_t ip=0; ip<m_Grids.pCollPtsLength(); ip++) {
+		for (std::size_t iT=0; iT<m_Grids.TCollPtsLength(); iT++) {
 			m_LCollTbl[ip][iT] = ENumFinite(m_Grids.pCollPts(ip), m_Grids.TCollPts(iT));
 		}
 	}
@@ -415,10 +415,10 @@ int lTables::exportLTables() const
 		file_out << std::fixed << std::setw(12) <<     "x" << " ";
 		file_out << std::fixed << std::setw(17) << "Ldndx" << "\n";
 
-		for (size_t itau=0; itau<m_Grids.tauPtsLength(); itau++) {
-			for (size_t ip=0; ip<m_Grids.pPtsLength(); ip++) {
-				for (size_t iT=0; iT<m_Grids.TPtsLength(); iT++) {
-					for (size_t ix=0; ix<m_Grids.xPtsLength(); ix++) {
+		for (std::size_t itau=0; itau<m_Grids.tauPtsLength(); itau++) {
+			for (std::size_t ip=0; ip<m_Grids.pPtsLength(); ip++) {
+				for (std::size_t iT=0; iT<m_Grids.TPtsLength(); iT++) {
+					for (std::size_t ix=0; ix<m_Grids.xPtsLength(); ix++) {
 						file_out << std::fixed 		<< std::setw(13) << std::setprecision(10) << m_Grids.tauPts(itau) << " ";
 						file_out << std::fixed 		<< std::setw(14) << std::setprecision(10) << m_Grids.pPts(ip) << " ";
 						file_out << std::fixed 		<< std::setw(12) << std::setprecision(10) << m_Grids.TPts(iT) << " ";
@@ -446,9 +446,9 @@ int lTables::exportLTables() const
 		file_out << std::fixed << std::setw(12) <<     "T" << " ";
 		file_out << std::fixed << std::setw(17) << "LNorm" << "\n";
 
-		for (size_t itau=0; itau<m_Grids.tauPtsLength(); itau++) {
-			for (size_t ip=0; ip<m_Grids.pPtsLength(); ip++) {
-				for (size_t iT=0; iT<m_Grids.TPtsLength(); iT++) {
+		for (std::size_t itau=0; itau<m_Grids.tauPtsLength(); itau++) {
+			for (std::size_t ip=0; ip<m_Grids.pPtsLength(); ip++) {
+				for (std::size_t iT=0; iT<m_Grids.TPtsLength(); iT++) {
 					file_out << std::fixed 		<< std::setw(13) << std::setprecision(10) << m_Grids.tauPts(itau) << " ";
 					file_out << std::fixed 		<< std::setw(14) << std::setprecision(10) << m_Grids.pPts(ip) << " ";
 					file_out << std::fixed 		<< std::setw(12) << std::setprecision(10) << m_Grids.TPts(iT) << " ";
@@ -473,8 +473,8 @@ int lTables::exportLTables() const
 		file_out << std::fixed << std::setw(12) <<     "T" << " ";
 		file_out << std::fixed << std::setw(17) << "LColl" << "\n";
 
-		for (size_t ip=0; ip<m_Grids.pCollPtsLength(); ip++) {
-			for (size_t iT=0; iT<m_Grids.TCollPtsLength(); iT++) {
+		for (std::size_t ip=0; ip<m_Grids.pCollPtsLength(); ip++) {
+			for (std::size_t iT=0; iT<m_Grids.TCollPtsLength(); iT++) {
 				file_out << std::fixed 		<< std::setw(14) << std::setprecision(10) << m_Grids.pCollPts(ip) << " ";
 				file_out << std::fixed 		<< std::setw(12) << std::setprecision(10) << m_Grids.TCollPts(iT) << " ";
 				file_out << std::scientific << std::setw(17) << std::setprecision(10) << m_LCollTbl[ip][iT] << "\n";

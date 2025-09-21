@@ -6,6 +6,7 @@
 #include <string>
 #include <vector>
 #include <complex>
+#include <cstddef>
 
 class lTables {
 
@@ -17,12 +18,12 @@ public:
 private:
     bool m_error; //flag that checks if previous calculation is done properly
 
-    std::string m_sNN;       //collision energy
-    std::string m_pName;     //particle name
-    double m_xB;             //xB value
-    size_t m_LdndxMaxPoints; //maximal number of points for Ldndx integration
-    size_t m_LCollMaxPoints; //maximal number of points for collisional integration
-    double m_TCRIT;          //critical temperature
+    std::string m_sNN;            //collision energy
+    std::string m_pName;          //particle name
+    double m_xB;                  //xB value
+    std::size_t m_LdndxMaxPoints; //maximal number of points for Ldndx integration
+    std::size_t m_LCollMaxPoints; //maximal number of points for collisional integration
+    double m_TCRIT;               //critical temperature
 
     double m_nf;                   //effective number of flavours
     const double m_Ng = 3.0;	   //effective number of gluons
