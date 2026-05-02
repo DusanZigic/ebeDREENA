@@ -1,7 +1,7 @@
 #include "energyloss.hpp"
 #include "grids.hpp"
 #include "linearinterpolation.hpp"
-#include "polyintegration.hpp"
+#include "polyintegrator.hpp"
 
 #include <iostream>
 #include <string>

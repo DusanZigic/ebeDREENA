@@ -1,6 +1,6 @@
 #include "ltables.hpp"
 #include "grids.hpp"
-#include "polyintegration.hpp"
+#include "polyintegrator.hpp"
 
 #include <iostream>
 #include <string>
