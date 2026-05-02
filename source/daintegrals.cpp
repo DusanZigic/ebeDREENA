@@ -4,7 +4,7 @@
 #include <vector>
 #include <cmath>
 
-double energyLoss::haltonSequence(int index, int base) const
+double EnergyLoss::haltonSequence(int index, int base) const
 {
 	double f = 1.0;
 	double res = 0.0;
@@ -19,7 +19,7 @@ double energyLoss::haltonSequence(int index, int base) const
 }
 
 
-void energyLoss::FdAHaltonSeqInit(std::size_t FdAMaxPts)
+void EnergyLoss::FdAHaltonSeqInit(std::size_t FdAMaxPts)
 {
 	m_FdAMaxPoints2 = FdAMaxPts; 	  //setting values of dAMaxPoints
 	m_FdAMaxPoints3 = FdAMaxPts-25;
@@ -35,15 +35,15 @@ void energyLoss::FdAHaltonSeqInit(std::size_t FdAMaxPts)
 	}
 }
 
-double energyLoss::dAp410(double ph, const LinearInterpolator<double> &norm) const {
+double EnergyLoss::dAp410(double ph, const LinearInterpolator<double> &norm) const {
 	return (1.0 / std::exp(norm.interpolate(ph)));
 }
 
-double energyLoss::FdA411(double ph, double dp, const LinearInterpolator<double> &norm, const LinearInterpolator<double> &dndx) const {
+double EnergyLoss::FdA411(double ph, double dp, const LinearInterpolator<double> &norm, const LinearInterpolator<double> &dndx) const {
 	return (1.0 / std::exp(norm.interpolate(ph + dp))*dndx.interpolate(ph + dp, 1.0 - ph/(ph + dp)));
 }
 
-double energyLoss::FdA412(double ph, double dp, const LinearInterpolator<double> &norm, const LinearInterpolator<double> &dndx) const{
+double EnergyLoss::FdA412(double ph, double dp, const LinearInterpolator<double> &norm, const LinearInterpolator<double> &dndx) const{
 	if (dp < 2.0*m_mgC / 2.0) return 0.0;
 	double p = ph + dp;
 	double yl, yh, yq, y;
@@ -61,7 +61,7 @@ double energyLoss::FdA412(double ph, double dp, const LinearInterpolator<double>
 	return (sum/static_cast<double>(m_FdAMaxPoints2));
 }
 
-double energyLoss::FdA413(double ph, double dp, const LinearInterpolator<double> &norm, const LinearInterpolator<double> &dndx) const {
+double EnergyLoss::FdA413(double ph, double dp, const LinearInterpolator<double> &norm, const LinearInterpolator<double> &dndx) const {
 	if (dp < 3.0*m_mgC / 2.0) return 0.0;
 	double p = ph + dp;
 	double yl, yh, yq, y;
@@ -85,7 +85,7 @@ double energyLoss::FdA413(double ph, double dp, const LinearInterpolator<double>
 	return (sum/static_cast<double>(m_FdAMaxPoints3));
 }
 
-double energyLoss::FdA414(double ph, double dp, const LinearInterpolator<double> &norm, const LinearInterpolator<double> &dndx) const {
+double EnergyLoss::FdA414(double ph, double dp, const LinearInterpolator<double> &norm, const LinearInterpolator<double> &dndx) const {
 	if (dp < 4.0*m_mgC / 2.0) return 0.0;
 	double p = ph + dp;
 	double yl, yh, yq, y;
@@ -115,7 +115,7 @@ double energyLoss::FdA414(double ph, double dp, const LinearInterpolator<double>
 	return (sum/static_cast<double>(m_FdAMaxPoints4));
 }
 
-double energyLoss::FdA415(double ph, double dp, const LinearInterpolator<double> &norm, const LinearInterpolator<double> &dndx) const {
+double EnergyLoss::FdA415(double ph, double dp, const LinearInterpolator<double> &norm, const LinearInterpolator<double> &dndx) const {
 	if (dp < 5.0*m_mgC / 2.0) return 0.0;
 	double p = ph + dp;
 	double yl, yh, yq, y;
@@ -152,13 +152,13 @@ double energyLoss::FdA415(double ph, double dp, const LinearInterpolator<double>
 	return (sum/static_cast<double>(m_FdAMaxPoints5));
 }
 
-double energyLoss::FdA(double ph, double dp, const LinearInterpolator<double> &currnorm, const LinearInterpolator<double> &currdndx) const {
+double EnergyLoss::FdA(double ph, double dp, const LinearInterpolator<double> &currnorm, const LinearInterpolator<double> &currdndx) const {
 	return (FdA411(ph, dp, currnorm, currdndx) + FdA412(ph, dp, currnorm, currdndx) + FdA413(ph, dp, currnorm, currdndx) +
 				FdA414(ph, dp, currnorm, currdndx) + FdA415(ph, dp, currnorm, currdndx));
 }
 
 
-void energyLoss::dAHaltonSeqInit(std::size_t dAMaxPts)
+void EnergyLoss::dAHaltonSeqInit(std::size_t dAMaxPts)
 {
 	m_dAMaxPoints1 = dAMaxPts;	 //setting values of dAMaxPoints
 	m_dAMaxPoints2 = dAMaxPts-100;
@@ -180,11 +180,11 @@ void energyLoss::dAHaltonSeqInit(std::size_t dAMaxPts)
 	}
 }
 
-double energyLoss::dA410(double ph, const LinearInterpolator<double> &norm) const {
+double EnergyLoss::dA410(double ph, const LinearInterpolator<double> &norm) const {
 	return (m_dsdpti2.interpolate(ph)/exp(norm.interpolate(ph)));
 }
 
-double energyLoss::dA411(double ph, const LinearInterpolator<double> &norm, const LinearInterpolator<double> &dndx) const {
+double EnergyLoss::dA411(double ph, const LinearInterpolator<double> &norm, const LinearInterpolator<double> &dndx) const {
 	double p1 = ph + m_mgC / 2.0;
 	double p2 = (((2.0*ph) < (ph + 30.0)) ? (2.0*ph) : (ph + 30.0));
 	double pq = p2 - p1;
@@ -199,7 +199,7 @@ double energyLoss::dA411(double ph, const LinearInterpolator<double> &norm, cons
 	return (sum*pq/static_cast<double>(m_dAMaxPoints1));
 }
 
-double energyLoss::dA412(double ph, const LinearInterpolator<double> &norm, const LinearInterpolator<double> &dndx) const {
+double EnergyLoss::dA412(double ph, const LinearInterpolator<double> &norm, const LinearInterpolator<double> &dndx) const {
 	double p1 = ph + 2.0*m_mgC / 2.0;
 	double p2 = (((2.0*ph) < (ph + 30.0)) ? (2.0*ph) : (ph + 30.0));
 	double pq = p2 - p1;
@@ -221,7 +221,7 @@ double energyLoss::dA412(double ph, const LinearInterpolator<double> &norm, cons
 	return (sum*pq/static_cast<double>(m_dAMaxPoints2));
 }
 
-double energyLoss::dA413(double ph, const LinearInterpolator<double> &norm, const LinearInterpolator<double> &dndx) const {
+double EnergyLoss::dA413(double ph, const LinearInterpolator<double> &norm, const LinearInterpolator<double> &dndx) const {
 	double p1 = ph + 3.0*m_mgC / 2.0;
 	double p2 = (((2.0*ph) < (ph + 30.0)) ? (2.0*ph) : (ph + 30.0));
 	double pq = p2 - p1;
@@ -249,7 +249,7 @@ double energyLoss::dA413(double ph, const LinearInterpolator<double> &norm, cons
 	return (sum*pq/static_cast<double>(m_dAMaxPoints3));
 }
 
-double energyLoss::dA414(double ph, const LinearInterpolator<double> &norm, const LinearInterpolator<double> &dndx) const {
+double EnergyLoss::dA414(double ph, const LinearInterpolator<double> &norm, const LinearInterpolator<double> &dndx) const {
 	double p1 = ph + 4.0*m_mgC / 2.0;
 	double p2 = (((2.0*ph) < (ph + 30.0)) ? (2.0*ph) : (ph + 30.0));
 	double pq = p2 - p1;
@@ -283,7 +283,7 @@ double energyLoss::dA414(double ph, const LinearInterpolator<double> &norm, cons
 	return (sum*pq/static_cast<double>(m_dAMaxPoints4));
 }
 
-double energyLoss::dA415(double ph, const LinearInterpolator<double> &norm, const LinearInterpolator<double> &dndx) const {
+double EnergyLoss::dA415(double ph, const LinearInterpolator<double> &norm, const LinearInterpolator<double> &dndx) const {
 	double p1 = ph + 5.0*m_mgC / 2.0;
 	double p2 = (((2.0*ph) < (ph + 30.0)) ? (2.0*ph) : (ph + 30.0));
 	double pq = p2 - p1;
@@ -323,7 +323,7 @@ double energyLoss::dA415(double ph, const LinearInterpolator<double> &norm, cons
 	return (sum*pq/static_cast<double>(m_dAMaxPoints5));
 }
 
-double energyLoss::dA416(double ph, const LinearInterpolator<double> &norm, const LinearInterpolator<double> &dndx) const {
+double EnergyLoss::dA416(double ph, const LinearInterpolator<double> &norm, const LinearInterpolator<double> &dndx) const {
 	double p1 = ph + 6.0*m_mgC / 2.0;
 	double p2 = (((2.0*ph) < (ph + 30.0)) ? (2.0*ph) : (ph + 30.0));
 	double pq = p2 - p1;
@@ -370,7 +370,7 @@ double energyLoss::dA416(double ph, const LinearInterpolator<double> &norm, cons
 	return (sum*pq/static_cast<double>(m_dAMaxPoints6));
 }
 
-double energyLoss::dA417(double ph, const LinearInterpolator<double> &norm, const LinearInterpolator<double> &dndx) const {
+double EnergyLoss::dA417(double ph, const LinearInterpolator<double> &norm, const LinearInterpolator<double> &dndx) const {
 	double p1 = ph + 7.0*m_mgC / 2.0;
 	double p2 = (((2.0*ph) < (ph + 30.0)) ? (2.0*ph) : (ph + 30.0));
 	double pq = p2 - p1;
@@ -423,7 +423,7 @@ double energyLoss::dA417(double ph, const LinearInterpolator<double> &norm, cons
 	return (sum*pq/static_cast<double>(m_dAMaxPoints7));
 }
 
-double energyLoss::dA41(double ph, LinearInterpolator<double> &currnorm, LinearInterpolator<double> &currdndx) const {
+double EnergyLoss::dA41(double ph, LinearInterpolator<double> &currnorm, LinearInterpolator<double> &currdndx) const {
 	if (m_pName == "Gluon") { //gluon needs 7 dA integrals
 		return (dA410(ph, currnorm) + dA411(ph, currnorm, currdndx) + dA412(ph, currnorm, currdndx) +dA413(ph, currnorm, currdndx) +
 					dA414(ph, currnorm, currdndx) + dA415(ph, currnorm, currdndx) + dA416(ph, currnorm, currdndx) +
