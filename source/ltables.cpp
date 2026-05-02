@@ -1,5 +1,6 @@
 #include "ltables.hpp"
 #include "grids.hpp"
+#include "utils.hpp"
 #include "polyintegrator.hpp"
 
 #include <iostream>
@@ -60,46 +61,9 @@ void LTables::LdndxHSeqInit()
 	}
 }
 
-double LTables::productLog(double x) const
-{
-	if (x == 0.0) {
-		return 0.0;
-	}
-
-	double w0, w1;
-	if (x > 0.0) {
-		w0 = std::log(1.2 * x / std::log(2.4 * x / std::log1p(2.4 * x)));
-	}
-	else {
-		double v = 1.4142135623730950488 * std::sqrt(1.0 + 2.7182818284590452354 * x);
-		double N2 = 10.242640687119285146 + 1.9797586132081854940 * v;
-		double N1 = 0.29289321881345247560 * (1.4142135623730950488 + N2);
-		w0 = -1 + v * (N2 + v) / (N2 + v + N1 * v);
-	}
-
-	while (true) {
-		double e = std::exp(w0);
-		double f = w0 * e - x;
-		w1 = w0 - f / ((e * (w0 + 1.0) - (w0 + 2.0) * f / (w0 + w0 + 2.0)));
-		if (std::abs(w0 / w1 - 1.0) < 1.4901161193847656e-8) {
-			break;
-		}
-		w0 = w1;
-	}
-	return w1;
-}
-
-double LTables::unitStep(double x) const {
-    return (x < 0.0) ? 0.0 : 1.0;
-}
-
-long double LTables::unitStep(long double x) const {
-    return (x < 0.0L) ? 0.0L : 1.0L;
-}
-
 double LTables::dElossDYN(double tau, double p, double x, double k, double q, double varphi, double T) const
 {
-	double mu = 0.197*std::sqrt((-8.0*(6.0+m_nf)*M_PI*M_PI*T*T)/(2.0*m_nf-33.0)/m_lambda/m_lambda/productLog((-8.0*(6.0 + m_nf)*M_PI*M_PI*T*T)/(2.0*m_nf-33.0)/m_lambda/m_lambda));
+	double mu = utils::debyeMass(m_nf, m_lambda, T);
 	double mg = mu / std::sqrt(2.0);
 	double M = 0.0;
 	if (m_pName == "Bottom") M = 4.75;
@@ -113,10 +77,10 @@ double LTables::dElossDYN(double tau, double p, double x, double k, double q, do
 	double alpha1 = 4.0*M_PI/(11.0 - 2.0*m_nf/3.0)/std::log(e*T/0.2/0.2);
 
 	double fn = 1.0;
-	fn *= 1.0 / 0.197*m_CR*alpha/M_PI*3.0*alpha1*T*2.0*k*q/M_PI;
+	fn *= 1.0 / utils::HBARC_GEVFM*m_CR*alpha/M_PI*3.0*alpha1*T*2.0*k*q/M_PI;
 	fn *= (mu*mu - mu*mu*m_xB*m_xB)/(q*q + mu*mu*m_xB*m_xB)/(q*q + mu*mu);
 
-	double psi = (k*k + q*q + 2.0*k*q*std::cos(varphi) + b*b)/2.0/x/e*tau/0.197;
+	double psi = (k*k + q*q + 2.0*k*q*std::cos(varphi) + b*b)/2.0/x/e*tau/utils::HBARC_GEVFM;
 
 	fn *= (1 - std::cos(psi));
 	fn *= 2.0/(k*k + b*b)/(k*k + q*q + 2.0*k*q*cos(varphi) + b*b)/(k*k + q*q + 2.0*k*q*std::cos(varphi) + b*b);
@@ -127,7 +91,7 @@ double LTables::dElossDYN(double tau, double p, double x, double k, double q, do
 
 double LTables::Ldndx(double tau, double p, double T, double x) const
 {
-	double mu = 0.197*std::sqrt((-8.0*(6.0+m_nf)*M_PI*M_PI*T*T)/(2.0*m_nf-33.0)/m_lambda/m_lambda/productLog((-8.0*(6.0+m_nf)*M_PI*M_PI*T*T)/(2.0*m_nf-33.0)/m_lambda/m_lambda));
+	double mu = utils::debyeMass(m_nf, m_lambda, T);
 	double mg = mu / std::sqrt(2.0);
 	double M = 0.0;
 	if (m_pName == "Bottom") M = 4.75;
@@ -182,7 +146,7 @@ void LTables::RadLTables()
 					m_LdndxTbl[itau][ip][iT][ix] = Ldndx(tau, p, T, x);
 				}
 				
-				mu = 0.197*std::sqrt((-8.0*(6.0+m_nf)*M_PI*M_PI*T*T)/(2.0*m_nf-33.0)/m_lambda/m_lambda/productLog((-8.0*(6.0+m_nf)*M_PI*M_PI*T*T)/(2.0*m_nf-33.0)/m_lambda/m_lambda));
+				mu = utils::debyeMass(m_nf, m_lambda, T);
 				if (m_pName == "Bottom") M = 4.75;
 				else if (m_pName == "Charm") M = 1.2;
 				else if (m_pName == "Gluon") M = mu/sqrt(2.0);
@@ -209,7 +173,7 @@ void LTables::LCollHSeqInit()
 
 std::complex<double> LTables::deltaL2(double q, double w, double T) const
 {
-	double mu = 0.197*sqrt((-8.0*(6.0+m_nf)*M_PI*M_PI*T*T)/(2.0*m_nf-33.0)/m_lambda/m_lambda/productLog((-8.0*(6.0+m_nf)*M_PI*M_PI*T*T)/(2.0*m_nf-33.0)/m_lambda/m_lambda));
+	double mu = utils::debyeMass(m_nf, m_lambda, T);
 
 	std::complex<double> q_c = q, w_c = w;
 	std::complex<double> log_c = std::log((q_c + w_c)/(q_c - w_c));
@@ -223,8 +187,7 @@ std::complex<double> LTables::deltaL2(double q, double w, double T) const
 
 std::complex<double> LTables::deltaT2(double q, double w, double T) const
 {
-	double mu = 0.197*sqrt((-8.0*(6.0+m_nf)*M_PI*M_PI*T*T)/(2.0*m_nf-33.0)/m_lambda/m_lambda/productLog((-8.0*(6.0+m_nf)*M_PI*M_PI*T*T)/(2.0*m_nf-33.0)/m_lambda/m_lambda));
-
+	double mu = utils::debyeMass(m_nf, m_lambda, T);
 	std::complex<double> q_c = q, w_c = w;
 	std::complex<double> log_c = std::log((q_c + w_c)/(q_c - w_c));
 
@@ -239,7 +202,7 @@ std::complex<double> LTables::deltaT2(double q, double w, double T) const
 
 double LTables::ENumFinite(double p, double T) const
 {
-	double mu = 0.197*sqrt((-8.0*(6.0+m_nf)*M_PI*M_PI*T*T)/(2.0*m_nf-33.0)/m_lambda/m_lambda/productLog((-8.0*(6.0+m_nf)*M_PI*M_PI*T*T)/(2.0*m_nf-33.0)/m_lambda/m_lambda));
+	double mu = utils::debyeMass(m_nf, m_lambda, T);
 	double M = 1.0;
 	if (m_pName == "Bottom") M = 4.75;
 	else if (m_pName == "Charm") M = 1.2;
@@ -282,7 +245,7 @@ double LTables::ENumFinite(double p, double T) const
 		wq = wh - wl;
 		w = wl + m_LCollHSeq3[i]*wq;
 
-		fn_comp  = 2.0/0.197*m_CR*alpha1*alpha2/M_PI/v/v*nfCol*w*unitStep(v*v*q*q - w*w);
+		fn_comp  = 2.0/utils::HBARC_GEVFM*m_CR*alpha1*alpha2/M_PI/v/v*nfCol*w*utils::unitStep(v*v*q*q - w*w);
 		fn_comp *= (deltaL2(q, w, T)*((2.0*k + w)*(2.0*k + w) - q*q)/2.0 + deltaT2(q, w, T)*(q*q - w*w)/4.0/q/q/q/q*((2.0*k + w)*(2.0*k + w) + q*q)*(v*v*q*q - w*w));
 
 		ENumFiniteSum1 += fn_comp.real()*qq*wq;
@@ -313,7 +276,7 @@ double LTables::ENumFinite(double p, double T) const
 		wq = wh - wl;
 		w = wl + m_LCollHSeq3[i] * wq;
 
-		fn_comp  = 2.0/0.197*m_CR*alpha1*alpha2/M_PI/v/v*nfCol*w*unitStep(v*v*q*q - w*w);
+		fn_comp  = 2.0/utils::HBARC_GEVFM*m_CR*alpha1*alpha2/M_PI/v/v*nfCol*w*utils::unitStep(v*v*q*q - w*w);
 		fn_comp *= (deltaL2(q, w, T)*((2.0*k + w)*(2.0*k + w) - q*q)/2.0 + deltaT2(q, w, T)*(q*q - w*w)/4.0/q/q/q/q*((2.0*k + w)*(2.0*k + w) + q*q)*(v*v*q*q - w*w));
 
 		ENumFiniteSum2 += fn_comp.real()*qq*wq;

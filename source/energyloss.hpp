@@ -18,20 +18,20 @@ public:
     void runEnergyLoss();
 
 private:
-    std::string m_collsys;	     //collision system
-    std::string m_sNN; 		     //collision energy
-    std::string m_pName; 	     //particle name
-    std::string m_centrality;    //centrality class
-    double m_xB;			     //xB value
-    double m_BCPP;			     //binary collision points percentage
-    std::size_t m_eventN;		 //number of events 
-    std::size_t m_phiGridN;		 //phi points number
-    double m_TIMESTEP;           //jets' traversal step in fm
-    double m_TCRIT;	             //temperature at which eloss stops
-    int m_BCPSEED;			     //seed for generating initial position points
+    std::string m_collsys;	     // collision system
+    std::string m_sNN; 		     // collision energy
+    std::string m_pName; 	     // particle name
+    std::string m_centrality;    // centrality class
+    double m_xB;			     // xB value
+    double m_BCPP;			     // binary collision points percentage
+    std::size_t m_eventN;		 // number of events 
+    std::size_t m_phiGridN;		 // phi points number
+    double m_TIMESTEP;           // jets' traversal step in fm
+    double m_TCRIT;	             // temperature at which eloss stops
+    int m_BCPSEED;			     // seed for generating initial position points
     
-    double m_nf;			     //effective number of flavours
-    const double m_lambda = 0.2; //QCD scale
+    double m_nf;			     // effective number of flavours
+    const double m_lambda = 0.2; // QCD scale
     
     double m_mgC;                // constant gluon mass used for dA integrals
     double m_MC;	             // constant particle mass used for dA integrals
@@ -60,8 +60,6 @@ private:
     std::vector<double> m_dAHS1, m_dAHS2, m_dAHS3, m_dAHS4, m_dAHS5, m_dAHS6, m_dAHS7; 								 	        //vectors that store Halton sequences for dA integrals
 
     int loadInputsFromFile(const std::string &filePath, std::map<std::string, std::string> &inputParamsFile);
-
-    double productLog(double x) const;
 
     int loaddsdpti2(const std::string &pname, LinearInterpolator<double> &dsdpti2int) const;
     int loadLdndx();

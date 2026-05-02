@@ -1,5 +1,6 @@
 #include "energyloss.hpp"
 #include "grids.hpp"
+#include "utils.hpp"
 #include "linearinterpolator.hpp"
 #include "polyintegrator.hpp"
 
@@ -30,8 +31,7 @@ EnergyLoss::EnergyLoss(const config::energyLossConfig &cfg)
     m_BCPSEED    = cfg.BCPSEED;
 
     m_nf = m_sNN == "200GeV" ? 2.5 : 3.0;
-	double T = 3.0 / 2.0*m_TCRIT;
-	double mu = 0.197*std::sqrt((-8.0*(6.0+m_nf)*M_PI*M_PI*T*T)/(2.0*m_nf-33.0)/m_lambda/m_lambda/productLog((-8.0*(6.0+m_nf)*M_PI*M_PI*T*T)/(2.0*m_nf-33.0)/m_lambda/m_lambda));
+	double mu = utils::debyeMass(m_nf, m_lambda, 3.0/2.0*m_TCRIT);
 	m_mgC = mu / std::sqrt(2.0);
 	if (m_pName == "Bottom") {
 		m_MC = 4.75;
@@ -42,7 +42,7 @@ EnergyLoss::EnergyLoss(const config::energyLossConfig &cfg)
 	} else {
 		m_MC = mu/std::sqrt(6.0);
 	}
-	m_TCollConst = T;
+	m_TCollConst = 3.0/2.0*m_TCRIT;
 }
 
 EnergyLoss::~EnergyLoss() {}
@@ -69,36 +69,6 @@ void EnergyLoss::runEnergyLoss()
 		runELossLightFlavour();
 	}
 }
-
-double EnergyLoss::productLog(double x) const
-{
-	if (x == 0.0) {
-		return 0.0;
-	}
-
-	double w0, w1;
-	if (x > 0.0) {
-		w0 = std::log(1.2 * x / std::log(2.4 * x / std::log1p(2.4 * x)));
-	}
-	else {
-		double v = 1.4142135623730950488 * std::sqrt(1.0 + 2.7182818284590452354 * x);
-		double N2 = 10.242640687119285146 + 1.9797586132081854940 * v;
-		double N1 = 0.29289321881345247560 * (1.4142135623730950488 + N2);
-		w0 = -1 + v * (N2 + v) / (N2 + v + N1 * v);
-	}
-
-	while (true) {
-		double e = std::exp(w0);
-		double f = w0 * e - x;
-		w1 = w0 - f / ((e * (w0 + 1.0) - (w0 + 2.0) * f / (w0 + w0 + 2.0)));
-		if (std::abs(w0 / w1 - 1.0) < 1.4901161193847656e-8) {
-			break;
-		}
-		w0 = w1;
-	}
-	return w1;
-}
-
 
 int EnergyLoss::loaddsdpti2(const std::string &pname, LinearInterpolator<double> &dsdpti2int)const 
 {

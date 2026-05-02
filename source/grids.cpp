@@ -1,4 +1,5 @@
 #include "grids.hpp"
+#include "utils.hpp"
 #include "linearinterpolator.hpp"
 
 #include <iostream>
@@ -41,7 +42,7 @@ void gridPoints::setGridPoints(const std::string &sNN, const std::string &partic
 		generateGrids(Tden, Tgridn, m_TPts);
 
 		//xPts:
-		double mg = muF(m_TPts[0])/std::sqrt(2.0);
+		double mg = utils::debyeMass(m_nf, m_lambda, m_TPts[0])/std::sqrt(2.0);
 		double M = 4.75;
 		double MAXP = sNN == "200GeV" ? 100.0 : 200.0;
 		std::size_t xgridn = 30;
@@ -56,7 +57,7 @@ void gridPoints::setGridPoints(const std::string &sNN, const std::string &partic
 		generateGrids(Radden, Radgridn, m_RadPts);
 
 		//FdpPts:
-		double mgC = muF(3.0/2.0*m_TCRIT)/std::sqrt(2.0);
+		double mgC = utils::debyeMass(m_nf, m_lambda, 3.0/2.0*m_TCRIT)/std::sqrt(2.0);
 		std::size_t Fdpgridn = 16;
 		std::vector<std::vector<double>> Fdpden = {{5.0*mgC/2.0, 10.0}, {12.0, 5.0}, {30.0, 0.0}};
 		generateGrids(Fdpden, Fdpgridn-4, m_FdpPts);
@@ -102,7 +103,7 @@ void gridPoints::setGridPoints(const std::string &sNN, const std::string &partic
 		generateGrids(Tden, Tgridn, m_TPts);
 
 		//xPts:
-		double mg = muF(m_TPts[0])/std::sqrt(2.0);
+		double mg = utils::debyeMass(m_nf, m_lambda, m_TPts[0])/std::sqrt(2.0);
 		double M = 1.2;
 		double MAXP = sNN == "200GeV" ? 100.0 : 200.0;
 		std::size_t xgridn = 30;
@@ -117,7 +118,7 @@ void gridPoints::setGridPoints(const std::string &sNN, const std::string &partic
 		generateGrids(Radden, Radgridn, m_RadPts);
 
 		//FdpPts:
-		double mgC = muF(3.0/2.0*m_TCRIT)/std::sqrt(2.0);
+		double mgC = utils::debyeMass(m_nf, m_lambda, 3.0/2.0*m_TCRIT)/std::sqrt(2.0);
 		std::size_t Fdpgridn = 16;
 		std::vector<std::vector<double>> Fdpden = {{5.0*mgC/2.0, 10.0}, {12.0, 5.0}, {30.0, 0.0}};
 		generateGrids(Fdpden, Fdpgridn-4, m_FdpPts);
@@ -165,8 +166,8 @@ void gridPoints::setGridPoints(const std::string &sNN, const std::string &partic
 		generateGrids(Tden, Tgridn, m_TPts);
 
 		//xPts:
-		double mg = muF(m_TPts[0])/std::sqrt(2.0);
-		double  M = muF(m_TPts[0])/std::sqrt(2.0);
+		double mg = utils::debyeMass(m_nf, m_lambda, m_TPts[0])/std::sqrt(2.0);
+		double  M = utils::debyeMass(m_nf, m_lambda, m_TPts[0])/std::sqrt(2.0);
 		double MAXP = sNN == "200GeV" ? 150.0 : 450.0;
 		std::size_t xgridn = 50;
 		double xmin = mg/(MAXP + std::sqrt(MAXP*MAXP + M*M));
@@ -181,7 +182,7 @@ void gridPoints::setGridPoints(const std::string &sNN, const std::string &partic
 		generateGrids(Radden, Radgridn, m_RadPts);
 
 		//FdpPts:
-		double mgC = muF(3.0/2.0*m_TCRIT)/std::sqrt(2.0);
+		double mgC = utils::debyeMass(m_nf, m_lambda, 3.0/2.0*m_TCRIT)/std::sqrt(2.0);
 		std::size_t Fdpgridn = 22;
 		std::vector<std::vector<double>> Fdpden = {{5.0*mgC/2.0, 10.0}, {12.0, 5.0}, {30.0, 0.0}};
 		generateGrids(Fdpden, Fdpgridn-4, m_FdpPts);
@@ -228,8 +229,8 @@ void gridPoints::setGridPoints(const std::string &sNN, const std::string &partic
 		generateGrids(Tden, Tgridn, m_TPts);
 
 		//xPts:
-		double mg = muF(m_TPts[0])/std::sqrt(2.0);
-		double M  = muF(m_TPts[0])/std::sqrt(6.0);
+		double mg = utils::debyeMass(m_nf, m_lambda, m_TPts[0])/std::sqrt(2.0);
+		double M  = utils::debyeMass(m_nf, m_lambda, m_TPts[0])/std::sqrt(6.0);
 		double MAXP = sNN == "200GeV" ? 150.0 : 450.0;
 		std::size_t xgridn = 50;
 		double xmin = mg/(MAXP + std::sqrt(MAXP*MAXP + M*M));
@@ -243,7 +244,7 @@ void gridPoints::setGridPoints(const std::string &sNN, const std::string &partic
 		generateGrids(Radden, Radgridn, m_RadPts);
 
 		//FdpPts:
-		double mgC = muF(3.0/2.0*m_TCRIT)/std::sqrt(2.0);
+		double mgC = utils::debyeMass(m_nf, m_lambda, 3.0/2.0*m_TCRIT)/std::sqrt(2.0);
 		std::size_t Fdpgridn = 22;
 		std::vector<std::vector<double>> Fdpden = {{5.0*mgC/2.0, 10.0}, {12.0, 5.0}, {30, 0.0}};
 		generateGrids(Fdpden, Fdpgridn-4, m_FdpPts);
@@ -391,40 +392,6 @@ double gridPoints::finPts(int i) const {
 }
 std::size_t gridPoints::finPtsLength() const {
     return m_finPts.size();
-}
-
-double gridPoints::productLog(double x)
-{
-	if (x == 0.0) {
-		return 0.0;
-	}
-
-	double w0, w1;
-	if (x > 0.0) {
-		w0 = std::log(1.2 * x / std::log(2.4 * x / std::log1p(2.4 * x)));
-	}
-	else {
-		double v = 1.4142135623730950488 * std::sqrt(1.0 + 2.7182818284590452354 * x);
-		double N2 = 10.242640687119285146 + 1.9797586132081854940 * v;
-		double N1 = 0.29289321881345247560 * (1.4142135623730950488 + N2);
-		w0 = -1 + v * (N2 + v) / (N2 + v + N1 * v);
-	}
-
-	while (true) {
-		double e = std::exp(w0);
-		double f = w0 * e - x;
-		w1 = w0 - f / ((e * (w0 + 1.0) - (w0 + 2.0) * f / (w0 + w0 + 2.0)));
-		if (std::abs(w0 / w1 - 1.0) < 1.4901161193847656e-8) {
-			break;
-		}
-		w0 = w1;
-	}
-	return w1;
-}
-
-double gridPoints::muF(double temp)
-{
-	return (0.197*sqrt((-8.0*(6.0 + m_nf)*M_PI*M_PI*temp*temp)/(2.0*m_nf - 33.0)/m_lambda/m_lambda/productLog((-8.0*(6.0 + m_nf)*M_PI*M_PI*temp*temp)/(2.0*m_nf - 33.0)/m_lambda/m_lambda)));
 }
 
 double gridPoints::linearIntegrate(const std::vector<double> &dataX, const std::vector<double> &dataF, double xH) const

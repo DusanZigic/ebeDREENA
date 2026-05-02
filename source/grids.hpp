@@ -63,8 +63,6 @@ private:
 	double m_nf     = 3.0;
 	double m_lambda = 0.2;
 	double m_TCRIT  = 0.155;
-	double productLog(double x);
-	double muF(double temp);
 	std::vector<double> m_tauPts, m_pPts, m_TPts, m_xPts, m_RadPts, m_FdpPts;
 	std::vector<double> m_pCollPts, m_TCollPts, m_finPts;
 	double linearIntegrate(const std::vector<double> &dataX, const std::vector<double> &dataF, double xH) const;

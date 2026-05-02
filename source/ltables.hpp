@@ -32,10 +32,6 @@ private:
     
     gridPoints m_Grids; //grids
 
-    double productLog(double x) const;
-    double unitStep(double x) const;
-    long double unitStep(long double x) const;
-
     std::vector<double> m_LdndxHSeq1, m_LdndxHSeq2, m_LdndxHSeq3;
     double haltonSequence(int index, int base) const;
     void LdndxHSeqInit();
