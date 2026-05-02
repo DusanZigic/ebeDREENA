@@ -8,7 +8,6 @@
 #include <sstream>
 #include <fstream>
 #include <vector>
-#include <map>
 #include <cmath>
 #include <complex>
 #include <iomanip>
@@ -97,14 +96,14 @@ double LTables::Ldndx(double tau, double p, double T, double x) const
 	if (m_pName == "Bottom") M = 4.75;
 	else if (m_pName == "Charm") M = 1.2;
 	else if (m_pName == "Gluon") M = mg;
-	else M = mu/sqrt(6.0);
-	double e = sqrt(p*p + M * M);
+	else M = mu/std::sqrt(6.0);
+	double e = std::sqrt(p*p + M * M);
 
 	double kl = 0.00000001; 
 	double kh = 2.0*x*(1 - x)*e;
 	double kq = (kh - kl);
 	double ql = 0.000001;
-	double qh = sqrt(4.0*e*T);
+	double qh = std::sqrt(4.0*e*T);
 	double qq = qh - ql;
 	double phil = 0.0;
 	double phih = M_PI;
@@ -149,8 +148,8 @@ void LTables::RadLTables()
 				mu = utils::debyeMass(m_nf, m_lambda, T);
 				if (m_pName == "Bottom") M = 4.75;
 				else if (m_pName == "Charm") M = 1.2;
-				else if (m_pName == "Gluon") M = mu/sqrt(2.0);
-				else M = mu/sqrt(6.0);
+				else if (m_pName == "Gluon") M = mu/std::sqrt(2.0);
+				else M = mu/std::sqrt(6.0);
 				
 				xIntegLimitLow = mu/std::sqrt(2.0)/(p + std::sqrt(p*p + M*M));
 				if (m_pName == "Gluon") xIntegLimitHigh = 0.5;

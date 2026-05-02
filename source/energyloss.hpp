@@ -7,7 +7,6 @@
 
 #include <string>
 #include <vector>
-#include <map>
 #include <cstddef>
 
 class EnergyLoss {
@@ -58,8 +57,6 @@ private:
     
     std::size_t m_dAMaxPoints1, m_dAMaxPoints2, m_dAMaxPoints3, m_dAMaxPoints4, m_dAMaxPoints5, m_dAMaxPoints6, m_dAMaxPoints7; //number of points for dA integration
     std::vector<double> m_dAHS1, m_dAHS2, m_dAHS3, m_dAHS4, m_dAHS5, m_dAHS6, m_dAHS7; 								 	        //vectors that store Halton sequences for dA integrals
-
-    int loadInputsFromFile(const std::string &filePath, std::map<std::string, std::string> &inputParamsFile);
 
     int loaddsdpti2(const std::string &pname, LinearInterpolator<double> &dsdpti2int) const;
     int loadLdndx();
