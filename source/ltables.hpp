@@ -1,6 +1,7 @@
-#ifndef HEADERFILE_LTABLESHEADER
-#define HEADERFILE_LTABLESHEADER
+#ifndef LTABLES_HPP
+#define LTABLES_HPP
 
+#include "config.hpp"
 #include "grids.hpp"
 
 #include <string>
@@ -8,28 +9,26 @@
 #include <complex>
 #include <cstddef>
 
-class lTables {
+class LTables {
 
 public:
-    lTables(int argc, const char *argv[]);
-    ~lTables();
+    LTables(const config::lTablesConfig &cfg);
+    ~LTables();
     void runLTables();
 
 private:
-    bool m_error; //flag that checks if previous calculation is done properly
+    std::string m_sNN;             // collision energy
+    std::string m_pName;           // particle name
+    double m_xB;                   // xB value
+    std::size_t m_LdndxMaxPoints;  // number of qmc integration points
+    std::size_t m_LCollMaxPoints;
+    double m_TCRIT;                // critical temperature
 
-    std::string m_sNN;            //collision energy
-    std::string m_pName;          //particle name
-    double m_xB;                  //xB value
-    std::size_t m_LdndxMaxPoints; //maximal number of points for Ldndx integration
-    std::size_t m_LCollMaxPoints; //maximal number of points for collisional integration
-    double m_TCRIT;               //critical temperature
-
-    double m_nf;                   //effective number of flavours
-    const double m_Ng = 3.0;	   //effective number of gluons
-    const double m_lambda = 0.2;   //QCD scale
-    const double m_kmaxColl = 5.0; //kMaxColl value
-          double m_CR;		       //Casimir (3 for gluons, 4/3 for quakrs)
+    double m_nf;                   // effective number of flavours
+    const double m_Ng = 3.0;	   // effective number of gluons
+    const double m_lambda = 0.2;   // QCD scale
+    const double m_kmaxColl = 5.0; // kMaxColl value
+    double m_CR;		           // Casimir (3 for gluons, 4/3 for quakrs)
     
     gridPoints m_Grids; //grids
 
@@ -60,4 +59,4 @@ private:
 
 };
 
-#endif
+#endif // LTABLES_HPP

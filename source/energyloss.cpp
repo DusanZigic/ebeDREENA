@@ -15,130 +15,40 @@
 #include <cmath>
 #include <iomanip>
 
-energyLoss::energyLoss(int argc, const char *argv[])
+EnergyLoss::EnergyLoss(const config::energyLossConfig &cfg)
 {
-	m_error = false;
+	m_collsys    = cfg.collsys;
+    m_sNN        = cfg.sNN;
+    m_pName      = cfg.pName;
+    m_centrality = cfg.centrality;
+    m_xB         = cfg.xB;
+    m_BCPP       = cfg.BCPP;
+    m_eventN     = cfg.eventN;
+    m_phiGridN   = cfg.phiGridN;
+    m_TIMESTEP   = cfg.TIMESTEP;
+	m_TCRIT      = cfg.TCRIT;
+    m_BCPSEED    = cfg.BCPSEED;
 
-	std::vector<std::string> inputs; for (int i=2; i<argc; i++) inputs.push_back(argv[i]);
-
-	if ((inputs.size() == 1) && (inputs[0] == "-h")) {
-		std::cout << "default values: --collsys=PbPb --sNN=5020GeV --pName=Charm --centrality=30-40% --xB=0.6 --eventN=1000 --BCPP=20% --phiGridN=25 --TIMESTEP=0.1 --TCRIT=0.155 --BCPSEED=0" << std::endl;
-		m_error = true;
-	}
-
-	std::map<std::string, std::string> inputParams;
-	for (const auto &in : inputs)
-	{
- 	   	std::string key = in.substr(0, in.find("="));
- 	   	std::string::size_type n = 0; while ((n = key.find("-", n)) != std::string::npos) {key.replace(n, 1, ""); n += 0;} //replacing all '-'
-		std::string val = in.substr(in.find("=")+1, in.length());
-		inputParams[key] = val;
-	}
-	std::vector<std::string> arguments = {"collsys", "sNN", "pName", "centrality", "xB", "eventN", "BCPP", "phiGridN", "TIMESTEP", "TCRIT", "BCPSEED", "config", "h"};
-	for (const auto &inputParam : inputParams) {
-		if(std::find(arguments.begin(), arguments.end(), inputParam.first) == arguments.end()) {
-			std::cerr << "Error: provided argument flag: '" << inputParam.first << "' is not an option." << std::endl;
-			std::cerr << "Valid parameters and default values are: ";
-			std::cerr << "--collsys=PbPb --sNN=5020GeV --pName=Charm --centrality=30-40% --xB=0.6 --eventN=1000 --BCPP=20% --phiGridN=25 --TIMESTEP=0.1 --TCRIT=0.155 --BCPSEED=0" << std::endl;
-			std::cerr << "For congiguration file use: --config=[pathToConfFile]" << std::endl;
-			m_error = true;
-		}
-	}
-
-	//checking if configuration file is provided:
-	std::map<std::string, std::string> inputParamsFile;
-	if (inputParams.count("config") > 0) {
-		if (loadInputsFromFile(inputParams.at("config"), inputParamsFile) != 1) {
-			m_error = true;
-		}
-	}
-	std::vector<std::string> argumentsFile = {"collsys", "sNN", "pName", "centrality", "xB", "eventN", "BCPP", "phiGridN", "TIMESTEP", "TCRIT", "BCPSEED"};
-	for (const auto &inputParam : inputParamsFile) {
-		if(std::find(argumentsFile.begin(), argumentsFile.end(), inputParam.first) == argumentsFile.end()) {
-			std::cerr << "Error: in configration file provided argument: '" << inputParam.first << "' is not an option." << std::endl;
-			std::cerr << "Valid parameters and default values are: \n";
-			std::cerr << "collsys = PbPb\nsNN = 5020GeV\npName = Charm\ncentrality = 30-40%\nxB = 0.6\neventN = 1000\nBCPP = 20%\nphiGridN = 25\nTIMESTEP = 0.1\nTCRIT = 0.155\nBCPSEED = 0" << std::endl;
-			m_error = true;
-		}
-	}
-
-	//setting parameter values based on config file values and overwriting with command line values:
-	//
-	m_collsys = "PbPb"; if (inputParamsFile.count("collsys") > 0) m_collsys = inputParamsFile["collsys"];
-						if (    inputParams.count("collsys") > 0) m_collsys =     inputParams["collsys"];
-	
-	m_sNN = "5020GeV"; if (inputParamsFile.count("sNN") > 0) m_sNN = inputParamsFile["sNN"];
-					   if (    inputParams.count("sNN") > 0) m_sNN =     inputParams["sNN"];
-
-	m_pName = "Charm"; if (inputParamsFile.count("pName") > 0) m_pName = inputParamsFile["pName"];
-					   if (    inputParams.count("pName") > 0) m_pName =     inputParams["pName"];
-
-	m_centrality = "30-40%"; if (inputParamsFile.count("centrality") > 0) m_centrality = inputParamsFile["centrality"];
-						     if (    inputParams.count("centrality") > 0) m_centrality =     inputParams["centrality"];
-
-	m_xB = 0.6; if (inputParamsFile.count("xB") > 0) m_xB = stod(inputParamsFile["xB"]);
-				if (    inputParams.count("xB") > 0) m_xB = stod(    inputParams["xB"]);
-
-	m_eventN = 1000; if (inputParamsFile.count("eventN") > 0) m_eventN = stoi(inputParamsFile["eventN"]);
-					 if (    inputParams.count("eventN") > 0) m_eventN = stoi(    inputParams["eventN"]);
-
-	std::string bcppstr = "20%"; if (inputParamsFile.count("BCPP") > 0) bcppstr = inputParamsFile["BCPP"];
-						         if (    inputParams.count("BCPP") > 0) bcppstr =     inputParams["BCPP"];
-	bcppstr.replace(bcppstr.find("%"), 1, ""); m_BCPP = stod(bcppstr)/100.0;
-
-	m_phiGridN = 25; if (inputParamsFile.count("phiGridN") > 0) m_phiGridN = stoi(inputParamsFile["phiGridN"]);
-					 if (    inputParams.count("phiGridN") > 0) m_phiGridN = stoi(    inputParams["phiGridN"]);
-
-	m_TIMESTEP = 0.1; if (inputParamsFile.count("TIMESTEP") > 0) m_TIMESTEP = stod(inputParamsFile["TIMESTEP"]);
-					  if (    inputParams.count("TIMESTEP") > 0) m_TIMESTEP = stod(    inputParams["TIMESTEP"]);
-
-	m_TCRIT = 0.155; if (inputParamsFile.count("TCRIT") > 0) m_TCRIT = stod(inputParamsFile["TCRIT"]);
-					 if (    inputParams.count("TCRIT") > 0) m_TCRIT = stod(    inputParams["TCRIT"]);
-
-	m_BCPSEED = 0; if (inputParamsFile.count("BCPSEED") > 0) m_BCPSEED = stoi(inputParamsFile["BCPSEED"]);
-				   if (    inputParams.count("BCPSEED") > 0) m_BCPSEED = stoi(    inputParams["BCPSEED"]);
-
-	//checking if provided value of sNN is an option:
-	if ((m_sNN != "5440GeV") && (m_sNN != "5020GeV") && (m_sNN != "2760GeV") && (m_sNN != "200GeV")) {
-		std::cerr << "Error: provided sNN parameter not an option, please try 5440GeV, 5020GeV, 2760GeV or 200GeV. Aborting..." << std::endl;
-		m_error = true;
-	}
-
-	m_nf = m_sNN == "200GeV" ? 2.5 : 3.0;
+    m_nf = m_sNN == "200GeV" ? 2.5 : 3.0;
 	double T = 3.0 / 2.0*m_TCRIT;
 	double mu = 0.197*std::sqrt((-8.0*(6.0+m_nf)*M_PI*M_PI*T*T)/(2.0*m_nf-33.0)/m_lambda/m_lambda/productLog((-8.0*(6.0+m_nf)*M_PI*M_PI*T*T)/(2.0*m_nf-33.0)/m_lambda/m_lambda));
 	m_mgC = mu / std::sqrt(2.0);
-	if (m_pName == "Bottom") m_MC = 4.75;
-	else if (m_pName == "Charm") m_MC = 1.2;
-	else if (m_pName == "Gluon") m_MC = mu/std::sqrt(2.0);
-	else m_MC = mu/sqrt(6.0);
+	if (m_pName == "Bottom") {
+		m_MC = 4.75;
+	} else if (m_pName == "Charm") {
+		m_MC = 1.2;
+	} else if (m_pName == "Gluon") {
+		m_MC = mu/std::sqrt(2.0);
+	} else {
+		m_MC = mu/std::sqrt(6.0);
+	}
 	m_TCollConst = T;
 }
 
-int energyLoss::loadInputsFromFile(const std::string &filePath, std::map<std::string, std::string> &inputParamsFile)
+EnergyLoss::~EnergyLoss() {}
+
+void EnergyLoss::runEnergyLoss()
 {
-	std::ifstream file_in(filePath);
-	if (!file_in.is_open()) {
-		std::cerr << "Error: unable to open configuration file. Aborting..." << std::endl;
-		return -1;
-	}
-	std::string line, key, sep, val;
-	while (std::getline(file_in, line))
-	{
-		std::stringstream ss(line);
-		ss >> key; ss >> sep; ss >> val;
-		inputParamsFile[key] = val;
-	}
-	file_in.close();
-	return 1;
-}
-
-energyLoss::~energyLoss() {}
-
-void energyLoss::runEnergyLoss()
-{
-	if (m_error) return;
-
 	m_Grids.setGridPoints(m_sNN, m_pName, m_TCRIT);
 
 	if (loadLdndx() != 1) return;
@@ -160,7 +70,7 @@ void energyLoss::runEnergyLoss()
 	}
 }
 
-double energyLoss::productLog(double x) const
+double EnergyLoss::productLog(double x) const
 {
 	if (x == 0.0) {
 		return 0.0;
@@ -190,7 +100,7 @@ double energyLoss::productLog(double x) const
 }
 
 
-int energyLoss::loaddsdpti2(const std::string &pname, LinearInterpolator<double> &dsdpti2int)const 
+int EnergyLoss::loaddsdpti2(const std::string &pname, LinearInterpolator<double> &dsdpti2int)const 
 {
 	const std::string path_in = "./ptDists/ptDist" + m_sNN + "/ptDist_" + m_sNN + "_" + pname + ".dat";
 
@@ -221,7 +131,7 @@ int energyLoss::loaddsdpti2(const std::string &pname, LinearInterpolator<double>
 	return 1;
 }
 
-int energyLoss::loadLdndx()
+int EnergyLoss::loadLdndx()
 {
 	std::string partName;
 	if (m_pName == "Bottom") partName = "Bottom";
@@ -275,7 +185,7 @@ int energyLoss::loadLdndx()
 	return 1;
 }
 
-int energyLoss::loadLNorm()
+int EnergyLoss::loadLNorm()
 {
 	std::string partName;
 	if (m_pName == "Bottom") partName = "Bottom";
@@ -326,7 +236,7 @@ int energyLoss::loadLNorm()
 	return 1;
 }
 
-int energyLoss::loadLColl()
+int EnergyLoss::loadLColl()
 {
 	std::string partName;
 	if (m_pName == "Bottom") partName = "Bottom";
@@ -373,7 +283,7 @@ int energyLoss::loadLColl()
 	return 1;
 }
 
-int energyLoss::generateTempGrid()
+int EnergyLoss::generateTempGrid()
 {
 	const std::string path_in = "./evols/evols_cent=" + m_centrality + "/evolgridparams.dat";
 
@@ -428,7 +338,7 @@ int energyLoss::generateTempGrid()
 	return 1;
 }
 
-int energyLoss::loadPhiPoints()
+int EnergyLoss::loadPhiPoints()
 {
 	const std::string path_in = "./phiGaussPts/phiptsgauss" + std::to_string(m_phiGridN) + ".dat";
 	std::ifstream file_in(path_in);
@@ -455,7 +365,7 @@ int energyLoss::loadPhiPoints()
 	return 1;
 }
 
-int energyLoss::loadBinCollPoints(std::size_t event_id, std::vector<std::vector<double>> &bcpoints)
+int EnergyLoss::loadBinCollPoints(std::size_t event_id, std::vector<std::vector<double>> &bcpoints)
 {
 	const std::string path_in = "./binarycollpts/binarycollpts_cent=" + m_centrality + "/binarycollpts" + std::to_string(event_id) + ".dat";
 
@@ -495,7 +405,7 @@ int energyLoss::loadBinCollPoints(std::size_t event_id, std::vector<std::vector<
 	return 1;
 }
 
-int energyLoss::generateInitPosPoints(std::size_t event_id, std::vector<double> &xPoints, std::vector<double> &yPoints)
+int EnergyLoss::generateInitPosPoints(std::size_t event_id, std::vector<double> &xPoints, std::vector<double> &yPoints)
 {
 	std::vector<std::vector<double>> bcpts; if (loadBinCollPoints(event_id, bcpts) != 1) return -1;
 
@@ -520,7 +430,7 @@ int energyLoss::generateInitPosPoints(std::size_t event_id, std::vector<double> 
 	return 1;
 }
 
-int energyLoss::loadTProfile(std::size_t event_id, LinearInterpolator<double> &tempProfile)
+int EnergyLoss::loadTProfile(std::size_t event_id, LinearInterpolator<double> &tempProfile)
 {
 	const std::string path_in = "./evols/evols_cent=" + m_centrality + "/tempevol" + std::to_string(event_id) + ".dat";
 
@@ -550,7 +460,7 @@ int energyLoss::loadTProfile(std::size_t event_id, LinearInterpolator<double> &t
 	return 1;
 }
 
-void energyLoss::generateGaussTab(std::vector<double> &qGTab, std::vector<double> &fGTab) const
+void EnergyLoss::generateGaussTab(std::vector<double> &qGTab, std::vector<double> &fGTab) const
 //function that generates sampling points for Gaussian integration
 //qGTab, fGTab - vectors that store sampling point <- output
 {	
@@ -573,7 +483,7 @@ void energyLoss::generateGaussTab(std::vector<double> &qGTab, std::vector<double
 	}
 }
 
-void energyLoss::calculateAvgPathlenTemps(const std::vector<double> &pathLenghDist, const std::vector<double> &temperatureDist, std::vector<double> &avgPathLength, std::vector<double> &avgTemp) const
+void EnergyLoss::calculateAvgPathlenTemps(const std::vector<double> &pathLenghDist, const std::vector<double> &temperatureDist, std::vector<double> &avgPathLength, std::vector<double> &avgTemp) const
 {
 	LinearInterpolator<double> pathLenghDistInt(m_phiGridPts, pathLenghDist);
 	avgPathLength.push_back(poly::cubicIntegrate(m_phiGridPts, pathLenghDist)/2.0/M_PI);
@@ -586,7 +496,7 @@ void energyLoss::calculateAvgPathlenTemps(const std::vector<double> &pathLenghDi
 	avgTemp.push_back((temperatureDistInt.interpolate(M_PI/2.0)             + temperatureDistInt.interpolate(3.0*M_PI/2.0))       /2.0);
 }
 
-int energyLoss::exportResults(const std::string &particleName, std::size_t event_id, const std::vector<std::vector<double>> &RAApTphi, const std::vector<double> &avgPathLength, const std::vector<double> &avgTemp, std::size_t trajecNum, std::size_t elossNum) const
+int EnergyLoss::exportResults(const std::string &particleName, std::size_t event_id, const std::vector<std::vector<double>> &RAApTphi, const std::vector<double> &avgPathLength, const std::vector<double> &avgTemp, std::size_t trajecNum, std::size_t elossNum) const
 {
 	std::vector<std::string> header;
     header.push_back("#collision_system: " + m_collsys);
@@ -641,7 +551,7 @@ int energyLoss::exportResults(const std::string &particleName, std::size_t event
 }
 
 
-void energyLoss::RadCollEL(double X0, double Y0, double phi0, const LinearInterpolator<double> &TProfile, std::vector<double> &radiativeRAA1, std::vector<std::vector<double>> &radiativeRAA2, std::vector<double> &collisionalEL, double &pathLength, double &temp) const
+void EnergyLoss::RadCollEL(double X0, double Y0, double phi0, const LinearInterpolator<double> &TProfile, std::vector<double> &radiativeRAA1, std::vector<std::vector<double>> &radiativeRAA2, std::vector<double> &collisionalEL, double &pathLength, double &temp) const
 //function that calculates radiative and collisional EL for particles created in (X0, Y0) with direction phi0 (modefied pT integration algorithm)
 //X0, Y0, phi0  - inital position and angle 					  		     <- input
 //radiativeRAA1 - radiative RAA for single trajectory (dA410)	  		     <- output
@@ -739,7 +649,7 @@ void energyLoss::RadCollEL(double X0, double Y0, double phi0, const LinearInterp
 	}
 }
 
-void energyLoss::RadCollEL(double X0, double Y0, double phi0, const LinearInterpolator<double> &TProfile, std::vector<double> &radiativeRAA, std::vector<double> &collisionalEL, double &pathLenght, double &temp) const
+void EnergyLoss::RadCollEL(double X0, double Y0, double phi0, const LinearInterpolator<double> &TProfile, std::vector<double> &radiativeRAA, std::vector<double> &collisionalEL, double &pathLenght, double &temp) const
 //function that calculates radiative and collisional EL for particles created in (X0, Y0) with direction phi0 (standard algorithm)
 //X0, Y0, phi0  - inital position and angle 					  <- input
 //radiativeRAA  - radiative RAA for single trajectory 			  <- output
@@ -829,7 +739,7 @@ void energyLoss::RadCollEL(double X0, double Y0, double phi0, const LinearInterp
 }
 
 
-void energyLoss::runELossHeavyFlavour()
+void EnergyLoss::runELossHeavyFlavour()
 {
 	if (loaddsdpti2(m_pName, m_dsdpti2) != 1) return;
 
@@ -913,7 +823,7 @@ void energyLoss::runELossHeavyFlavour()
 	}
 }
 
-void energyLoss::gaussFilterIntegrate(const std::vector<double> &radiativeRAA1, const std::vector<std::vector<double>> &radiativeRAA2, const std::vector<double> &collisionalEL, std::vector<double> &singRAA1, std::vector<std::vector<double>> &singRAA2) const
+void EnergyLoss::gaussFilterIntegrate(const std::vector<double> &radiativeRAA1, const std::vector<std::vector<double>> &radiativeRAA2, const std::vector<double> &collisionalEL, std::vector<double> &singRAA1, std::vector<std::vector<double>> &singRAA2) const
 //function that performs Gauss filter integration - modefied pT integration algorithm
 //radiativeRAA1 - raditive RAA (dA410)											  <- input
 //radiativeRAA2 - raditive RAA (rest of dA integrals)							  <- input
@@ -1019,7 +929,7 @@ void energyLoss::gaussFilterIntegrate(const std::vector<double> &radiativeRAA1, 
 }
 
 
-void energyLoss::runELossLightQuarks()
+void EnergyLoss::runELossLightQuarks()
 {
 	const std::vector<std::string> lightQuarksList{"Down", "DownBar", "Strange", "Up", "UpBar"};
 
@@ -1117,7 +1027,7 @@ void energyLoss::runELossLightQuarks()
 	}
 }
 
-void energyLoss::gaussFilterIntegrate(const LinearInterpolator<double> &dsdpti2lquark, const std::vector<double> &radiativeRAA1, const std::vector<std::vector<double>> &radiativeRAA2, const std::vector<double> &collisionalEL, std::vector<double> &singRAA1, std::vector<std::vector<double>> &singRAA2) const
+void EnergyLoss::gaussFilterIntegrate(const LinearInterpolator<double> &dsdpti2lquark, const std::vector<double> &radiativeRAA1, const std::vector<std::vector<double>> &radiativeRAA2, const std::vector<double> &collisionalEL, std::vector<double> &singRAA1, std::vector<std::vector<double>> &singRAA2) const
 //function that performs Gauss filter integration - modefied pT integration algorithm used in all lquarks algorithm
 //dsdpti2lquark - light quark initial pT distribution      						  <- input
 //radiativeRAA1 - raditive RAA (dA410)											  <- input
@@ -1224,7 +1134,7 @@ void energyLoss::gaussFilterIntegrate(const LinearInterpolator<double> &dsdpti2l
 }
 
 
-void energyLoss::runELossLightFlavour()
+void EnergyLoss::runELossLightFlavour()
 {
 	if (loaddsdpti2(m_pName, m_dsdpti2)  != 1) return;
 
@@ -1297,7 +1207,7 @@ void energyLoss::runELossLightFlavour()
 	}
 }
 
-void energyLoss::gaussFilterIntegrate(const std::vector<double> &radiativeRAA, const std::vector<double> &collisionalEL, std::vector<double> &singRAA) const
+void EnergyLoss::gaussFilterIntegrate(const std::vector<double> &radiativeRAA, const std::vector<double> &collisionalEL, std::vector<double> &singRAA) const
 //function that performs Gauss filter integration - default algorithm
 //radiativeRAA  - raditive RAA 							   <- input
 //collisionalEL - collisional energy loss				   <- input

@@ -12,80 +12,22 @@
 #include <complex>
 #include <iomanip>
 
-lTables::lTables(int argc, const char *argv[])
-{
-	m_error = false;
-
-	std::vector<std::string> inputs; for (int i=2; i<argc; i++) inputs.push_back(argv[i]);
-
-	if ((inputs.size() == 1) && (inputs[0] == "-h")) {
-		std::cout << "default values: --sNN=5020GeV --pName=Charm --xB=0.6 --LdndxMaxPoints=500000 --LCollMaxPoints=10000 --TCRIT=0.155" << std::endl;
-		m_error = true;
-	}
-
-	std::map<std::string, std::string> inputparams;
-	for (const auto &in : inputs)
-	{
- 	   	std::string key = in.substr(0, in.find("="));
- 	   	std::string::size_type n = 0; while ((n = key.find("-", n)) != std::string::npos) {key.replace(n, 1, ""); n += 0;} //replacing all '-'
-		std::string val = in.substr(in.find("=")+1, in.length());
-		inputparams[key] = val;
-	}
-
-	//checking if configuration file is provided:
-	std::map<std::string, std::string> inputparams_f;
-	if (inputparams.count("c") > 0) {
-		std::ifstream file_in(inputparams["c"]);
-		if (!file_in.is_open()) {
-			std::cerr << "Error: unable to open configuration file. Aborting..." << std::endl;
-			m_error = true;
-		}
-		std::string line, key, sep, val;
-		while (std::getline(file_in, line))
-		{
-			std::stringstream ss(line);
-			ss >> key; ss >>sep; ss >> val;
-			inputparams_f[key] = val;
-		}
-		file_in.close();
-	}
-
-	//setting parameter values based on config file values and overwriting with command line values:
-	//
-	m_sNN = "5020GeV"; if (inputparams_f.count("sNN") > 0) m_sNN = inputparams_f["sNN"];
-					   if (inputparams.count("sNN")   > 0) m_sNN =   inputparams["sNN"];
-
-	m_pName = "Charm"; if (inputparams_f.count("pName") > 0) m_pName = inputparams_f["pName"];
-					   if (inputparams.count("pName")   > 0) m_pName =   inputparams["pName"];
-
-	m_xB = 0.6; if (inputparams_f.count("xB") > 0) m_xB = stod(inputparams_f["xB"]);
-				if (inputparams.count("xB")   > 0) m_xB = stod(  inputparams["xB"]);
-
-	m_LdndxMaxPoints = 500000; if (inputparams_f.count("LdndxMaxPoints") > 0) m_LdndxMaxPoints = stoi(inputparams_f["LdndxMaxPoints"]);
-						       if (  inputparams.count("LdndxMaxPoints") > 0) m_LdndxMaxPoints = stoi(  inputparams["LdndxMaxPoints"]);
-
-	m_LCollMaxPoints = 10000; if (inputparams_f.count("LCollMaxPoints") > 0) m_LCollMaxPoints = stoi(inputparams_f["LCollMaxPoints"]);
-						      if (inputparams.count("LCollMaxPoints")   > 0) m_LCollMaxPoints = stoi(  inputparams["LCollMaxPoints"]);
-	
-	m_TCRIT = 0.155; if (inputparams_f.count("TCRIT") > 0) m_TCRIT = stod(inputparams_f["TCRIT"]);
-					 if (  inputparams.count("TCRIT") > 0) m_TCRIT = stod(  inputparams["TCRIT"]);
-
-	//checking if provided value of sNN is an option:
-	if ((m_sNN != "5440GeV") && (m_sNN != "5020GeV") && (m_sNN != "2760GeV") && (m_sNN != "200GeV")) {
-		std::cerr << "Error: provided sNN parameter not an option, please try 5440GeV, 5020GeV, 2760GeV or 200GeV. Aborting..." << std::endl;
-		m_error = true;
-	}
+LTables::LTables(const config::lTablesConfig &cfg) {
+	m_sNN            = cfg.sNN;
+    m_pName          = cfg.pName;
+    m_xB             = cfg.xB;
+    m_LdndxMaxPoints = cfg.LdndxMaxPoints;
+    m_LCollMaxPoints = cfg.LCollMaxPoints;
+    m_TCRIT          = cfg.TCRIT;
 
 	m_nf = m_sNN   == "200GeV" ? 2.5 : 3.0;
 	m_CR = m_pName == "Gluon"  ? 3.0 : 4.0/3.0;
 }
 
-lTables::~lTables() {}
+LTables::~LTables() {}
 
-void lTables::runLTables()
+void LTables::runLTables()
 {
-	if (m_error) return;
-
 	m_Grids.setGridPoints(m_sNN, m_pName, m_TCRIT);
 
     RadLTables();
@@ -95,7 +37,7 @@ void lTables::runLTables()
 	if (exportLTables() != 1) return;
 }
 
-double lTables::haltonSequence(int index, int base) const
+double LTables::haltonSequence(int index, int base) const
 {
 	double f = 1.0;
 	double res = 0.0;
@@ -109,7 +51,7 @@ double lTables::haltonSequence(int index, int base) const
 	return res;
 }
 
-void lTables::LdndxHSeqInit()
+void LTables::LdndxHSeqInit()
 {
 	for (std::size_t i=0; i<m_LdndxMaxPoints; i++) {
 		m_LdndxHSeq1.push_back(haltonSequence((i+1)*409, 2));
@@ -118,7 +60,7 @@ void lTables::LdndxHSeqInit()
 	}
 }
 
-double lTables::productLog(double x) const
+double LTables::productLog(double x) const
 {
 	if (x == 0.0) {
 		return 0.0;
@@ -147,15 +89,15 @@ double lTables::productLog(double x) const
 	return w1;
 }
 
-double lTables::unitStep(double x) const {
+double LTables::unitStep(double x) const {
     return (x < 0.0) ? 0.0 : 1.0;
 }
 
-long double lTables::unitStep(long double x) const {
+long double LTables::unitStep(long double x) const {
     return (x < 0.0L) ? 0.0L : 1.0L;
 }
 
-double lTables::dElossDYN(double tau, double p, double x, double k, double q, double varphi, double T) const
+double LTables::dElossDYN(double tau, double p, double x, double k, double q, double varphi, double T) const
 {
 	double mu = 0.197*std::sqrt((-8.0*(6.0+m_nf)*M_PI*M_PI*T*T)/(2.0*m_nf-33.0)/m_lambda/m_lambda/productLog((-8.0*(6.0 + m_nf)*M_PI*M_PI*T*T)/(2.0*m_nf-33.0)/m_lambda/m_lambda));
 	double mg = mu / std::sqrt(2.0);
@@ -183,7 +125,7 @@ double lTables::dElossDYN(double tau, double p, double x, double k, double q, do
 	return fn;
 }
 
-double lTables::Ldndx(double tau, double p, double T, double x) const
+double LTables::Ldndx(double tau, double p, double T, double x) const
 {
 	double mu = 0.197*std::sqrt((-8.0*(6.0+m_nf)*M_PI*M_PI*T*T)/(2.0*m_nf-33.0)/m_lambda/m_lambda/productLog((-8.0*(6.0+m_nf)*M_PI*M_PI*T*T)/(2.0*m_nf-33.0)/m_lambda/m_lambda));
 	double mg = mu / std::sqrt(2.0);
@@ -217,7 +159,7 @@ double lTables::Ldndx(double tau, double p, double T, double x) const
 	return (sum*kq*qq*phiq/static_cast<double>(m_LdndxMaxPoints));
 }
 
-void lTables::RadLTables()
+void LTables::RadLTables()
 {
 	LdndxHSeqInit();
 
@@ -256,7 +198,7 @@ void lTables::RadLTables()
 	}
 }
 
-void lTables::LCollHSeqInit()
+void LTables::LCollHSeqInit()
 {
 	for (std::size_t i=0; i<m_LCollMaxPoints; i++) {
 		m_LCollHSeq1.push_back(haltonSequence((i+1)*409, 2));
@@ -265,7 +207,7 @@ void lTables::LCollHSeqInit()
 	}
 }
 
-std::complex<double> lTables::deltaL2(double q, double w, double T) const
+std::complex<double> LTables::deltaL2(double q, double w, double T) const
 {
 	double mu = 0.197*sqrt((-8.0*(6.0+m_nf)*M_PI*M_PI*T*T)/(2.0*m_nf-33.0)/m_lambda/m_lambda/productLog((-8.0*(6.0+m_nf)*M_PI*M_PI*T*T)/(2.0*m_nf-33.0)/m_lambda/m_lambda));
 
@@ -279,7 +221,7 @@ std::complex<double> lTables::deltaL2(double q, double w, double T) const
 	return (1.0/fn);
 }
 
-std::complex<double> lTables::deltaT2(double q, double w, double T) const
+std::complex<double> LTables::deltaT2(double q, double w, double T) const
 {
 	double mu = 0.197*sqrt((-8.0*(6.0+m_nf)*M_PI*M_PI*T*T)/(2.0*m_nf-33.0)/m_lambda/m_lambda/productLog((-8.0*(6.0+m_nf)*M_PI*M_PI*T*T)/(2.0*m_nf-33.0)/m_lambda/m_lambda));
 
@@ -295,7 +237,7 @@ std::complex<double> lTables::deltaT2(double q, double w, double T) const
 	return (1.0/fn);
 }
 
-double lTables::ENumFinite(double p, double T) const
+double LTables::ENumFinite(double p, double T) const
 {
 	double mu = 0.197*sqrt((-8.0*(6.0+m_nf)*M_PI*M_PI*T*T)/(2.0*m_nf-33.0)/m_lambda/m_lambda/productLog((-8.0*(6.0+m_nf)*M_PI*M_PI*T*T)/(2.0*m_nf-33.0)/m_lambda/m_lambda));
 	double M = 1.0;
@@ -382,7 +324,7 @@ double lTables::ENumFinite(double p, double T) const
 	return (ENumFiniteSum1 + ENumFiniteSum2);
 }
 
-void lTables::CollLTables()
+void LTables::CollLTables()
 {
 	LCollHSeqInit();
 
@@ -395,7 +337,7 @@ void lTables::CollLTables()
 	}
 }
 
-int lTables::exportLTables() const
+int LTables::exportLTables() const
 {
 	std::stringstream xBss; xBss << std::fixed << std::setprecision(1) << m_xB;
 	std::stringstream nfss; nfss << std::fixed << std::setprecision(1) << m_nf;

@@ -1,6 +1,7 @@
 #ifndef HEADERFILE_ELOSSHEADER
 #define HEADERFILE_ELOSSHEADER
 
+#include "config.hpp"
 #include "grids.hpp"
 #include "linearinterpolator.hpp"
 
@@ -9,36 +10,36 @@
 #include <map>
 #include <cstddef>
 
-class energyLoss {
+class EnergyLoss {
 
 public:
-    energyLoss(int argc, const char *argv[]);
-    ~energyLoss();
+    EnergyLoss(const config::energyLossConfig &cfg);
+    ~EnergyLoss();
     void runEnergyLoss();
 
 private:
-    bool m_error; //flag that checks if previous calculation is done properly
-    
-    std::string m_collsys;	    //collision system
-    std::string m_sNN; 		    //collision energy
-    std::string m_pName; 	    //particle name
-    std::string m_centrality;   //centrality class
-    double m_xB;			    //xB value
-    double m_BCPP;			    //binary collision points percentage
-    std::size_t m_eventN;		//number of events 
-    std::size_t m_phiGridN;		//phi points number
-    double m_TIMESTEP, m_TCRIT;	//time step and critical temperature
-    int m_BCPSEED;			    //seed for generating initial position points
+    std::string m_collsys;	     //collision system
+    std::string m_sNN; 		     //collision energy
+    std::string m_pName; 	     //particle name
+    std::string m_centrality;    //centrality class
+    double m_xB;			     //xB value
+    double m_BCPP;			     //binary collision points percentage
+    std::size_t m_eventN;		 //number of events 
+    std::size_t m_phiGridN;		 //phi points number
+    double m_TIMESTEP;           //jets' traversal step in fm
+    double m_TCRIT;	             //temperature at which eloss stops
+    int m_BCPSEED;			     //seed for generating initial position points
     
     double m_nf;			     //effective number of flavours
     const double m_lambda = 0.2; //QCD scale
     
-    gridPoints m_Grids;				    	          //grid points
-    LinearInterpolator<double> m_LNorm, m_Ldndx, m_LColl; //interpolated L tables
-    LinearInterpolator<double> m_dsdpti2; 				  //initial pT distribution
+    double m_mgC;                // constant gluon mass used for dA integrals
+    double m_MC;	             // constant particle mass used for dA integrals
+    double m_TCollConst;         // constant temperature used for Gauss filter integration
     
-    double m_mgC, m_MC;	 //constant particle and gluon masses used for dA integrals
-    double m_TCollConst; //constant temperature used for Gauss filter integration
+    gridPoints m_Grids;				    	              //grid points
+    LinearInterpolator<double> m_LNorm, m_Ldndx, m_LColl; //interpolated L tables
+    LinearInterpolator<double> m_dsdpti2; 				  //initial pT distribution    
     
     double m_tau0;									  	         //thermalization time
     double m_tauMaxFM = 25.0;					                 //maximal value of tau for TProfile grids in fm
