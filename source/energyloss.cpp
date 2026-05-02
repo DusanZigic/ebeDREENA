@@ -1,6 +1,6 @@
 #include "energyloss.hpp"
 #include "grids.hpp"
-#include "linearinterpolation.hpp"
+#include "linearinterpolator.hpp"
 #include "polyintegrator.hpp"
 
 #include <iostream>
@@ -190,7 +190,7 @@ double energyLoss::productLog(double x) const
 }
 
 
-int energyLoss::loaddsdpti2(const std::string &pname, interpolationF<double> &dsdpti2int)const 
+int energyLoss::loaddsdpti2(const std::string &pname, LinearInterpolator<double> &dsdpti2int)const 
 {
 	const std::string path_in = "./ptDists/ptDist" + m_sNN + "/ptDist_" + m_sNN + "_" + pname + ".dat";
 
@@ -261,15 +261,16 @@ int energyLoss::loadLdndx()
 
 	m_Ldndx.setData(Ldndx_tau, Ldndx_p, Ldndx_T, Ldndx_x, Ldndx_f);
 
-	std::vector<std::vector<double>> domain = m_Ldndx.domain();
-	if (m_Grids.tauPts(0)  < domain[0][0]) {std::cerr << "Error: tau grid point(s) out of lower bound of Ldndx domain. Aborting..." << std::endl; return -1;}
-	if (m_Grids.tauPts(-1) > domain[0][1]) {std::cerr << "Error: tau grid point(s) out of upper bound of Ldndx domain. Aborting..." << std::endl; return -1;}
-	if (m_Grids.pPts(0)    < domain[1][0]) {std::cerr << "Error:   p grid point(s) out of lower bound of Ldndx domain. Aborting..." << std::endl; return -1;}
-	if (m_Grids.pPts(-1)   > domain[1][1]) {std::cerr << "Error:   p grid point(s) out of upper bound of Ldndx domain. Aborting..." << std::endl; return -1;}
-	if (m_Grids.TPts(0)    < domain[2][0]) {std::cerr << "Error:   T grid point(s) out of lower bound of Ldndx domain. Aborting..." << std::endl; return -1;}
-	if (m_Grids.TPts(-1)   > domain[2][1]) {std::cerr << "Error:   T grid point(s) out of upper bound of Ldndx domain. Aborting..." << std::endl; return -1;}
-	if (m_Grids.xPts(0)    < domain[3][0]) {std::cerr << "Error:   x grid point(s) out of lower bound of Ldndx domain. Aborting..." << std::endl; return -1;}
-	if (m_Grids.xPts(-1)   > domain[3][1]) {std::cerr << "Error:   x grid point(s) out of upper bound of Ldndx domain. Aborting..." << std::endl; return -1;}
+	// TODO: domain check
+	// std::vector<std::vector<double>> domain = m_Ldndx.domain();
+	// if (m_Grids.tauPts(0)  < domain[0][0]) {std::cerr << "Error: tau grid point(s) out of lower bound of Ldndx domain. Aborting..." << std::endl; return -1;}
+	// if (m_Grids.tauPts(-1) > domain[0][1]) {std::cerr << "Error: tau grid point(s) out of upper bound of Ldndx domain. Aborting..." << std::endl; return -1;}
+	// if (m_Grids.pPts(0)    < domain[1][0]) {std::cerr << "Error:   p grid point(s) out of lower bound of Ldndx domain. Aborting..." << std::endl; return -1;}
+	// if (m_Grids.pPts(-1)   > domain[1][1]) {std::cerr << "Error:   p grid point(s) out of upper bound of Ldndx domain. Aborting..." << std::endl; return -1;}
+	// if (m_Grids.TPts(0)    < domain[2][0]) {std::cerr << "Error:   T grid point(s) out of lower bound of Ldndx domain. Aborting..." << std::endl; return -1;}
+	// if (m_Grids.TPts(-1)   > domain[2][1]) {std::cerr << "Error:   T grid point(s) out of upper bound of Ldndx domain. Aborting..." << std::endl; return -1;}
+	// if (m_Grids.xPts(0)    < domain[3][0]) {std::cerr << "Error:   x grid point(s) out of lower bound of Ldndx domain. Aborting..." << std::endl; return -1;}
+	// if (m_Grids.xPts(-1)   > domain[3][1]) {std::cerr << "Error:   x grid point(s) out of upper bound of Ldndx domain. Aborting..." << std::endl; return -1;}
 
 	return 1;
 }
@@ -313,13 +314,14 @@ int energyLoss::loadLNorm()
 
 	m_LNorm.setData(LNorm_tau, LNorm_p, LNorm_T, LNorm_f);
 
-	std::vector<std::vector<double>> domain = m_LNorm.domain();
-	if (m_Grids.tauPts(0)  < domain[0][0]) {std::cerr << "Error: tau grid point(s) out of lower bound of LNorm domain. Aborting..." << std::endl; return -1;}
-	if (m_Grids.tauPts(-1) > domain[0][1]) {std::cerr << "Error: tau grid point(s) out of upeer bound of LNorm domain. Aborting..." << std::endl; return -1;}
-	if (m_Grids.pPts(0)    < domain[1][0]) {std::cerr << "Error:   p grid point(s) out of lower bound of LNorm domain. Aborting..." << std::endl; return -1;}
-	if (m_Grids.pPts(-1)   > domain[1][1]) {std::cerr << "Error:   p grid point(s) out of upeer bound of LNorm domain. Aborting..." << std::endl; return -1;}
-	if (m_Grids.TPts(0)    < domain[2][0]) {std::cerr << "Error:   T grid point(s) out of lower bound of LNorm domain. Aborting..." << std::endl; return -1;}
-	if (m_Grids.TPts(-1)   > domain[2][1]) {std::cerr << "Error:   T grid point(s) out of upeer bound of LNorm domain. Aborting..." << std::endl; return -1;}
+	// TODO: domain check
+	// std::vector<std::vector<double>> domain = m_LNorm.domain();
+	// if (m_Grids.tauPts(0)  < domain[0][0]) {std::cerr << "Error: tau grid point(s) out of lower bound of LNorm domain. Aborting..." << std::endl; return -1;}
+	// if (m_Grids.tauPts(-1) > domain[0][1]) {std::cerr << "Error: tau grid point(s) out of upeer bound of LNorm domain. Aborting..." << std::endl; return -1;}
+	// if (m_Grids.pPts(0)    < domain[1][0]) {std::cerr << "Error:   p grid point(s) out of lower bound of LNorm domain. Aborting..." << std::endl; return -1;}
+	// if (m_Grids.pPts(-1)   > domain[1][1]) {std::cerr << "Error:   p grid point(s) out of upeer bound of LNorm domain. Aborting..." << std::endl; return -1;}
+	// if (m_Grids.TPts(0)    < domain[2][0]) {std::cerr << "Error:   T grid point(s) out of lower bound of LNorm domain. Aborting..." << std::endl; return -1;}
+	// if (m_Grids.TPts(-1)   > domain[2][1]) {std::cerr << "Error:   T grid point(s) out of upeer bound of LNorm domain. Aborting..." << std::endl; return -1;}
 
 	return 1;
 }
@@ -361,11 +363,12 @@ int energyLoss::loadLColl()
 
 	m_LColl.setData(LColl_p, LColl_T, LColl_f);
 
-	std::vector<std::vector<double>> domain = m_LColl.domain();
-	if (m_Grids.pCollPts(0)  < domain[0][0]) {std::cerr << "Error: p grid point(s) out of lower bound of LColl domain. Aborting..." << std::endl; return -1;}
-	if (m_Grids.pCollPts(-1) > domain[0][1]) {std::cerr << "Error: p grid point(s) out of upper bound of LColl domain. Aborting..." << std::endl; return -1;}
-	if (m_Grids.TCollPts(0)  < domain[1][0]) {std::cerr << "Error: T grid point(s) out of lower bound of LColl domain. Aborting..." << std::endl; return -1;}
-	if (m_Grids.TCollPts(-1) > domain[1][1]) {std::cerr << "Error: T grid point(s) out of upper bound of LColl domain. Aborting..." << std::endl; return -1;}
+	// TODO: domain check
+	// std::vector<std::vector<double>> domain = m_LColl.domain();
+	// if (m_Grids.pCollPts(0)  < domain[0][0]) {std::cerr << "Error: p grid point(s) out of lower bound of LColl domain. Aborting..." << std::endl; return -1;}
+	// if (m_Grids.pCollPts(-1) > domain[0][1]) {std::cerr << "Error: p grid point(s) out of upper bound of LColl domain. Aborting..." << std::endl; return -1;}
+	// if (m_Grids.TCollPts(0)  < domain[1][0]) {std::cerr << "Error: T grid point(s) out of lower bound of LColl domain. Aborting..." << std::endl; return -1;}
+	// if (m_Grids.TCollPts(-1) > domain[1][1]) {std::cerr << "Error: T grid point(s) out of upper bound of LColl domain. Aborting..." << std::endl; return -1;}
 
 	return 1;
 }
@@ -517,7 +520,7 @@ int energyLoss::generateInitPosPoints(std::size_t event_id, std::vector<double> 
 	return 1;
 }
 
-int energyLoss::loadTProfile(std::size_t event_id, interpolationF<double> &tempProfile)
+int energyLoss::loadTProfile(std::size_t event_id, LinearInterpolator<double> &tempProfile)
 {
 	const std::string path_in = "./evols/evols_cent=" + m_centrality + "/tempevol" + std::to_string(event_id) + ".dat";
 
@@ -572,15 +575,15 @@ void energyLoss::generateGaussTab(std::vector<double> &qGTab, std::vector<double
 
 void energyLoss::calculateAvgPathlenTemps(const std::vector<double> &pathLenghDist, const std::vector<double> &temperatureDist, std::vector<double> &avgPathLength, std::vector<double> &avgTemp) const
 {
-	interpolationF<double> pathLenghDistInt(m_phiGridPts, pathLenghDist);
+	LinearInterpolator<double> pathLenghDistInt(m_phiGridPts, pathLenghDist);
 	avgPathLength.push_back(poly::cubicIntegrate(m_phiGridPts, pathLenghDist)/2.0/M_PI);
-	avgPathLength.push_back((pathLenghDistInt.interpolation(m_phiGridPts.front()) + pathLenghDistInt.interpolation(m_phiGridPts.back()))/2.0);
-	avgPathLength.push_back((pathLenghDistInt.interpolation(M_PI/2.0)             + pathLenghDistInt.interpolation(3.0*M_PI/2.0))       /2.0);
+	avgPathLength.push_back((pathLenghDistInt.interpolate(m_phiGridPts.front()) + pathLenghDistInt.interpolate(m_phiGridPts.back()))/2.0);
+	avgPathLength.push_back((pathLenghDistInt.interpolate(M_PI/2.0)             + pathLenghDistInt.interpolate(3.0*M_PI/2.0))       /2.0);
 
-	interpolationF<double> temperatureDistInt(m_phiGridPts, temperatureDist);
+	LinearInterpolator<double> temperatureDistInt(m_phiGridPts, temperatureDist);
 	avgTemp.push_back(poly::cubicIntegrate(m_phiGridPts, temperatureDist)/2.0/M_PI);
-	avgTemp.push_back((temperatureDistInt.interpolation(m_phiGridPts.front()) + temperatureDistInt.interpolation(m_phiGridPts.back()))/2.0);
-	avgTemp.push_back((temperatureDistInt.interpolation(M_PI/2.0)             + temperatureDistInt.interpolation(3.0*M_PI/2.0))       /2.0);
+	avgTemp.push_back((temperatureDistInt.interpolate(m_phiGridPts.front()) + temperatureDistInt.interpolate(m_phiGridPts.back()))/2.0);
+	avgTemp.push_back((temperatureDistInt.interpolate(M_PI/2.0)             + temperatureDistInt.interpolate(3.0*M_PI/2.0))       /2.0);
 }
 
 int energyLoss::exportResults(const std::string &particleName, std::size_t event_id, const std::vector<std::vector<double>> &RAApTphi, const std::vector<double> &avgPathLength, const std::vector<double> &avgTemp, std::size_t trajecNum, std::size_t elossNum) const
@@ -638,7 +641,7 @@ int energyLoss::exportResults(const std::string &particleName, std::size_t event
 }
 
 
-void energyLoss::RadCollEL(double X0, double Y0, double phi0, const interpolationF<double> &TProfile, std::vector<double> &radiativeRAA1, std::vector<std::vector<double>> &radiativeRAA2, std::vector<double> &collisionalEL, double &pathLength, double &temp) const
+void energyLoss::RadCollEL(double X0, double Y0, double phi0, const LinearInterpolator<double> &TProfile, std::vector<double> &radiativeRAA1, std::vector<std::vector<double>> &radiativeRAA2, std::vector<double> &collisionalEL, double &pathLength, double &temp) const
 //function that calculates radiative and collisional EL for particles created in (X0, Y0) with direction phi0 (modefied pT integration algorithm)
 //X0, Y0, phi0  - inital position and angle 					  		     <- input
 //radiativeRAA1 - radiative RAA for single trajectory (dA410)	  		     <- output
@@ -650,7 +653,7 @@ void energyLoss::RadCollEL(double X0, double Y0, double phi0, const interpolatio
 
 	double t = m_tau0, currTemp; //defining current path-length (time) and temperature
 
-	while ((currTemp = TProfile.interpolation(t, X0 + t*std::cos(phi0), Y0 + t*std::sin(phi0))) > m_TCRIT) { //calculating current path-length and temp table
+	while ((currTemp = TProfile.interpolate(t, X0 + t*std::cos(phi0), Y0 + t*std::sin(phi0))) > m_TCRIT) { //calculating current path-length and temp table
 		currLTTabL.push_back(t);
 		currLTTabT.push_back(currTemp);
 		t += m_TIMESTEP;
@@ -672,7 +675,7 @@ void energyLoss::RadCollEL(double X0, double Y0, double phi0, const interpolatio
 			for (std::size_t iL=0; iL<currLTTabL.size(); iL++) //loop over current path-length and temperature table
 			{
 				currNormTabTau[iL] = currLTTabL[iL]; 								         //setting path-lengths
-				currNormTabVal[iL] = m_LNorm.interpolation(currLTTabL[iL], p, currLTTabT[iL]); //setting current norm values by integrating over time
+				currNormTabVal[iL] = m_LNorm.interpolate(currLTTabL[iL], p, currLTTabT[iL]); //setting current norm values by integrating over time
 			}
 
 			NormSparseP.push_back(p);												//setting p of current norm table
@@ -683,7 +686,7 @@ void energyLoss::RadCollEL(double X0, double Y0, double phi0, const interpolatio
 				for (std::size_t iL=0; iL<currLTTabL.size(); iL++) //loop over current path-length and temperature table
 				{
 					currDndxTabTau[iL] = currLTTabL[iL]; 									        //setting path-lengths
-					currDndxTabVal[iL] = m_Ldndx.interpolation(currLTTabL[iL], p, currLTTabT[iL], x); //setting Ldndx values
+					currDndxTabVal[iL] = m_Ldndx.interpolate(currLTTabL[iL], p, currLTTabT[iL], x); //setting Ldndx values
 				}
 
 				dndxSparseP.push_back(p); 												//setting p of current dndx table
@@ -692,8 +695,8 @@ void energyLoss::RadCollEL(double X0, double Y0, double phi0, const interpolatio
 			}
 		}
 		
-		interpolationF<double> currNorm(NormSparseP, NormSparseV); 			    //constructing interpolated current norm
-		interpolationF<double> currDndx(dndxSparseP, dndxSparseX, dndxSparseV); //constructing interpolated current dndx
+		LinearInterpolator<double> currNorm(NormSparseP, NormSparseV); 			    //constructing interpolated current norm
+		LinearInterpolator<double> currDndx(dndxSparseP, dndxSparseX, dndxSparseV); //constructing interpolated current dndx
 		
 		for (const auto &ph : m_Grids.RadPts()) //loop over Radpts
 		{
@@ -716,7 +719,7 @@ void energyLoss::RadCollEL(double X0, double Y0, double phi0, const interpolatio
 			for (std::size_t iL=0; iL<currLTTabL.size(); iL++) //loop over current path-length and temperature table
 			{
 				currCollTabTau[iL] = currLTTabL[iL]; 				         //setting path-lengths
-				currCollTabVal[iL] = m_LColl.interpolation(p, currLTTabT[iL]); //setting LColl values
+				currCollTabVal[iL] = m_LColl.interpolate(p, currLTTabT[iL]); //setting LColl values
 			}
 
 			collisionalEL.push_back(poly::linearIntegrate(currCollTabTau, currCollTabVal)); //calculating collisional energy loss by integrating over time
@@ -736,7 +739,7 @@ void energyLoss::RadCollEL(double X0, double Y0, double phi0, const interpolatio
 	}
 }
 
-void energyLoss::RadCollEL(double X0, double Y0, double phi0, const interpolationF<double> &TProfile, std::vector<double> &radiativeRAA, std::vector<double> &collisionalEL, double &pathLenght, double &temp) const
+void energyLoss::RadCollEL(double X0, double Y0, double phi0, const LinearInterpolator<double> &TProfile, std::vector<double> &radiativeRAA, std::vector<double> &collisionalEL, double &pathLenght, double &temp) const
 //function that calculates radiative and collisional EL for particles created in (X0, Y0) with direction phi0 (standard algorithm)
 //X0, Y0, phi0  - inital position and angle 					  <- input
 //radiativeRAA  - radiative RAA for single trajectory 			  <- output
@@ -747,7 +750,7 @@ void energyLoss::RadCollEL(double X0, double Y0, double phi0, const interpolatio
 
 	double t = m_tau0, currTemp; //defining current path-length (time) and temperature
 
-	while ((currTemp = TProfile.interpolation(t, X0 + t*cos(phi0), Y0 + t*sin(phi0))) > m_TCRIT) { //calculating current path-length and temp table
+	while ((currTemp = TProfile.interpolate(t, X0 + t*cos(phi0), Y0 + t*sin(phi0))) > m_TCRIT) { //calculating current path-length and temp table
 		currLTTabL.push_back(t);
 		currLTTabT.push_back(currTemp);
 		t += m_TIMESTEP;
@@ -769,7 +772,7 @@ void energyLoss::RadCollEL(double X0, double Y0, double phi0, const interpolatio
 			for (std::size_t iL=0; iL<currLTTabL.size(); iL++) //loop over current path-length and temperature table
 			{
 				currNormTabTau[iL] = currLTTabL[iL]; 								         //setting path-lengths
-				currNormTabVal[iL] = m_LNorm.interpolation(currLTTabL[iL], p, currLTTabT[iL]); //setting current norm values by integrating over time
+				currNormTabVal[iL] = m_LNorm.interpolate(currLTTabL[iL], p, currLTTabT[iL]); //setting current norm values by integrating over time
 			}
 
 			NormSparseP.push_back(p);												//setting p of current norm table
@@ -780,7 +783,7 @@ void energyLoss::RadCollEL(double X0, double Y0, double phi0, const interpolatio
 				for (std::size_t iL=0; iL<currLTTabL.size(); iL++) //loop over current path-length and temperature table
 				{
 					currDndxTabTau[iL] = currLTTabL[iL]; 									        //setting path-lengths
-					currDndxTabVal[iL] = m_Ldndx.interpolation(currLTTabL[iL], p, currLTTabT[iL], x); //setting Ldndx values
+					currDndxTabVal[iL] = m_Ldndx.interpolate(currLTTabL[iL], p, currLTTabT[iL], x); //setting Ldndx values
 				}
 
 				dndxSparseP.push_back(p); 												//setting p of current dndx table
@@ -789,11 +792,11 @@ void energyLoss::RadCollEL(double X0, double Y0, double phi0, const interpolatio
 			}
 		}
 		
-		interpolationF<double> currNorm(NormSparseP, NormSparseV); 			   //constructing interpolated current norm
-		interpolationF<double> currDndx(dndxSparseP, dndxSparseX, dndxSparseV); //constructing interpolated current dndx
+		LinearInterpolator<double> currNorm(NormSparseP, NormSparseV); 			   //constructing interpolated current norm
+		LinearInterpolator<double> currDndx(dndxSparseP, dndxSparseX, dndxSparseV); //constructing interpolated current dndx
 		
 		for (const auto &p : m_Grids.RadPts())
-			radiativeRAA.push_back(dA41(p, currNorm, currDndx)/m_dsdpti2.interpolation(p)); //calculating radiative RAA
+			radiativeRAA.push_back(dA41(p, currNorm, currDndx)/m_dsdpti2.interpolate(p)); //calculating radiative RAA
 		
 		///////////////////////////////////////////////////////////////////////////////////////////////////
 		//Collisional EnergyLoss calculation:
@@ -805,7 +808,7 @@ void energyLoss::RadCollEL(double X0, double Y0, double phi0, const interpolatio
 			for (std::size_t iL=0; iL<currLTTabL.size(); iL++) //loop over current path-length and temperature table
 			{
 				currCollTabTau[iL] = currLTTabL[iL]; 				         //setting path-lengths
-				currCollTabVal[iL] = m_LColl.interpolation(p, currLTTabT[iL]); //setting LColl values
+				currCollTabVal[iL] = m_LColl.interpolate(p, currLTTabT[iL]); //setting LColl values
 			}
 
 			collisionalEL.push_back(poly::linearIntegrate(currCollTabTau, currCollTabVal)); //calculating collisional energy loss by integrating over time
@@ -837,7 +840,7 @@ void energyLoss::runELossHeavyFlavour()
 	{
 		std::vector<double> xPoints, yPoints; generateInitPosPoints(eventID, xPoints, yPoints);
 
-		interpolationF<double> tProfile; loadTProfile(eventID, tProfile);
+		LinearInterpolator<double> tProfile; loadTProfile(eventID, tProfile);
 
 		std::vector<std::vector<double>> RAAdist(m_Grids.finPtsLength(), std::vector<double>(m_phiGridN, 0.0));
 
@@ -918,7 +921,7 @@ void energyLoss::gaussFilterIntegrate(const std::vector<double> &radiativeRAA1, 
 //singRAA1 		- RAA array after Gauss filter integration (dA410)				  <- output
 //singRAA2 		- RAA array after Gauss filter integration (rest of dA integrals) <- output
 {
-    interpolationF<double> muCollInt(m_Grids.pCollPts(), collisionalEL); //creating collisional energy loss interpolated function
+    LinearInterpolator<double> muCollInt(m_Grids.pCollPts(), collisionalEL); //creating collisional energy loss interpolated function
 
 	std::vector<double> qGaussTabOG, fGaussTabOG; //defining vectors that will store original Gauss filter sampling points
 	generateGaussTab(qGaussTabOG, fGaussTabOG);   //generating sampling points and settin number of sampling poins
@@ -928,7 +931,7 @@ void energyLoss::gaussFilterIntegrate(const std::vector<double> &radiativeRAA1, 
 	//////////////////////////////////////////////////////////////////////////////////
 	//Gauss integration of dAp410:
 	{
-        interpolationF<double> RadRelInt(m_Grids.RadPts(), radiativeRAA1); //creating radiative RAA1 interpolated function
+        LinearInterpolator<double> RadRelInt(m_Grids.RadPts(), radiativeRAA1); //creating radiative RAA1 interpolated function
 
 		double GFSum; //defining sum variable for Gauss filter
 		double dppT;  //defining integration variable
@@ -940,7 +943,7 @@ void energyLoss::gaussFilterIntegrate(const std::vector<double> &radiativeRAA1, 
 		{
 			GFSum = 0.0;
 
-			muCollCurrVal = muCollInt.interpolation(pT);
+			muCollCurrVal = muCollInt.interpolate(pT);
 
 			sigmaColl = std::sqrt(2.0*m_TCollConst*muCollCurrVal);
 
@@ -960,17 +963,17 @@ void energyLoss::gaussFilterIntegrate(const std::vector<double> &radiativeRAA1, 
 			for (std::size_t iG=0; iG<qGaussTab.size(); iG++)
 			{
 				dppT = muCollCurrVal + sigmaColl * qGaussTab[iG];			
-				GFSum += (m_dsdpti2.interpolation(pT + dppT)*RadRelInt.interpolation(pT + dppT)*(pT + dppT) / pT * fGaussTab[iG]);
+				GFSum += (m_dsdpti2.interpolate(pT + dppT)*RadRelInt.interpolate(pT + dppT)*(pT + dppT) / pT * fGaussTab[iG]);
 			}
 
-			singRAA1.push_back(1.0 / m_dsdpti2.interpolation(pT) * GFSum);
+			singRAA1.push_back(1.0 / m_dsdpti2.interpolate(pT) * GFSum);
 		}
 	}
 
 	//////////////////////////////////////////////////////////////////////////////////
 	//Gauss integration of FdA:
 	{
-		interpolationF<double> RadRelInt(m_Grids.RadPts(), m_Grids.FdpPts(), radiativeRAA2);
+		LinearInterpolator<double> RadRelInt(m_Grids.RadPts(), m_Grids.FdpPts(), radiativeRAA2);
 
 		double GFSum; //defining sum variable for Gauss filter
 		double dppT;  //defining integration variable
@@ -982,7 +985,7 @@ void energyLoss::gaussFilterIntegrate(const std::vector<double> &radiativeRAA1, 
 		{
 			singRAA2.push_back(std::vector<double>()); //resizing single RAA vector
 
-			muCollCurrVal = muCollInt.interpolation(pT);
+			muCollCurrVal = muCollInt.interpolate(pT);
 
 			sigmaColl = std::sqrt(2.0*m_TCollConst*muCollCurrVal);
 
@@ -1006,10 +1009,10 @@ void energyLoss::gaussFilterIntegrate(const std::vector<double> &radiativeRAA1, 
 				for (std::size_t iG=0; iG<qGaussTab.size(); iG++)
 				{
 					dppT = muCollCurrVal + sigmaColl * qGaussTab[iG];
-					GFSum += (m_dsdpti2.interpolation(pT + dpT + dppT)*RadRelInt.interpolation(pT + dppT, dpT)*(pT + dppT)/(pT+ dpT + dppT)*fGaussTab[iG]);
+					GFSum += (m_dsdpti2.interpolate(pT + dpT + dppT)*RadRelInt.interpolate(pT + dppT, dpT)*(pT + dppT)/(pT+ dpT + dppT)*fGaussTab[iG]);
 				}
 
-				singRAA2.back().push_back(1.0 / m_dsdpti2.interpolation(pT) * GFSum);
+				singRAA2.back().push_back(1.0 / m_dsdpti2.interpolate(pT) * GFSum);
 			}
 		}
 	}
@@ -1020,7 +1023,7 @@ void energyLoss::runELossLightQuarks()
 {
 	const std::vector<std::string> lightQuarksList{"Down", "DownBar", "Strange", "Up", "UpBar"};
 
-	std::vector<interpolationF<double>> dsdpti2LightQuarks(lightQuarksList.size());
+	std::vector<LinearInterpolator<double>> dsdpti2LightQuarks(lightQuarksList.size());
 
 	for (std::size_t iLQ=0; iLQ<lightQuarksList.size(); iLQ++)
 		if (loaddsdpti2(lightQuarksList[iLQ], dsdpti2LightQuarks[iLQ]) != 1) return;
@@ -1032,7 +1035,7 @@ void energyLoss::runELossLightQuarks()
 	{
 		std::vector<double> xPoints, yPoints; generateInitPosPoints(eventID, xPoints, yPoints);
 
-		interpolationF<double> tProfile; loadTProfile(eventID, tProfile);
+		LinearInterpolator<double> tProfile; loadTProfile(eventID, tProfile);
 
 		std::vector<std::vector<std::vector<double>>> RAAdist(lightQuarksList.size(), std::vector<std::vector<double>>(m_Grids.finPtsLength(), std::vector<double>(m_phiGridN, 0.0)));
 
@@ -1114,7 +1117,7 @@ void energyLoss::runELossLightQuarks()
 	}
 }
 
-void energyLoss::gaussFilterIntegrate(const interpolationF<double> &dsdpti2lquark, const std::vector<double> &radiativeRAA1, const std::vector<std::vector<double>> &radiativeRAA2, const std::vector<double> &collisionalEL, std::vector<double> &singRAA1, std::vector<std::vector<double>> &singRAA2) const
+void energyLoss::gaussFilterIntegrate(const LinearInterpolator<double> &dsdpti2lquark, const std::vector<double> &radiativeRAA1, const std::vector<std::vector<double>> &radiativeRAA2, const std::vector<double> &collisionalEL, std::vector<double> &singRAA1, std::vector<std::vector<double>> &singRAA2) const
 //function that performs Gauss filter integration - modefied pT integration algorithm used in all lquarks algorithm
 //dsdpti2lquark - light quark initial pT distribution      						  <- input
 //radiativeRAA1 - raditive RAA (dA410)											  <- input
@@ -1123,7 +1126,7 @@ void energyLoss::gaussFilterIntegrate(const interpolationF<double> &dsdpti2lquar
 //singRAA1 		- RAA array after Gauss filter integration (dA410)				  <- output
 //singRAA2 		- RAA array after Gauss filter integration (rest of dA integrals) <- output
 {
-    interpolationF<double> muCollInt(m_Grids.pCollPts(), collisionalEL); //creating collisional energy loss interpolated function
+    LinearInterpolator<double> muCollInt(m_Grids.pCollPts(), collisionalEL); //creating collisional energy loss interpolated function
 
 	std::vector<double> qGaussTabOG, fGaussTabOG; //defining vectors that will store original Gauss filter sampling points
 	generateGaussTab(qGaussTabOG, fGaussTabOG);   //generating sampling points and settin number of sampling poins
@@ -1133,7 +1136,7 @@ void energyLoss::gaussFilterIntegrate(const interpolationF<double> &dsdpti2lquar
 	//////////////////////////////////////////////////////////////////////////////////
 	//Gauss integration of dAp410:
 	{
-        interpolationF<double> RadRelInt(m_Grids.RadPts(), radiativeRAA1); //creating radiative RAA1 interpolated function
+        LinearInterpolator<double> RadRelInt(m_Grids.RadPts(), radiativeRAA1); //creating radiative RAA1 interpolated function
 
 		double GFSum; //defining sum variable for Gauss filter
 		double dppT;  //defining integration variable
@@ -1145,7 +1148,7 @@ void energyLoss::gaussFilterIntegrate(const interpolationF<double> &dsdpti2lquar
 		{
 			GFSum = 0.0;
 
-			muCollCurrVal = muCollInt.interpolation(pT);
+			muCollCurrVal = muCollInt.interpolate(pT);
 
 			sigmaColl = std::sqrt(2.0*m_TCollConst*muCollCurrVal);
 
@@ -1165,17 +1168,17 @@ void energyLoss::gaussFilterIntegrate(const interpolationF<double> &dsdpti2lquar
 			for (std::size_t iG=0; iG<qGaussTab.size(); iG++)
 			{
 				dppT = muCollCurrVal + sigmaColl * qGaussTab[iG];			
-				GFSum += (dsdpti2lquark.interpolation(pT + dppT)*RadRelInt.interpolation(pT + dppT)*(pT + dppT) / pT * fGaussTab[iG]);
+				GFSum += (dsdpti2lquark.interpolate(pT + dppT)*RadRelInt.interpolate(pT + dppT)*(pT + dppT) / pT * fGaussTab[iG]);
 			}
 
-			singRAA1.push_back(1.0 / dsdpti2lquark.interpolation(pT) * GFSum);
+			singRAA1.push_back(1.0 / dsdpti2lquark.interpolate(pT) * GFSum);
 		}
 	}
 
 	//////////////////////////////////////////////////////////////////////////////////
 	//Gauss integration of FdA:
 	{
-		interpolationF<double> RadRelInt(m_Grids.RadPts(), m_Grids.FdpPts(), radiativeRAA2);
+		LinearInterpolator<double> RadRelInt(m_Grids.RadPts(), m_Grids.FdpPts(), radiativeRAA2);
 
 		double GFSum; //defining sum variable for Gauss filter
 		double dppT;  //defining integration variable
@@ -1187,7 +1190,7 @@ void energyLoss::gaussFilterIntegrate(const interpolationF<double> &dsdpti2lquar
 		{
 			singRAA2.push_back(std::vector<double>()); //resizing single RAA vector
 
-			muCollCurrVal = muCollInt.interpolation(pT);
+			muCollCurrVal = muCollInt.interpolate(pT);
 
 			sigmaColl = std::sqrt(2.0*m_TCollConst*muCollCurrVal);
 
@@ -1211,10 +1214,10 @@ void energyLoss::gaussFilterIntegrate(const interpolationF<double> &dsdpti2lquar
 				for (std::size_t iG=0; iG<qGaussTab.size(); iG++)
 				{
 					dppT = muCollCurrVal + sigmaColl * qGaussTab[iG];
-					GFSum += (dsdpti2lquark.interpolation(pT + dpT + dppT)*RadRelInt.interpolation(pT + dppT, dpT)*(pT + dppT)/(pT+ dpT + dppT)*fGaussTab[iG]);
+					GFSum += (dsdpti2lquark.interpolate(pT + dpT + dppT)*RadRelInt.interpolate(pT + dppT, dpT)*(pT + dppT)/(pT+ dpT + dppT)*fGaussTab[iG]);
 				}
 
-				singRAA2.back().push_back(1.0 / dsdpti2lquark.interpolation(pT) * GFSum);
+				singRAA2.back().push_back(1.0 / dsdpti2lquark.interpolate(pT) * GFSum);
 			}
 		}
 	}
@@ -1232,7 +1235,7 @@ void energyLoss::runELossLightFlavour()
 	{
 		std::vector<double> xPoints, yPoints; generateInitPosPoints(eventID, xPoints, yPoints);
 
-		interpolationF<double> tProfile; loadTProfile(eventID, tProfile);
+		LinearInterpolator<double> tProfile; loadTProfile(eventID, tProfile);
 
 		std::vector<std::vector<double>> RAAdist(m_Grids.finPtsLength(), std::vector<double>(m_phiGridN, 0.0));
 
@@ -1300,8 +1303,8 @@ void energyLoss::gaussFilterIntegrate(const std::vector<double> &radiativeRAA, c
 //collisionalEL - collisional energy loss				   <- input
 //singRAA 		- RAA array after Gauss filter integration <- output
 {
-    interpolationF<double> RadRelInt(m_Grids.RadPts(),   radiativeRAA);  //creating radiative RAA interpolated function
-    interpolationF<double> muCollInt(m_Grids.pCollPts(), collisionalEL); //creating collisional energy loss interpolated function
+    LinearInterpolator<double> RadRelInt(m_Grids.RadPts(),   radiativeRAA);  //creating radiative RAA interpolated function
+    LinearInterpolator<double> muCollInt(m_Grids.pCollPts(), collisionalEL); //creating collisional energy loss interpolated function
 
 	std::vector<double> qGaussTabOG, fGaussTabOG; //defining vectors that will store original Gauss filter sampling points
 	generateGaussTab(qGaussTabOG, fGaussTabOG);   //generating sampling points and settin number of sampling poins
@@ -1321,7 +1324,7 @@ void energyLoss::gaussFilterIntegrate(const std::vector<double> &radiativeRAA, c
 	{
 		GFSum = 0.0L;
 
-		muCollCurrVal = muCollInt.interpolation(pT);
+		muCollCurrVal = muCollInt.interpolate(pT);
 
 		sigmaColl = std::sqrt(2.0*m_TCollConst*muCollCurrVal);
 
@@ -1341,9 +1344,9 @@ void energyLoss::gaussFilterIntegrate(const std::vector<double> &radiativeRAA, c
 		for (std::size_t iG=0; iG<qGaussTab.size(); iG++)
 		{
 			dpT = muCollCurrVal + sigmaColl * qGaussTab[iG];			
-			GFSum += (m_dsdpti2.interpolation(pT + dpT)*RadRelInt.interpolation(pT + dpT)*(pT + dpT) / pT * fGaussTab[iG]);
+			GFSum += (m_dsdpti2.interpolate(pT + dpT)*RadRelInt.interpolate(pT + dpT)*(pT + dpT) / pT * fGaussTab[iG]);
 		}
 
-		singRAA.push_back(1.0 / m_dsdpti2.interpolation(pT) * GFSum);
+		singRAA.push_back(1.0 / m_dsdpti2.interpolate(pT) * GFSum);
 	}
 }

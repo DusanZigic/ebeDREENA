@@ -1,5 +1,5 @@
 #include "grids.hpp"
-#include "linearinterpolation.hpp"
+#include "linearinterpolator.hpp"
 
 #include <iostream>
 #include <vector>
@@ -472,7 +472,7 @@ void gridPoints::generateGrids(const std::vector<std::vector<double>> &density, 
 	inttabX.push_back(linearIntegrate(densityX, densityF, xxx));
 	inttabF.push_back(xxx);
 
-	interpolationF<double> inttabInt(inttabX, inttabF);
+	LinearInterpolator<double> inttabInt(inttabX, inttabF);
 
 	gridpoints.resize(0);
 
@@ -481,7 +481,7 @@ void gridPoints::generateGrids(const std::vector<std::vector<double>> &density, 
 	for (std::size_t i=1; i<numpts-1; i++)
 	{
 		double a = inttabX.front() + (inttabX.back()-inttabX.front())*static_cast<double>(i)/static_cast<double>(numpts-1);
-		gridpoints.push_back(inttabInt.interpolation(a));
+		gridpoints.push_back(inttabInt.interpolate(a));
 	}
 
 	gridpoints.push_back(densityX.back());

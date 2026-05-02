@@ -2,7 +2,7 @@
 #define HEADERFILE_ELOSSHEADER
 
 #include "grids.hpp"
-#include "linearinterpolation.hpp"
+#include "linearinterpolator.hpp"
 
 #include <string>
 #include <vector>
@@ -34,8 +34,8 @@ private:
     const double m_lambda = 0.2; //QCD scale
     
     gridPoints m_Grids;				    	          //grid points
-    interpolationF<double> m_LNorm, m_Ldndx, m_LColl; //interpolated L tables
-    interpolationF<double> m_dsdpti2; 				  //initial pT distribution
+    LinearInterpolator<double> m_LNorm, m_Ldndx, m_LColl; //interpolated L tables
+    LinearInterpolator<double> m_dsdpti2; 				  //initial pT distribution
     
     double m_mgC, m_MC;	 //constant particle and gluon masses used for dA integrals
     double m_TCollConst; //constant temperature used for Gauss filter integration
@@ -62,7 +62,7 @@ private:
 
     double productLog(double x) const;
 
-    int loaddsdpti2(const std::string &pname, interpolationF<double> &dsdpti2int) const;
+    int loaddsdpti2(const std::string &pname, LinearInterpolator<double> &dsdpti2int) const;
     int loadLdndx();
     int loadLNorm();
     int loadLColl();
@@ -70,30 +70,30 @@ private:
     int loadPhiPoints();
     int loadBinCollPoints(std::size_t event_id, std::vector<std::vector<double>> &bcpoints);
     int generateInitPosPoints(std::size_t event_id, std::vector<double> &xPoints, std::vector<double> &yPoints);
-    int loadTProfile(std::size_t event_id, interpolationF<double> &tempProfile);
+    int loadTProfile(std::size_t event_id, LinearInterpolator<double> &tempProfile);
 
-    void RadCollEL(double X0, double Y0, double phi0, const interpolationF<double> &TProfile, std::vector<double> &radiativeRAA1, std::vector<std::vector<double>> &radiativeRAA2, std::vector<double> &collisionalEL, double &pathLength, double &temp) const;
-    void RadCollEL(double X0, double Y0, double phi0, const interpolationF<double> &TProfile, std::vector<double> &radiativeRAA, std::vector<double> &collisionalEL, double &pathLenght, double &temp) const;
+    void RadCollEL(double X0, double Y0, double phi0, const LinearInterpolator<double> &TProfile, std::vector<double> &radiativeRAA1, std::vector<std::vector<double>> &radiativeRAA2, std::vector<double> &collisionalEL, double &pathLength, double &temp) const;
+    void RadCollEL(double X0, double Y0, double phi0, const LinearInterpolator<double> &TProfile, std::vector<double> &radiativeRAA, std::vector<double> &collisionalEL, double &pathLenght, double &temp) const;
 
     double haltonSequence(int index, int base) const;
     void FdAHaltonSeqInit(std::size_t FdAMaxPts);
-    double dAp410(double ph, const interpolationF<double> &norm) const;
-    double FdA411(double ph, double dp, const interpolationF<double> &norm, const interpolationF<double> &dndx) const;
-    double FdA412(double ph, double dp, const interpolationF<double> &norm, const interpolationF<double> &dndx) const;
-    double FdA413(double ph, double dp, const interpolationF<double> &norm, const interpolationF<double> &dndx) const;
-    double FdA414(double ph, double dp, const interpolationF<double> &norm, const interpolationF<double> &dndx) const;
-    double FdA415(double ph, double dp, const interpolationF<double> &norm, const interpolationF<double> &dndx) const;
-    double FdA(double ph, double dp, const interpolationF<double> &currnorm, const interpolationF<double> &currdndx) const;
+    double dAp410(double ph, const LinearInterpolator<double> &norm) const;
+    double FdA411(double ph, double dp, const LinearInterpolator<double> &norm, const LinearInterpolator<double> &dndx) const;
+    double FdA412(double ph, double dp, const LinearInterpolator<double> &norm, const LinearInterpolator<double> &dndx) const;
+    double FdA413(double ph, double dp, const LinearInterpolator<double> &norm, const LinearInterpolator<double> &dndx) const;
+    double FdA414(double ph, double dp, const LinearInterpolator<double> &norm, const LinearInterpolator<double> &dndx) const;
+    double FdA415(double ph, double dp, const LinearInterpolator<double> &norm, const LinearInterpolator<double> &dndx) const;
+    double FdA(double ph, double dp, const LinearInterpolator<double> &currnorm, const LinearInterpolator<double> &currdndx) const;
     void dAHaltonSeqInit(std::size_t dAMaxPts);
-    double dA410(double ph, const interpolationF<double> &norm) const;
-    double dA411(double ph, const interpolationF<double> &norm, const interpolationF<double> &dndx) const;
-    double dA412(double ph, const interpolationF<double> &norm, const interpolationF<double> &dndx) const;
-    double dA413(double ph, const interpolationF<double> &norm, const interpolationF<double> &dndx) const;
-    double dA414(double ph, const interpolationF<double> &norm, const interpolationF<double> &dndx) const;
-    double dA415(double ph, const interpolationF<double> &norm, const interpolationF<double> &dndx) const;
-    double dA416(double ph, const interpolationF<double> &norm, const interpolationF<double> &dndx) const;
-    double dA417(double ph, const interpolationF<double> &norm, const interpolationF<double> &dndx) const;
-    double dA41(double ph, interpolationF<double> &currnorm, interpolationF<double> &currdndx) const;
+    double dA410(double ph, const LinearInterpolator<double> &norm) const;
+    double dA411(double ph, const LinearInterpolator<double> &norm, const LinearInterpolator<double> &dndx) const;
+    double dA412(double ph, const LinearInterpolator<double> &norm, const LinearInterpolator<double> &dndx) const;
+    double dA413(double ph, const LinearInterpolator<double> &norm, const LinearInterpolator<double> &dndx) const;
+    double dA414(double ph, const LinearInterpolator<double> &norm, const LinearInterpolator<double> &dndx) const;
+    double dA415(double ph, const LinearInterpolator<double> &norm, const LinearInterpolator<double> &dndx) const;
+    double dA416(double ph, const LinearInterpolator<double> &norm, const LinearInterpolator<double> &dndx) const;
+    double dA417(double ph, const LinearInterpolator<double> &norm, const LinearInterpolator<double> &dndx) const;
+    double dA41(double ph, LinearInterpolator<double> &currnorm, LinearInterpolator<double> &currdndx) const;
 
     void generateGaussTab(std::vector<double> &qGTab, std::vector<double> &fGTab) const;
     void calculateAvgPathlenTemps(const std::vector<double> &pathLenghDist, const std::vector<double> &temperatureDist, std::vector<double> &avgPathLength, std::vector<double> &avgTemp) const;
@@ -103,7 +103,7 @@ private:
     void gaussFilterIntegrate(const std::vector<double> &radiativeRAA1, const std::vector<std::vector<double>> &radiativeRAA2, const std::vector<double> &collisionalEL, std::vector<double> &singRAA1, std::vector<std::vector<double>> &singRAA2) const;
 
     void runELossLightQuarks();
-    void gaussFilterIntegrate(const interpolationF<double> &dsdpti2lquark, const std::vector<double> &radiativeRAA1, const std::vector<std::vector<double>> &radiativeRAA2, const std::vector<double> &collisionalEL, std::vector<double> &singRAA1, std::vector<std::vector<double>> &singRAA2) const;
+    void gaussFilterIntegrate(const LinearInterpolator<double> &dsdpti2lquark, const std::vector<double> &radiativeRAA1, const std::vector<std::vector<double>> &radiativeRAA2, const std::vector<double> &collisionalEL, std::vector<double> &singRAA1, std::vector<std::vector<double>> &singRAA2) const;
 
     void runELossLightFlavour();
     void gaussFilterIntegrate(const std::vector<double> &radiativeRAA, const std::vector<double> &collisionalEL, std::vector<double> &singRAA) const;
