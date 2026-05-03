@@ -66,7 +66,7 @@ namespace detail {
 
     template <typename T>
     inline void getCubicCoeffs(const T* x, const T* f, double* coeff) {
-        T s[4] = {static_cast<T>(0)};;
+        T s[4] = {static_cast<T>(0)};
         T phi, ff, b;
         s[3] = -x[0];
 
@@ -135,20 +135,20 @@ inline T cubicIntegrate(const std::vector<T> &x, const std::vector<T> &f) {
 
 template <typename T>
 inline T linearIntegrate(const std::vector<T> &x, const std::vector<T> &f, T low, T high) {
-    VALIDATE_DATA_SIZE("LinearIntegrate", xdata.size(), 2);
+    VALIDATE_DATA_SIZE("LinearIntegrate", x.size(), 2);
     VALIDATE_POLY_RANGE("LinearIntegrate", low, x.front(), x.back());
     VALIDATE_POLY_RANGE("LinearIntegrate", high, x.front(), x.back());
 
     std::size_t iStart = detail::locatePoint(x, low, 1);
     std::size_t iEnd = detail::locatePoint(x, high, 1);
-    T total = static_cast<T>(0);;
+    T total = static_cast<T>(0);
 
     for (std::size_t i = iStart; i <= iEnd; ++i) {
         T xL = (i == iStart) ? low : x[i];
         T xR = (i == iEnd) ? high : x[i+1];
         
         T dx = x[i+1] - x[i];
-        T k = f[i+1] - f[i] / dx;
+        T k = (f[i+1] - f[i]) / dx;
         T c = f[i] - k * x[i];
 
         total += static_cast<T>(0.5) * k * (xR * xR - xL * xL) + c * (xR - xL);
@@ -158,7 +158,7 @@ inline T linearIntegrate(const std::vector<T> &x, const std::vector<T> &f, T low
 
 template <typename T>
 inline T cubicIntegrate(const std::vector<T> &x, const std::vector<T> &f, T low, T high) {
-    VALIDATE_DATA_SIZE("CubicIntegrate", xdata.size(), 4);
+    VALIDATE_DATA_SIZE("CubicIntegrate", x.size(), 4);
     VALIDATE_POLY_RANGE("CubicIntegrate", low, x.front(), x.back());
     VALIDATE_POLY_RANGE("CubicIntegrate", high, x.front(), x.back());
 
