@@ -13,7 +13,7 @@
 int main(int argc, const char* argv[])
 {
 	if (argc < 2) {
-        std::cerr << "Usage: ./simulation [lTables|eLoss] [options...]" << std::endl;
+        parser::printGlobalUsage(argv[0]);
         return 1;
     }
 
@@ -28,8 +28,8 @@ int main(int argc, const char* argv[])
 		EnergyLoss energyLoss(cfg);
 		// energyLoss.runEnergyLoss();
 	} else {
-		std::cerr << "Unknown mode: " << mode << std::endl;
-		std::cerr << "Possible modes: lTables, eLoss" << std::endl;
+		std::cerr << "Error: Unknown mode '" << mode << "'\n";
+		parser::printGlobalUsage(argv[0]);
 		return 1;
 	}
 

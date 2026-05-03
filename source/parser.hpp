@@ -4,6 +4,7 @@
 #include "config.hpp"
 
 namespace parser {
+    void printGlobalUsage(const char* execName);
     config::energyLossConfig parseEnergyLossArgs(int argc, const char* argv[]);
     config::lTablesConfig parseLTableArgs(int args, const char* argv[]);
 } // namespace parser

@@ -105,6 +105,17 @@ namespace {
 }
 
 namespace parser {
+    void printGlobalUsage(const char* execName) {
+        std::cerr << "\nUsage: " << execName << " [mode] [options...]\n\n"
+                  << "AVAILABLE MODES:\n"
+                  << "  lTables    Generate lookup tables for energy loss calculations.\n"
+                  << "  eLoss      Run the main energy loss simulation.\n\n"
+                  << "GETTING HELP:\n"
+                  << "  To see detailed parameters for a specific mode, run:\n"
+                  << "    " << execName << " lTables -h\n"
+                  << "    " << execName << " eLoss -h\n" << std::endl;
+    }
+
     config::lTablesConfig parseLTableArgs(int argc, const char* argv[]) {
         if (argc >= 3 && ((std::string(argv[2]) == "-h") || (std::string(argv[2]) == "--help"))) {
             config::lTablesConfig defaults;
