@@ -60,13 +60,18 @@ public:
 //private variables and functions:
 private:
 
-	double m_nf     = 3.0;
-	double m_lambda = 0.2;
-	double m_TCRIT  = 0.155;
+	std::string m_sNN;
+	double m_nf;
+	double m_TCRIT;
+	const double m_lambda = 0.2;
 	std::vector<double> m_tauPts, m_pPts, m_TPts, m_xPts, m_RadPts, m_FdpPts;
 	std::vector<double> m_pCollPts, m_TCollPts, m_finPts;
-	double linearIntegrate(const std::vector<double> &dataX, const std::vector<double> &dataF, double xH) const;
 	void generateGrids(const std::vector<std::vector<double>> &density, std::size_t numpts, std::vector<double> &gridpoints);
+	void setGridPointsBottom();
+	void setGridPointsCharm();
+	void setGridPointsGluon();
+	void setGridPointsLQuarks();
+	void roundGridPoints();
 };
 
 #endif
