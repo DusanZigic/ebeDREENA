@@ -63,10 +63,13 @@ double LTables::haltonSequence(int index, int base) const noexcept {
 }
 
 void LTables::LdndxHSeqInit() {
-	for (std::size_t i=0; i<m_LdndxMaxPoints; i++) {
-		m_LdndxHSeq1.push_back(haltonSequence((i+1)*409, 2));
-		m_LdndxHSeq2.push_back(haltonSequence((i+1)*409, 3));
-		m_LdndxHSeq3.push_back(haltonSequence((i+1)*409, 5));
+	m_LdndxHSeq1.resize(m_LdndxMaxPoints);
+	m_LdndxHSeq2.resize(m_LdndxMaxPoints);
+	m_LdndxHSeq3.resize(m_LdndxMaxPoints);
+	for (std::size_t i = 0; i < m_LdndxMaxPoints; ++i) {
+		m_LdndxHSeq1[i] = haltonSequence((i+1)*409, 2);
+		m_LdndxHSeq2[i] = haltonSequence((i+1)*409, 3);
+		m_LdndxHSeq3[i] = haltonSequence((i+1)*409, 5);
 	}
 }
 
@@ -188,12 +191,14 @@ void LTables::RadLTables() {
 	}
 }
 
-void LTables::LCollHSeqInit()
-{
-	for (std::size_t i=0; i<m_LCollMaxPoints; i++) {
-		m_LCollHSeq1.push_back(haltonSequence((i+1)*409, 2));
-		m_LCollHSeq2.push_back(haltonSequence((i+1)*409, 3));
-		m_LCollHSeq3.push_back(haltonSequence((i+1)*409, 5));
+void LTables::LCollHSeqInit() {
+	m_LCollHSeq1.resize(m_LCollMaxPoints);
+    m_LCollHSeq2.resize(m_LCollMaxPoints);
+    m_LCollHSeq3.resize(m_LCollMaxPoints);
+	for (std::size_t i = 0; i < m_LCollMaxPoints; ++i) {
+		m_LCollHSeq1[i] = haltonSequence((i+1)*409, 2);
+		m_LCollHSeq2[i] = haltonSequence((i+1)*409, 3);
+		m_LCollHSeq3[i] = haltonSequence((i+1)*409, 5);
 	}
 }
 
