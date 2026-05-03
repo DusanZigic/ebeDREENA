@@ -22,12 +22,24 @@ LTables::LTables(const config::lTablesConfig &cfg) {
 
 	m_nf = m_sNN   == "200GeV" ? 2.5 : 3.0;
 	m_CR = m_pName == "Gluon"  ? 3.0 : 4.0/3.0;
+
+	m_xB_2 = m_xB*m_xB;
+	m_alpha_prefactor = 4.0*M_PI/(11.0 - 2.0*m_nf/3.0);
+
+	if (m_pName == "Bottom") {
+		m_particleType = ParticleType::Bottom;
+	} else if (m_pName == "Charm") {
+		m_particleType = ParticleType::Charm;
+	} else if (m_pName == "Gluon") {
+		m_particleType = ParticleType::Gluon;
+	} else {
+		m_particleType = ParticleType::LQuarks;
+	}
 }
 
 LTables::~LTables() {}
 
-void LTables::runLTables()
-{
+void LTables::runLTables() {
 	m_Grids.setGridPoints(m_sNN, m_pName, m_TCRIT);
 
     RadLTables();
@@ -37,8 +49,7 @@ void LTables::runLTables()
 	if (exportLTables() != 1) return;
 }
 
-double LTables::haltonSequence(int index, int base) const
-{
+double LTables::haltonSequence(int index, int base) const noexcept {
 	double f = 1.0;
 	double res = 0.0;
 
@@ -51,8 +62,7 @@ double LTables::haltonSequence(int index, int base) const
 	return res;
 }
 
-void LTables::LdndxHSeqInit()
-{
+void LTables::LdndxHSeqInit() {
 	for (std::size_t i=0; i<m_LdndxMaxPoints; i++) {
 		m_LdndxHSeq1.push_back(haltonSequence((i+1)*409, 2));
 		m_LdndxHSeq2.push_back(haltonSequence((i+1)*409, 3));
@@ -60,44 +70,47 @@ void LTables::LdndxHSeqInit()
 	}
 }
 
-double LTables::dElossDYN(double tau, double p, double x, double k, double q, double varphi, double T) const
-{
+LTables::ParticleMasses LTables::calculateMasses(double T) const noexcept {
 	double mu = utils::debyeMass(m_nf, m_lambda, T);
-	double mg = mu / std::sqrt(2.0);
-	double M = 0.0;
-	if (m_pName == "Bottom") M = 4.75;
-	else if (m_pName == "Charm") M = 1.2;
-	else if (m_pName == "Gluon") M = mu/std::sqrt(2.0);
-	else M = mu/std::sqrt(6.0);
+    double mg = mu / std::sqrt(2.0);
+    double M = 0.0;
 
-	double b = std::sqrt(mg*mg + M * M*x*x);
-	double e = std::sqrt(p*p + M * M);
-	double alpha  = 4.0*M_PI/(11.0 - 2.0*m_nf/3.0)/std::log((k*k + mg*mg + M*M*x*x)/x/m_lambda/m_lambda);
-	double alpha1 = 4.0*M_PI/(11.0 - 2.0*m_nf/3.0)/std::log(e*T/0.2/0.2);
+	switch (m_particleType) {
+        case ParticleType::Bottom:  M = 4.75; break;
+        case ParticleType::Charm:   M = 1.2;  break;
+        case ParticleType::Gluon:   M = mg;   break;
+        case ParticleType::LQuarks: M = mu / std::sqrt(6.0); break;
+    }
 
+    return {mu, mg, M};
+}
+
+double LTables::dElossDYN(double tau, double x, double k, double q, double varphi, double T, double mu2, double mg2, double M2, double e, double b, double alpha1) const noexcept {	
+	double k2 = k*k;
+	double q2 = q*q;
+	double b2 = b*b;
+	double k_q_cosvarphi = k*q*std::cos(varphi);
+	double k2_q2_plus_2_k_q_cosvarphi = k2 + q2 + 2.0*k_q_cosvarphi;
+	double k2_q2_2_k_q_cosvarphi_plus_b2 = k2_q2_plus_2_k_q_cosvarphi + b2;
+	double k2_q2_2_k_q_cosvarphi_plus_b2_squared = k2_q2_2_k_q_cosvarphi_plus_b2*k2_q2_2_k_q_cosvarphi_plus_b2;
+	
+	double alpha  = m_alpha_prefactor/std::log((k2 + mg2 + M2*x*x)/x/m_lambda_2);
+	
 	double fn = 1.0;
-	fn *= 1.0 / utils::HBARC_GEVFM*m_CR*alpha/M_PI*3.0*alpha1*T*2.0*k*q/M_PI;
-	fn *= (mu*mu - mu*mu*m_xB*m_xB)/(q*q + mu*mu*m_xB*m_xB)/(q*q + mu*mu);
+	fn *= 1.0/utils::HBARC_GEVFM * m_CR*alpha/M_PI * 3.0*alpha1*T * 2.0*k*q/M_PI;
+	fn *= (mu2 - mu2*m_xB_2)/(q2 + mu2*m_xB_2)/(q2 + mu2);
 
-	double psi = (k*k + q*q + 2.0*k*q*std::cos(varphi) + b*b)/2.0/x/e*tau/utils::HBARC_GEVFM;
+	double psi = (k2_q2_2_k_q_cosvarphi_plus_b2)/2.0/x/e*tau/utils::HBARC_GEVFM;
 
 	fn *= (1 - std::cos(psi));
-	fn *= 2.0/(k*k + b*b)/(k*k + q*q + 2.0*k*q*cos(varphi) + b*b)/(k*k + q*q + 2.0*k*q*std::cos(varphi) + b*b);
-	fn *= (-1.0*k*q*std::cos(varphi)*(k*k + q*q + 2.0*k*q*std::cos(varphi)) + b*b*(k*q*std::cos(varphi) + q*q));
+	fn *= 2.0/(k2 + b2)/k2_q2_2_k_q_cosvarphi_plus_b2_squared;
+	fn *= (-1.0*k_q_cosvarphi*k2_q2_plus_2_k_q_cosvarphi + b2*(k_q_cosvarphi + q2));
 
 	return fn;
 }
 
-double LTables::Ldndx(double tau, double p, double T, double x) const
-{
-	double mu = utils::debyeMass(m_nf, m_lambda, T);
-	double mg = mu / std::sqrt(2.0);
-	double M = 0.0;
-	if (m_pName == "Bottom") M = 4.75;
-	else if (m_pName == "Charm") M = 1.2;
-	else if (m_pName == "Gluon") M = mg;
-	else M = mu/std::sqrt(6.0);
-	double e = std::sqrt(p*p + M * M);
+double LTables::Ldndx(double tau, double T, double x, double mu2, double mg2, double M2, double e, double alpha1) const noexcept {
+	double b = std::sqrt(mg2 + M2*x*x);
 
 	double kl = 0.00000001; 
 	double kh = 2.0*x*(1 - x)*e;
@@ -108,54 +121,68 @@ double LTables::Ldndx(double tau, double p, double T, double x) const
 	double phil = 0.0;
 	double phih = M_PI;
 	double phiq = (phih - phil);
-	double sum = 0.0; //integration sum
-	double k, q, phi; //integration variables
+	double sum = 0.0;
+	double k, q, phi;
 
 	#pragma omp parallel for reduction(+:sum) private(k,q,phi)
 	for (std::size_t i = 0; i<m_LdndxMaxPoints; i++) {
 		  k  =   kl + m_LdndxHSeq1[i]*kq;
 		  q  =   ql + m_LdndxHSeq2[i]*qq;
 		phi  = phil + m_LdndxHSeq3[i]*phiq;
-		sum += 2*dElossDYN(tau, p, x, k, q, phi, T)/x;
+		sum += 2.0*dElossDYN(tau, x, k, q, phi, T, mu2, mg2, M2, e, b, alpha1)/x;
 	}
 
 	return (sum*kq*qq*phiq/static_cast<double>(m_LdndxMaxPoints));
 }
 
-void LTables::RadLTables()
-{
+void LTables::RadLTables() {
 	LdndxHSeqInit();
+	
+	const std::vector<double>& tauPts = m_Grids.tauPts();
+	const std::vector<double>& pPts = m_Grids.pPts();
+	const std::vector<double>& TPts = m_Grids.TPts();
+	const std::vector<double>& xPts = m_Grids.xPts();
 
-	m_LdndxTbl.resize(m_Grids.tauPtsLength(), std::vector<std::vector<std::vector<double>>>(m_Grids.pPtsLength(), std::vector<std::vector<double>>(m_Grids.TPtsLength(), std::vector<double>(m_Grids.xPtsLength(), 0.0))));;
-	m_LNormTbl.resize(m_Grids.tauPtsLength(), std::vector<std::vector<double>>(m_Grids.pPtsLength(), std::vector<double>(m_Grids.TPtsLength(), 0.0)));
+	m_LdndxTbl.resize(
+		tauPts.size(), std::vector<std::vector<std::vector<double>>>(
+			pPts.size(), std::vector<std::vector<double>>(
+				TPts.size(), std::vector<double>(
+					xPts.size(), 0.0
+				)
+			)
+		)
+	);
+	m_LNormTbl.resize(
+		tauPts.size(), std::vector<std::vector<double>>(
+			pPts.size(), std::vector<double>(
+				TPts.size(), 0.0
+			)
+		)
+	);
+	
+	double xIntegLimitLow, xIntegLimitHigh;
 
-	double tau, p, T, x, mu, M, xIntegLimitLow, xIntegLimitHigh;
+	for (std::size_t i_tau = 0; i_tau < tauPts.size(); ++i_tau) {
+		for (std::size_t i_p = 0; i_p < pPts.size(); ++i_p) {
+			for (std::size_t i_T = 0; i_T < TPts.size(); ++i_T) {
 
-	for (std::size_t itau=0; itau<m_Grids.tauPtsLength(); itau++) {
-		tau = m_Grids.tauPts(itau);
+				auto [mu, mg, M] = calculateMasses(TPts[i_T]);
+				double mu2 = mu*mu, mg2 = mg*mg, M2 = M*M;
+				double e = std::sqrt(pPts[i_p]*pPts[i_p] + M2);
+				double alpha1 = m_alpha_prefactor/std::log(e*TPts[i_T]/m_lambda_2);
 
-		for (std::size_t ip=0; ip<m_Grids.pPtsLength(); ip++) {
-			p = m_Grids.pPts(ip);
-
-			for (std::size_t iT=0; iT<m_Grids.TPtsLength(); iT++) {
-				T = m_Grids.TPts(iT);
-				
-				for (std::size_t ix=0; ix<m_Grids.xPtsLength(); ix++) {
-					x = m_Grids.xPts(ix);
-					m_LdndxTbl[itau][ip][iT][ix] = Ldndx(tau, p, T, x);
+				for (std::size_t i_x = 0; i_x < xPts.size(); ++i_x) {
+					m_LdndxTbl[i_tau][i_p][i_T][i_x] = Ldndx(tauPts[i_tau], TPts[i_T], xPts[i_x], mu2, mg2, M2, e, alpha1);
 				}
 				
-				mu = utils::debyeMass(m_nf, m_lambda, T);
-				if (m_pName == "Bottom") M = 4.75;
-				else if (m_pName == "Charm") M = 1.2;
-				else if (m_pName == "Gluon") M = mu/std::sqrt(2.0);
-				else M = mu/std::sqrt(6.0);
-				
-				xIntegLimitLow = mu/std::sqrt(2.0)/(p + std::sqrt(p*p + M*M));
-				if (m_pName == "Gluon") xIntegLimitHigh = 0.5;
-				else xIntegLimitHigh = 1.0 - M/(std::sqrt(p*p + M*M) + p);
+				xIntegLimitLow = mu/std::sqrt(2.0)/(pPts[i_p] + e);
+				if (m_particleType == ParticleType::Gluon) {
+					xIntegLimitHigh = 0.5;
+				} else {
+					xIntegLimitHigh = 1.0 - M/(e + pPts[i_p]);
+				}
 
-				m_LNormTbl[itau][ip][iT] = poly::cubicIntegrate(m_Grids.xPts(), m_LdndxTbl[itau][ip][iT], xIntegLimitLow, xIntegLimitHigh);
+				m_LNormTbl[i_tau][i_p][i_T] = poly::cubicIntegrate(xPts, m_LdndxTbl[i_tau][i_p][i_T], xIntegLimitLow, xIntegLimitHigh);
 			}
 		}
 	}

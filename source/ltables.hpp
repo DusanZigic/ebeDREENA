@@ -29,17 +29,26 @@ private:
     const double m_lambda = 0.2;   // QCD scale
     const double m_kmaxColl = 5.0; // kMaxColl value
     double m_CR;		           // Casimir (3 for gluons, 4/3 for quakrs)
+
+    double m_xB_2;                               // squared xB (precalculated for optimizations)
+    const double m_lambda_2 = m_lambda*m_lambda; // squared lambda (precalculated for optimizations)
+    double m_alpha_prefactor;                    // prefactor for alpha (precalculated for optimizations)
     
     gridPoints m_Grids; //grids
 
+    enum class ParticleType { Bottom, Charm, Gluon, LQuarks }; // particle type enum class (refactored for optimizations)
+    ParticleType m_particleType;
+    struct ParticleMasses { double mu; double mg; double M; }; // masses structure containing Debye, gluon and jet mass (refactored for optimizations)
+    ParticleMasses calculateMasses(double T) const noexcept;
+
     std::vector<double> m_LdndxHSeq1, m_LdndxHSeq2, m_LdndxHSeq3;
-    double haltonSequence(int index, int base) const;
+    double haltonSequence(int index, int base) const noexcept;
     void LdndxHSeqInit();
     
     std::vector<std::vector<std::vector<std::vector<double>>>> m_LdndxTbl;
     std::vector<std::vector<std::vector<double>>> m_LNormTbl;
-    double dElossDYN(double tau, double p, double x, double k, double q, double varphi, double T) const;
-    double Ldndx(double tau, double p, double T, double x) const;
+    double dElossDYN(double tau, double x, double k, double q, double varphi, double T, double mu2, double mg2, double M2, double e, double b, double alpha1) const noexcept;
+    double Ldndx(double tau, double T, double x, double mu2, double mg2, double M2, double e, double alpha1) const noexcept;
     void RadLTables();
 
     std::vector<double> m_LCollHSeq1, m_LCollHSeq2, m_LCollHSeq3;
