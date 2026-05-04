@@ -202,47 +202,40 @@ void LTables::LCollHSeqInit() {
 	}
 }
 
-std::complex<double> LTables::deltaL2(double q, double w, double T) const
-{
-	double mu = utils::debyeMass(m_nf, m_lambda, T);
-
+std::complex<double> LTables::deltaL2(double q, double w, double mu2, double mu4) const noexcept{
 	std::complex<double> q_c = q, w_c = w;
 	std::complex<double> log_c = std::log((q_c + w_c)/(q_c - w_c));
 
-	std::complex<double> fn = q*q + mu*mu*(1.0 - w/2.0/q*log_c);
+	std::complex<double> fn = q*q + mu2*(1.0 - w/2.0/q*log_c);
 	fn  = fn*fn;
-	fn += (M_PI*M_PI*mu*mu*mu*mu/4.0*w*w/q/q);
+	fn += (M_PI*M_PI*mu4/4.0*w*w/q/q);
 
 	return (1.0/fn);
 }
 
-std::complex<double> LTables::deltaT2(double q, double w, double T) const
-{
-	double mu = utils::debyeMass(m_nf, m_lambda, T);
+std::complex<double> LTables::deltaT2(double q, double w, double mu2, double mu4) const noexcept {
 	std::complex<double> q_c = q, w_c = w;
 	std::complex<double> log_c = std::log((q_c + w_c)/(q_c - w_c));
 
 	std::complex<double> fn = w*w/q/q + w*(q*q - w*w)/2.0/q/q/q*log_c;
-	fn *= (mu*mu/2.0);
+	fn *= (mu2/2.0);
 	fn += (q*q - w*w);
 	fn = fn*fn;
-	fn += (M_PI*M_PI*mu*mu*mu*mu/4.0*w*w/q/q*(q*q - w*w)*(q*q - w*w)/4.0/q/q/q/q);
+	fn += (M_PI*M_PI*mu4/4.0*w*w/q/q*(q*q - w*w)*(q*q - w*w)/4.0/q/q/q/q);
 
 	return (1.0/fn);
 }
 
-double LTables::ENumFinite(double p, double T) const
-{
-	double mu = utils::debyeMass(m_nf, m_lambda, T);
-	double M = 1.0;
-	if (m_pName == "Bottom") M = 4.75;
-	else if (m_pName == "Charm") M = 1.2;
-	else if (m_pName == "Gluon") M = mu/std::sqrt(2.0);
-	else M = mu/std::sqrt(6.0);
+double LTables::ENumFinite(double p, double T) const noexcept {
+	auto [mu, mg, M] = calculateMasses(T);
+	(void)mg;
+	double mu2 = mu*mu;
+	double mu4 = mu2*mu2;
 	double e = std::sqrt(p*p + M * M);
 	double v = p/e;
-	double alpha1 = 4.0*M_PI/(11.0 - 2.0/3.0*m_nf)/std::log(e*T/0.2/0.2);
-	double alpha2 = 2.0*M_PI/(11.0 - 2.0/m_nf*3.0)/std::log(mu/0.2);
+	double v2 = v*v;
+	double alpha1 = 4.0*M_PI/(11.0 - 2.0/3.0*m_nf)/std::log(e*T/m_lambda_2);
+	double alpha2 = 2.0*M_PI/(11.0 - 2.0/m_nf*3.0)/std::log(mu/m_lambda);
 
 	//ENumFinite1 integral:
 	double ENumFiniteSum1 = 0.0;
@@ -253,31 +246,36 @@ double LTables::ENumFinite(double p, double T) const
 	double kl = 0.0001;
 	double kh = m_kmaxColl;
 	double kq = kh - kl;
+	double expKT;
 
 	double ql = 0.0001;
-	double qh, qq, q, qmaxCol, qh1, qh2;
+	double qh, qq, q, q2, q4, qh1, qh2;
+	double qmaxCol = std::sqrt(6.0*e*T);
+	
+	double wl, wh, wq, w, w2;
 
-	double wl, wh, wq, w;
-
-	#pragma omp parallel for reduction(+:ENumFiniteSum1) private(k,nfCol, qh,qq,q,qmaxCol, wl,wh,wq,w)
+	#pragma omp parallel for reduction(+:ENumFiniteSum1) private(k,expKT,nfCol, qh,qq,q,q2,q4, wl,wh,wq,w,w2)
 	for (std::size_t i=0; i<m_LCollMaxPoints; i++) {
 		std::complex<double> fn_comp;
 
 		k = kl + m_LCollHSeq1[i]*kq;
-		nfCol = m_Ng/(std::exp(k/T) - 1.0) + m_nf/(std::exp(k/T) + 1.0);
+		expKT = std::exp(k/T);
+		nfCol = m_Ng/(expKT - 1.0) + m_nf/(expKT + 1.0);
 
-		qmaxCol = std::sqrt(6.0*e*T);
 		qh = ((qmaxCol < k) ? qmaxCol : k);
 		qq = qh - ql;
 		q = ql + m_LCollHSeq2[i]*qq;
+		q2 = q*q;
+		q4 = q2*q2;
 
 		wl = -q;
 		wh = q;
 		wq = wh - wl;
 		w = wl + m_LCollHSeq3[i]*wq;
+		w2 = w*w;
 
-		fn_comp  = 2.0/utils::HBARC_GEVFM*m_CR*alpha1*alpha2/M_PI/v/v*nfCol*w*utils::unitStep(v*v*q*q - w*w);
-		fn_comp *= (deltaL2(q, w, T)*((2.0*k + w)*(2.0*k + w) - q*q)/2.0 + deltaT2(q, w, T)*(q*q - w*w)/4.0/q/q/q/q*((2.0*k + w)*(2.0*k + w) + q*q)*(v*v*q*q - w*w));
+		fn_comp  = 2.0/utils::HBARC_GEVFM*m_CR*alpha1*alpha2/M_PI/v/v*nfCol*w*utils::unitStep(v2*q2 - w2);
+		fn_comp *= (deltaL2(q, w, mu2, mu4)*((2.0*k + w)*(2.0*k + w) - q2)/2.0 + deltaT2(q, w, mu2, mu4)*(q2 - w2)/4.0/q4*((2.0*k + w)*(2.0*k + w) + q*q)*(v2*q2 - w2));
 
 		ENumFiniteSum1 += fn_comp.real()*qq*wq;
 	}
@@ -287,28 +285,31 @@ double LTables::ENumFinite(double p, double T) const
 	//ENumFinite2 integral:
 	double ENumFiniteSum2 = 0.0;
 
-	#pragma omp parallel for reduction(+:ENumFiniteSum2) private(k,nfCol, ql,qh,qh1,qh2,qq,q,qmaxCol, wl,wh,wq,w)
+	#pragma omp parallel for reduction(+:ENumFiniteSum2) private(k,expKT,nfCol, ql,qh,qh1,qh2,qq,q,q2,q4, wl,wh,wq,w,w2)
 	for (std::size_t i=0; i<m_LCollMaxPoints; i++) {
 		std::complex<double> fn_comp;
 
 		k = kl + m_LCollHSeq1[i]*kq;
-		nfCol = m_Ng/(std::exp(k/T) - 1.0) + m_nf/(std::exp(k/T) + 1.0);
+		expKT = std::exp(k/T);
+		nfCol = m_Ng/(expKT - 1.0) + m_nf/(expKT + 1.0);
 
-		qmaxCol = std::sqrt(6.0*e*T);
 		ql = ((qmaxCol < k) ? qmaxCol : k);
 		qh1 = 2.0*k*(1.0 - k/e)/(1.0 - v + 2.0*k/e);
 		qh2 = ((k > qh1) ? k : qh1);
 		qh = ((qmaxCol < qh2) ? qmaxCol : qh2);
 		qq = qh - ql;
 		q = ql + m_LCollHSeq2[i]*qq;
+		q2 = q*q;
+		q4 = q2*q2;
 
 		wl = q - 2.0*k;
 		wh = q;
 		wq = wh - wl;
 		w = wl + m_LCollHSeq3[i] * wq;
+		w2 = w*w;
 
-		fn_comp  = 2.0/utils::HBARC_GEVFM*m_CR*alpha1*alpha2/M_PI/v/v*nfCol*w*utils::unitStep(v*v*q*q - w*w);
-		fn_comp *= (deltaL2(q, w, T)*((2.0*k + w)*(2.0*k + w) - q*q)/2.0 + deltaT2(q, w, T)*(q*q - w*w)/4.0/q/q/q/q*((2.0*k + w)*(2.0*k + w) + q*q)*(v*v*q*q - w*w));
+		fn_comp  = 2.0/utils::HBARC_GEVFM*m_CR*alpha1*alpha2/M_PI/v/v*nfCol*w*utils::unitStep(v2*q2 - w2);
+		fn_comp *= (deltaL2(q, w, mu2, mu4)*((2.0*k + w)*(2.0*k + w) - q2)/2.0 + deltaT2(q, w, mu2, mu4)*(q2 - w2)/4.0/q4*((2.0*k + w)*(2.0*k + w) + q2)*(v2*q2 - w2));
 
 		ENumFiniteSum2 += fn_comp.real()*qq*wq;
 	}
@@ -322,11 +323,18 @@ void LTables::CollLTables()
 {
 	LCollHSeqInit();
 
-	m_LCollTbl.resize(m_Grids.pCollPtsLength(), std::vector<double>(m_Grids.TCollPtsLength(), 0.0));
+	const std::vector<double>& pCollPts = m_Grids.pCollPts();
+	const std::vector<double>& TCollPts = m_Grids.TCollPts();
 
-	for (std::size_t ip=0; ip<m_Grids.pCollPtsLength(); ip++) {
-		for (std::size_t iT=0; iT<m_Grids.TCollPtsLength(); iT++) {
-			m_LCollTbl[ip][iT] = ENumFinite(m_Grids.pCollPts(ip), m_Grids.TCollPts(iT));
+	m_LCollTbl.resize(
+		pCollPts.size(), std::vector<double>(
+			TCollPts.size(), 0.0
+		)
+	);
+
+	for (std::size_t i_p = 0; i_p < pCollPts.size(); ++i_p) {
+		for (std::size_t i_T = 0; i_T < TCollPts.size(); ++i_T) {
+			m_LCollTbl[i_p][i_T] = ENumFinite(pCollPts[i_p], TCollPts[i_T]);
 		}
 	}
 }

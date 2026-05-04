@@ -55,9 +55,9 @@ private:
     void LCollHSeqInit();
     
     std::vector<std::vector<double>> m_LCollTbl;
-    std::complex<double> deltaL2(double q, double w, double T) const;
-    std::complex<double> deltaT2(double q, double w, double T) const;
-    double ENumFinite(double p, double T) const;
+    std::complex<double> deltaL2(double q, double w, double mu2, double mu4) const noexcept;
+    std::complex<double> deltaT2(double q, double w, double mu2, double mu4) const noexcept;
+    double ENumFinite(double p, double T) const noexcept;
     void CollLTables();
 
     int exportLTables() const;
