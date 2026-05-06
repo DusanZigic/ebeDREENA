@@ -22,7 +22,7 @@ int main(int argc, const char* argv[])
 	if (mode == "lTables") {
 		auto cfg = parser::parseLTableArgs(argc, argv);
 		LTables lTables(cfg);
-		// lTables.runLTables();
+		lTables.runLTables();
 	} else if (mode == "eLoss") {
 		auto cfg = parser::parseEnergyLossArgs(argc, argv);
 		EnergyLoss energyLoss(cfg);
