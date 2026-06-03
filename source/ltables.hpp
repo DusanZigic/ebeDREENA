@@ -1,6 +1,7 @@
 #ifndef LTABLES_HPP
 #define LTABLES_HPP
 
+#include "utils.hpp"
 #include "config.hpp"
 #include "grids.hpp"
 
@@ -36,13 +37,9 @@ private:
     
     gridPoints m_Grids; //grids
 
-    enum class ParticleType { Bottom, Charm, Gluon, LQuarks }; // particle type enum class (refactored for optimizations)
-    ParticleType m_particleType;
-    struct ParticleMasses { double mu; double mg; double M; }; // masses structure containing Debye, gluon and jet mass (refactored for optimizations)
-    ParticleMasses calculateMasses(double T) const noexcept;
+    utils::ParticleType m_particleType;
 
     std::vector<double> m_LdndxHSeq1, m_LdndxHSeq2, m_LdndxHSeq3;
-    double haltonSequence(int index, int base) const noexcept;
     void LdndxHSeqInit();
     
     std::vector<std::vector<std::vector<std::vector<double>>>> m_LdndxTbl;

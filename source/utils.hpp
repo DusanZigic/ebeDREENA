@@ -1,3 +1,7 @@
+#ifndef UTILS_HPP
+#define UTILS_HPP
+
+#include <cstdint>
 #include <cmath>
 
 namespace {
@@ -33,12 +37,31 @@ namespace {
 namespace utils {
     const double HBARC_GEVFM = 0.197;
 
+    enum class ParticleType: std::uint8_t { Bottom, Charm, Gluon, LQuarks }; // particle type enum class
+    struct ParticleMasses { double mu; double mg; double M; };               // masses structure containing Debye, gluon and jet mass
+
     inline double debyeMass(double nf, double lambda, double T) {
         double numerator = -8.0*(6.0 + nf)*M_PI*M_PI*T*T;
         double denominator = (2.0*nf - 33.0)*lambda*lambda;
         double x = numerator / denominator;
         double mu_squared  = x / productLog(x);
         return HBARC_GEVFM * std::sqrt(mu_squared);
+    }
+
+
+    inline ParticleMasses calculateMasses(ParticleType particleType, double nf, double lambda, double T) {
+        double mu = utils::debyeMass(nf, lambda, T);
+        double mg = mu / std::sqrt(2.0);
+        double M = 0.0;
+
+        switch (particleType) {
+            case ParticleType::Bottom:  M = 4.75; break;
+            case ParticleType::Charm:   M = 1.2;  break;
+            case ParticleType::Gluon:   M = mg;   break;
+            case ParticleType::LQuarks: M = mu / std::sqrt(6.0); break;
+        }
+
+        return {mu, mg, M};
     }
 
     inline double unitStep(double x) {
@@ -49,4 +72,16 @@ namespace utils {
         return (x < 0.0L) ? 0.0L : 1.0L;
     }
 
+    inline double haltonSequence(int index, int base) {
+        double f = 1.0, res = 0.0;
+        while (index > 0) {
+            f = f / static_cast<double>(base);
+            res += f * static_cast<double>(index % base);
+            index = index / base; // integer division
+        }
+        return res;
+    }
+
 } // namspace utils
+
+#endif // UTILS_HPP

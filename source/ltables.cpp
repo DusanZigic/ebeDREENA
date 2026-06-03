@@ -1,6 +1,5 @@
 #include "ltables.hpp"
 #include "grids.hpp"
-#include "utils.hpp"
 #include "polyintegrator.hpp"
 
 #include <iostream>
@@ -27,13 +26,13 @@ LTables::LTables(const config::lTablesConfig &cfg) {
 	m_alpha_prefactor = 4.0*M_PI/(11.0 - 2.0*m_nf/3.0);
 
 	if (m_pName == "Bottom") {
-		m_particleType = ParticleType::Bottom;
+		m_particleType = utils::ParticleType::Bottom;
 	} else if (m_pName == "Charm") {
-		m_particleType = ParticleType::Charm;
+		m_particleType = utils::ParticleType::Charm;
 	} else if (m_pName == "Gluon") {
-		m_particleType = ParticleType::Gluon;
+		m_particleType = utils::ParticleType::Gluon;
 	} else {
-		m_particleType = ParticleType::LQuarks;
+		m_particleType = utils::ParticleType::LQuarks;
 	}
 }
 
@@ -49,43 +48,15 @@ void LTables::runLTables() {
 	if (exportLTables() != 1) return;
 }
 
-double LTables::haltonSequence(int index, int base) const noexcept {
-	double f = 1.0;
-	double res = 0.0;
-
-	while (index > 0) {
-		f = f / static_cast<double>(base);
-		res += f * static_cast<double>(index % base);
-		index = index / base; // integer division
-	}
-
-	return res;
-}
-
 void LTables::LdndxHSeqInit() {
 	m_LdndxHSeq1.resize(m_LdndxMaxPoints);
 	m_LdndxHSeq2.resize(m_LdndxMaxPoints);
 	m_LdndxHSeq3.resize(m_LdndxMaxPoints);
 	for (std::size_t i = 0; i < m_LdndxMaxPoints; ++i) {
-		m_LdndxHSeq1[i] = haltonSequence((i+1)*409, 2);
-		m_LdndxHSeq2[i] = haltonSequence((i+1)*409, 3);
-		m_LdndxHSeq3[i] = haltonSequence((i+1)*409, 5);
+		m_LdndxHSeq1[i] = utils::haltonSequence((i+1)*409, 2);
+		m_LdndxHSeq2[i] = utils::haltonSequence((i+1)*409, 3);
+		m_LdndxHSeq3[i] = utils::haltonSequence((i+1)*409, 5);
 	}
-}
-
-LTables::ParticleMasses LTables::calculateMasses(double T) const noexcept {
-	double mu = utils::debyeMass(m_nf, m_lambda, T);
-    double mg = mu / std::sqrt(2.0);
-    double M = 0.0;
-
-	switch (m_particleType) {
-        case ParticleType::Bottom:  M = 4.75; break;
-        case ParticleType::Charm:   M = 1.2;  break;
-        case ParticleType::Gluon:   M = mg;   break;
-        case ParticleType::LQuarks: M = mu / std::sqrt(6.0); break;
-    }
-
-    return {mu, mg, M};
 }
 
 double LTables::dElossDYN(double tau, double x, double k, double q, double varphi, double T, double mu2, double mg2, double M2, double e, double b, double alpha1) const noexcept {	
@@ -168,7 +139,7 @@ void LTables::RadLTables() {
 	for (std::size_t i_tau = 0; i_tau < tauPts.size(); ++i_tau) {
 		for (std::size_t i_p = 0; i_p < pPts.size(); ++i_p) {
 			for (std::size_t i_T = 0; i_T < TPts.size(); ++i_T) {
-				auto pMasses = calculateMasses(TPts[i_T]);
+				auto pMasses = utils::calculateMasses(m_particleType, m_nf, m_lambda, TPts[i_T]);
 				double mu2 = pMasses.mu*pMasses.mu;
 				double mg2 = pMasses.mg*pMasses.mg;
 				double M2 = pMasses.M*pMasses.M;
@@ -180,7 +151,7 @@ void LTables::RadLTables() {
 				}
 				
 				xIntegLimitLow = pMasses.mu/std::sqrt(2.0)/(pPts[i_p] + e);
-				if (m_particleType == ParticleType::Gluon) {
+				if (m_particleType == utils::ParticleType::Gluon) {
 					xIntegLimitHigh = 0.5;
 				} else {
 					xIntegLimitHigh = 1.0 - pMasses.M/(e + pPts[i_p]);
@@ -197,9 +168,9 @@ void LTables::LCollHSeqInit() {
     m_LCollHSeq2.resize(m_LCollMaxPoints);
     m_LCollHSeq3.resize(m_LCollMaxPoints);
 	for (std::size_t i = 0; i < m_LCollMaxPoints; ++i) {
-		m_LCollHSeq1[i] = haltonSequence((i+1)*409, 2);
-		m_LCollHSeq2[i] = haltonSequence((i+1)*409, 3);
-		m_LCollHSeq3[i] = haltonSequence((i+1)*409, 5);
+		m_LCollHSeq1[i] = utils::haltonSequence((i+1)*409, 2);
+		m_LCollHSeq2[i] = utils::haltonSequence((i+1)*409, 3);
+		m_LCollHSeq3[i] = utils::haltonSequence((i+1)*409, 5);
 	}
 }
 
@@ -228,7 +199,7 @@ std::complex<double> LTables::deltaT2(double q, double w, double mu2, double mu4
 }
 
 double LTables::ENumFinite(double p, double T) const noexcept {
-	auto pMasses = calculateMasses(T);
+	auto pMasses = utils::calculateMasses(m_particleType, m_nf, m_lambda, T);
 	double mu2 = pMasses.mu*pMasses.mu;
 	double mu4 = mu2*mu2;
 	double e = std::sqrt(p*p + pMasses.M * pMasses.M);
