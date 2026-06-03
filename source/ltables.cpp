@@ -168,9 +168,10 @@ void LTables::RadLTables() {
 	for (std::size_t i_tau = 0; i_tau < tauPts.size(); ++i_tau) {
 		for (std::size_t i_p = 0; i_p < pPts.size(); ++i_p) {
 			for (std::size_t i_T = 0; i_T < TPts.size(); ++i_T) {
-
-				auto [mu, mg, M] = calculateMasses(TPts[i_T]);
-				double mu2 = mu*mu, mg2 = mg*mg, M2 = M*M;
+				auto pMasses = calculateMasses(TPts[i_T]);
+				double mu2 = pMasses.mu*pMasses.mu;
+				double mg2 = pMasses.mg*pMasses.mg;
+				double M2 = pMasses.M*pMasses.M;
 				double e = std::sqrt(pPts[i_p]*pPts[i_p] + M2);
 				double alpha1 = m_alpha_prefactor/std::log(e*TPts[i_T]/m_lambda_2);
 
@@ -178,11 +179,11 @@ void LTables::RadLTables() {
 					m_LdndxTbl[i_tau][i_p][i_T][i_x] = Ldndx(tauPts[i_tau], TPts[i_T], xPts[i_x], mu2, mg2, M2, e, alpha1);
 				}
 				
-				xIntegLimitLow = mu/std::sqrt(2.0)/(pPts[i_p] + e);
+				xIntegLimitLow = pMasses.mu/std::sqrt(2.0)/(pPts[i_p] + e);
 				if (m_particleType == ParticleType::Gluon) {
 					xIntegLimitHigh = 0.5;
 				} else {
-					xIntegLimitHigh = 1.0 - M/(e + pPts[i_p]);
+					xIntegLimitHigh = 1.0 - pMasses.M/(e + pPts[i_p]);
 				}
 
 				m_LNormTbl[i_tau][i_p][i_T] = poly::cubicIntegrate(xPts, m_LdndxTbl[i_tau][i_p][i_T], xIntegLimitLow, xIntegLimitHigh);
@@ -227,15 +228,14 @@ std::complex<double> LTables::deltaT2(double q, double w, double mu2, double mu4
 }
 
 double LTables::ENumFinite(double p, double T) const noexcept {
-	auto [mu, mg, M] = calculateMasses(T);
-	(void)mg;
-	double mu2 = mu*mu;
+	auto pMasses = calculateMasses(T);
+	double mu2 = pMasses.mu*pMasses.mu;
 	double mu4 = mu2*mu2;
-	double e = std::sqrt(p*p + M * M);
+	double e = std::sqrt(p*p + pMasses.M * pMasses.M);
 	double v = p/e;
 	double v2 = v*v;
 	double alpha1 = 4.0*M_PI/(11.0 - 2.0/3.0*m_nf)/std::log(e*T/m_lambda_2);
-	double alpha2 = 2.0*M_PI/(11.0 - 2.0/m_nf*3.0)/std::log(mu/m_lambda);
+	double alpha2 = 2.0*M_PI/(11.0 - 2.0/m_nf*3.0)/std::log(pMasses.mu/m_lambda);
 
 	//ENumFinite1 integral:
 	double ENumFiniteSum1 = 0.0;
