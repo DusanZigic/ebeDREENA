@@ -27,13 +27,11 @@ private:
 
     double m_nf;                   // effective number of flavours
     const double m_Ng = 3.0;	   // effective number of gluons
-    const double m_lambda = 0.2;   // QCD scale
     const double m_kmaxColl = 5.0; // kMaxColl value
     double m_CR;		           // Casimir (3 for gluons, 4/3 for quakrs)
 
-    double m_xB_2;                               // squared xB (precalculated for optimizations)
-    const double m_lambda_2 = m_lambda*m_lambda; // squared lambda (precalculated for optimizations)
-    double m_alpha_prefactor;                    // prefactor for alpha (precalculated for optimizations)
+    double m_xB_sq;           // squared xB (precalculated for optimizations)
+    double m_alpha_prefactor; // prefactor for alpha (precalculated for optimizations)
     
     gridPoints m_Grids; //grids
 
@@ -44,7 +42,7 @@ private:
     
     std::vector<std::vector<std::vector<std::vector<double>>>> m_LdndxTbl;
     std::vector<std::vector<std::vector<double>>> m_LNormTbl;
-    double dElossDYN(double tau, double x, double k, double q, double varphi, double T, double mu2, double mg2, double M2, double e, double b, double alpha1) const noexcept;
+    double dElossDYN(double tau, double x, double x_sq, double k, double q, double varphi, double T, double mu2, double mg2, double M2, double e, double b, double alpha1) const noexcept;
     double Ldndx(double tau, double T, double x, double mu2, double mg2, double M2, double e, double alpha1) const noexcept;
     void RadLTables();
 

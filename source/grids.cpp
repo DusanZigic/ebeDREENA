@@ -27,7 +27,7 @@ void gridPoints::setGridPointsBottom() {
 	std::vector<std::vector<double>> Tden{{0.01, 10.0}, {2.0, 10.0}};
 	generateGrids(Tden, Tgridn, m_TPts);
 
-	double mg = utils::debyeMass(m_nf, m_lambda, m_TPts[0])/std::sqrt(2.0);
+	double mg = utils::debyeMass(m_nf, m_TPts[0])*utils::constants::INV_SQRT_2;
 	double M = 4.75;
 	double MAXP = m_sNN == "200GeV" ? 100.0 : 200.0;
 	std::size_t xgridn = 30;
@@ -40,7 +40,7 @@ void gridPoints::setGridPointsBottom() {
 	std::vector<std::vector<double>> Radden{{2.0, 10.0}, {21.8, 10.0}, {44.5, 1.050001}, {Radgridmax, 1.0}};
 	generateGrids(Radden, Radgridn, m_RadPts);
 
-	double mgC = utils::debyeMass(m_nf, m_lambda, 3.0/2.0*m_TCRIT)/std::sqrt(2.0);
+	double mgC = utils::debyeMass(m_nf, 3.0/2.0*m_TCRIT)*utils::constants::INV_SQRT_2;
 	std::size_t Fdpgridn = 16;
 	std::vector<std::vector<double>> Fdpden = {{5.0*mgC/2.0, 10.0}, {12.0, 5.0}, {30.0, 0.0}};
 	generateGrids(Fdpden, Fdpgridn-4, m_FdpPts);
@@ -82,7 +82,7 @@ void gridPoints::setGridPointsCharm() {
 	generateGrids(Tden, Tgridn, m_TPts);
 
 	//xPts:
-	double mg = utils::debyeMass(m_nf, m_lambda, m_TPts[0])/std::sqrt(2.0);
+	double mg = utils::debyeMass(m_nf, m_TPts[0])*utils::constants::INV_SQRT_2;
 	double M = 1.2;
 	double MAXP = m_sNN == "200GeV" ? 100.0 : 200.0;
 	std::size_t xgridn = 30;
@@ -97,7 +97,7 @@ void gridPoints::setGridPointsCharm() {
 	generateGrids(Radden, Radgridn, m_RadPts);
 
 	//FdpPts:
-	double mgC = utils::debyeMass(m_nf, m_lambda, 3.0/2.0*m_TCRIT)/std::sqrt(2.0);
+	double mgC = utils::debyeMass(m_nf, 3.0/2.0*m_TCRIT)*utils::constants::INV_SQRT_2;
 	std::size_t Fdpgridn = 16;
 	std::vector<std::vector<double>> Fdpden = {{5.0*mgC/2.0, 10.0}, {12.0, 5.0}, {30.0, 0.0}};
 	generateGrids(Fdpden, Fdpgridn-4, m_FdpPts);
@@ -143,8 +143,8 @@ void gridPoints::setGridPointsGluon() {
 	generateGrids(Tden, Tgridn, m_TPts);
 
 	//xPts:
-	double mg = utils::debyeMass(m_nf, m_lambda, m_TPts[0])/std::sqrt(2.0);
-	double  M = utils::debyeMass(m_nf, m_lambda, m_TPts[0])/std::sqrt(2.0);
+	double mg = utils::debyeMass(m_nf, m_TPts[0])*utils::constants::INV_SQRT_2;
+	double  M = utils::debyeMass(m_nf, m_TPts[0])*utils::constants::INV_SQRT_2;
 	double MAXP = m_sNN == "200GeV" ? 150.0 : 450.0;
 	std::size_t xgridn = 50;
 	double xmin = mg/(MAXP + std::sqrt(MAXP*MAXP + M*M));
@@ -159,7 +159,7 @@ void gridPoints::setGridPointsGluon() {
 	generateGrids(Radden, Radgridn, m_RadPts);
 
 	//FdpPts:
-	double mgC = utils::debyeMass(m_nf, m_lambda, 3.0/2.0*m_TCRIT)/std::sqrt(2.0);
+	double mgC = utils::debyeMass(m_nf, 3.0/2.0*m_TCRIT)*utils::constants::INV_SQRT_2;
 	std::size_t Fdpgridn = 22;
 	std::vector<std::vector<double>> Fdpden = {{5.0*mgC/2.0, 10.0}, {12.0, 5.0}, {30.0, 0.0}};
 	generateGrids(Fdpden, Fdpgridn-4, m_FdpPts);
@@ -201,8 +201,8 @@ void gridPoints::setGridPointsLQuarks() {
 	std::vector<std::vector<double>> Tden{{0.01, 10.0}, {2.0, 10.0}};
 	generateGrids(Tden, Tgridn, m_TPts);
 
-	double mg = utils::debyeMass(m_nf, m_lambda, m_TPts[0])/std::sqrt(2.0);
-	double M  = utils::debyeMass(m_nf, m_lambda, m_TPts[0])/std::sqrt(6.0);
+	double mg = utils::debyeMass(m_nf, m_TPts[0])*utils::constants::INV_SQRT_2;
+	double M  = utils::debyeMass(m_nf, m_TPts[0])*utils::constants::INV_SQRT_6;
 	double MAXP = m_sNN == "200GeV" ? 150.0 : 450.0;
 	std::size_t xgridn = 50;
 	double xmin = mg/(MAXP + std::sqrt(MAXP*MAXP + M*M));
@@ -214,7 +214,7 @@ void gridPoints::setGridPointsLQuarks() {
 	std::vector<std::vector<double>> Radden{{2.0, 10.0}, {50.0, 10.0}, {70.0, 1.0}, {Radgridmax, 1.0}};
 	generateGrids(Radden, Radgridn, m_RadPts);
 
-	double mgC = utils::debyeMass(m_nf, m_lambda, 3.0/2.0*m_TCRIT)/std::sqrt(2.0);
+	double mgC = utils::debyeMass(m_nf, 3.0/2.0*m_TCRIT)*utils::constants::INV_SQRT_2;
 	std::size_t Fdpgridn = 22;
 	std::vector<std::vector<double>> Fdpden = {{5.0*mgC/2.0, 10.0}, {12.0, 5.0}, {30, 0.0}};
 	generateGrids(Fdpden, Fdpgridn-4, m_FdpPts);

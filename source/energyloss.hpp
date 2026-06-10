@@ -30,7 +30,6 @@ private:
     int m_BCPSEED;			     // seed for generating initial position points
     
     double m_nf;			     // effective number of flavours
-    const double m_lambda = 0.2; // QCD scale
     
     double m_mgC;                // constant gluon mass used for dA integrals
     double m_MC;	             // constant particle mass used for dA integrals

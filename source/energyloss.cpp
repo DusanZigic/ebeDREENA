@@ -27,16 +27,16 @@ EnergyLoss::EnergyLoss(const config::energyLossConfig &cfg)
     m_BCPSEED    = cfg.BCPSEED;
 
     m_nf = m_sNN == "200GeV" ? 2.5 : 3.0;
-	double mu = utils::debyeMass(m_nf, m_lambda, 3.0/2.0*m_TCRIT);
-	m_mgC = mu / std::sqrt(2.0);
+	double mu = utils::debyeMass(m_nf, 3.0/2.0*m_TCRIT);
+	m_mgC = mu*utils::constants::INV_SQRT_2;
 	if (m_pName == "Bottom") {
 		m_MC = 4.75;
 	} else if (m_pName == "Charm") {
 		m_MC = 1.2;
 	} else if (m_pName == "Gluon") {
-		m_MC = mu/std::sqrt(2.0);
+		m_MC = mu*utils::constants::INV_SQRT_2;
 	} else {
-		m_MC = mu/std::sqrt(6.0);
+		m_MC = mu*utils::constants::INV_SQRT_6;
 	}
 	m_TCollConst = 3.0/2.0*m_TCRIT;
 }
@@ -452,14 +452,14 @@ void EnergyLoss::generateGaussTab(std::vector<double> &qGTab, std::vector<double
 void EnergyLoss::calculateAvgPathlenTemps(const std::vector<double> &pathLenghDist, const std::vector<double> &temperatureDist, std::vector<double> &avgPathLength, std::vector<double> &avgTemp) const
 {
 	LinearInterpolator<double> pathLenghDistInt(m_phiGridPts, pathLenghDist);
-	avgPathLength.push_back(poly::cubicIntegrate(m_phiGridPts, pathLenghDist)/2.0/M_PI);
-	avgPathLength.push_back((pathLenghDistInt.interpolate(m_phiGridPts.front()) + pathLenghDistInt.interpolate(m_phiGridPts.back()))/2.0);
-	avgPathLength.push_back((pathLenghDistInt.interpolate(M_PI/2.0)             + pathLenghDistInt.interpolate(3.0*M_PI/2.0))       /2.0);
+	avgPathLength.push_back(poly::cubicIntegrate(m_phiGridPts, pathLenghDist)/2.0/utils::constants::PI);
+	avgPathLength.push_back((pathLenghDistInt.interpolate(m_phiGridPts.front())     + pathLenghDistInt.interpolate(m_phiGridPts.back()))          / 2.0);
+	avgPathLength.push_back((pathLenghDistInt.interpolate(utils::constants::PI/2.0) + pathLenghDistInt.interpolate(3.0*utils::constants::PI/2.0)) / 2.0);
 
 	LinearInterpolator<double> temperatureDistInt(m_phiGridPts, temperatureDist);
-	avgTemp.push_back(poly::cubicIntegrate(m_phiGridPts, temperatureDist)/2.0/M_PI);
-	avgTemp.push_back((temperatureDistInt.interpolate(m_phiGridPts.front()) + temperatureDistInt.interpolate(m_phiGridPts.back()))/2.0);
-	avgTemp.push_back((temperatureDistInt.interpolate(M_PI/2.0)             + temperatureDistInt.interpolate(3.0*M_PI/2.0))       /2.0);
+	avgTemp.push_back(poly::cubicIntegrate(m_phiGridPts, temperatureDist)/2.0/utils::constants::PI);
+	avgTemp.push_back((temperatureDistInt.interpolate(m_phiGridPts.front())      + temperatureDistInt.interpolate(m_phiGridPts.back()))          / 2.0);
+	avgTemp.push_back((temperatureDistInt.interpolate(utils::constants::PI/2.0)  + temperatureDistInt.interpolate(3.0*utils::constants::PI/2.0)) / 2.0);
 }
 
 int EnergyLoss::exportResults(const std::string &particleName, std::size_t event_id, const std::vector<std::vector<double>> &RAApTphi, const std::vector<double> &avgPathLength, const std::vector<double> &avgTemp, std::size_t trajecNum, std::size_t elossNum) const

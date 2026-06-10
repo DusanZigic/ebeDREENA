@@ -63,7 +63,6 @@ private:
 	std::string m_sNN;
 	double m_nf;
 	double m_TCRIT;
-	const double m_lambda = 0.2;
 	std::vector<double> m_tauPts, m_pPts, m_TPts, m_xPts, m_RadPts, m_FdpPts;
 	std::vector<double> m_pCollPts, m_TCollPts, m_finPts;
 	void generateGrids(const std::vector<std::vector<double>> &density, std::size_t numpts, std::vector<double> &gridpoints);
