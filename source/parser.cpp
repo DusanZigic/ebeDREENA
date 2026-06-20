@@ -27,20 +27,20 @@ namespace {
     void parseCMDToMap(int argc, const char* argv[], const std::set<std::string>& validKeys, std::map<std::string, std::string>& cmdMap) {
         for (int i = 2; i < argc; ++i) {
             std::string arg = argv[i];
-            size_t pos = arg.find('=');
-            if (pos != std::string::npos) {
-                std::string key = cleanKey(arg.substr(0, pos));
+            size_t sepPos = arg.find('=');
+            if (sepPos != std::string::npos) {
+                std::string key = cleanKey(arg.substr(0, sepPos));
                 if (validKeys.find(key) == validKeys.end()) {
-                    std::cerr << "FATAL: Unknown argument '" << key << "'" << std::endl;
+                    std::cerr << "FATAL: Unknown command-line argument '" << key << "'" << std::endl;
                     std::exit(1);
                 }
-                std::string val = cleanVal(arg.substr(pos + 1));
+                std::string val = cleanVal(arg.substr(sepPos + 1));
                 cmdMap[key] = val;
             }
         }
     }
 
-    void loadFileToMap(const std::string& path, std::map<std::string, std::string>& target) {
+    void loadFileToMap(const std::string& path, const std::set<std::string>& validKeys, std::map<std::string, std::string>& fileMap) {
         std::ifstream file(path);
         if (!file.is_open()) {
             std::cerr << "FATAL: Unable to open config file: " << path << std::endl;
@@ -52,8 +52,13 @@ namespace {
             size_t sepPos = line.find('=');
             if (sepPos != std::string::npos) {
                 std::string key = cleanKey(line.substr(0, sepPos));
+                if (validKeys.find(key) == validKeys.end()) {
+                    std::cerr << "FATAL: Unknown config file parameter '" << key
+                              << "' found in " << path << std::endl;
+                    std::exit(1);
+                }
                 std::string val = cleanVal(line.substr(sepPos + 1));
-                target[key] = val;
+                fileMap[key] = val;
             }
         }
     }
@@ -147,7 +152,7 @@ namespace parser {
 
         std::map<std::string, std::string> fileMap;
         if (cmdMap.count("config")) {
-            loadFileToMap(cmdMap["config"], fileMap);
+            loadFileToMap(cmdMap["config"], validKeys, fileMap);
         }
 
         safeAssign("sNN",            cfg.sNN,              fileMap, cmdMap, [](std::string v) { return v; });
@@ -197,7 +202,7 @@ namespace parser {
 
         std::map<std::string, std::string> fileMap;
         if (cmdMap.count("config")) {
-            loadFileToMap(cmdMap["config"], fileMap);
+            loadFileToMap(cmdMap["config"], validKeys, fileMap);
         }
 
         safeAssign("collsys",    cfg.collsys,    fileMap, cmdMap, [](std::string v) { return v; });
