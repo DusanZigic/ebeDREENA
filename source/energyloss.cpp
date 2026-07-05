@@ -1,8 +1,4 @@
 #include "energyloss.hpp"
-#include "grids.hpp"
-#include "utils.hpp"
-#include "linearinterpolator.hpp"
-#include "polyintegrator.hpp"
 
 #include <iostream>
 #include <sstream>
@@ -11,6 +7,11 @@
 #include <fstream>
 #include <cmath>
 #include <iomanip>
+
+#include "utils.hpp"
+#include "polyintegrator.hpp"
+#include "linearinterpolator.hpp"
+#include "grids.hpp"
 
 EnergyLoss::EnergyLoss(const config::energyLossConfig &cfg)
 {
@@ -64,7 +65,7 @@ void EnergyLoss::runEnergyLoss()
 	}
 }
 
-int EnergyLoss::loaddsdpti2(const std::string &pname, LinearInterpolator<double> &dsdpti2int)const 
+int EnergyLoss::loaddsdpti2(const std::string &pname, LinearInterpolator<double> &dsdpti2int) 
 {
 	const std::string path_in = "./ptDists/ptDist" + m_sNN + "/ptDist_" + m_sNN + "_" + pname + ".dat";
 
@@ -556,194 +557,202 @@ int EnergyLoss::exportResults(const std::string &particleName, std::size_t event
 	return 0;
 }
 
-
-void EnergyLoss::RadCollEL(double X0, double Y0, double phi0, const LinearInterpolator<double> &TProfile, std::vector<double> &radiativeRAA1, std::vector<std::vector<double>> &radiativeRAA2, std::vector<double> &collisionalEL, double &pathLength, double &temp) const
-//function that calculates radiative and collisional EL for particles created in (X0, Y0) with direction phi0 (modefied pT integration algorithm)
-//X0, Y0, phi0  - inital position and angle 					  		     <- input
-//radiativeRAA1 - radiative RAA for single trajectory (dA410)	  		     <- output
-//radiativeRAA2 - radiative RAA for single trajectory (rest of dA integrals) <- output
-//collisionalEL - collisional energy loss for single trajectory   		     <- output
-//pathL, temp - path-length and temperature for single trajectory 		     <- output
+void EnergyLoss::RadCollEL(double X0, double Y0, double phi0,
+						   const LinearInterpolator<double> &TProfile,
+						   std::vector<double> &radiativeRAA1, std::vector<std::vector<double>> &radiativeRAA2,
+						   std::vector<double> &collisionalEL,
+						   double &pathLength, double &temp) const noexcept
 {
-	std::vector<double> currLTTabL, currLTTabT; //defining arrays that will store current path-lengths and temperatures
+	std::vector<double> currLTTabL, currLTTabT; // NOTE (dusan): holds tau (L) and T for a given trajectory
+	currLTTabL.reserve(256);                    // NOTE (dusan): default reservation to prevent vector growth overhead
+    currLTTabT.reserve(256);
 
-	double t = m_tau0, currTemp; //defining current path-length (time) and temperature
+	double t = m_tau0;
+    double currTemp;
+    const double cos_phi0 = std::cos(phi0);
+    const double sin_phi0 = std::sin(phi0);
 
-	while ((currTemp = TProfile.interpolate(t, X0 + t*std::cos(phi0), Y0 + t*std::sin(phi0))) > m_TCRIT) { //calculating current path-length and temp table
-		currLTTabL.push_back(t);
-		currLTTabT.push_back(currTemp);
-		t += m_TIMESTEP;
+	// NOTE (dusan): profile trajectory propagation
+	while ((currTemp = TProfile.interpolate(t, X0 + t * cos_phi0, Y0 + t * sin_phi0)) > m_TCRIT) {
+        currLTTabL.push_back(t);
+        currLTTabT.push_back(currTemp);
+        t += m_TIMESTEP;
+    }
+
+	if (currLTTabL.size() > 1) { // NOTE (dusan): calculating energy loss if path-length is longer than thermalization time
+		const std::size_t numL = currLTTabL.size();
+        const std::size_t numP = m_Grids.pPts().size();
+        const std::size_t numX = m_Grids.xPts().size();
+
+		std::vector<double> currNormF(numL);   // NOTE (dusan): norm = norm(L) for current trajectory and p
+        std::vector<double> normSparseP(numP); // NOTE (dusan): norm = norm(p) integrated over L
+		std::vector<double> normSparseF(numP);
+
+		std::vector<double> currDndxF(numL);          // NOTE (dusan): dndx = dndx(L) for current trajectory and p, x
+        std::vector<double> dndxSparseP(numP * numX); // NOTE (dusan): dndx = dndx(p, x) integrated over L
+		std::vector<double> dndxSparseX(numP * numX);
+		std::vector<double> dndxSparseF(numP * numX);
+
+		for (std::size_t iP = 0; iP < numP; ++iP) {
+			const double p = m_Grids.pPts()[iP];
+
+			for (std::size_t iL = 0; iL < numL; ++iL) {
+        		currNormF[iL] = m_LNorm.interpolate(currLTTabL[iL], p, currLTTabT[iL]);
+    		}
+			normSparseP[iP] = p;
+    		normSparseF[iP] = poly::linearIntegrate(currLTTabL, currNormF);
+
+			for (std::size_t ix = 0; ix < numX; ++ix) {
+				const double x = m_Grids.xPts()[ix];
+				for (std::size_t iL = 0; iL < numL; ++iL) {
+        		    currDndxF[iL] = m_Ldndx.interpolate(currLTTabL[iL], p, currLTTabT[iL], x);
+        		}
+				dndxSparseP[iP * numX + ix] = p;
+        		dndxSparseX[iP * numX + ix] = x;
+        		dndxSparseF[iP * numX + ix] = poly::linearIntegrate(currLTTabL, currDndxF);
+			}
+		}
+
+		LinearInterpolator<double> currNorm(normSparseP, normSparseF);
+        LinearInterpolator<double> currDndx(dndxSparseP, dndxSparseX, dndxSparseF);
+
+		const std::size_t numRad = m_Grids.RadPts().size();
+        const std::size_t numFdp = m_Grids.FdpPts().size();
+
+		radiativeRAA1.reserve(numRad);
+        radiativeRAA2.reserve(numRad);
+
+		for (const auto &ph : m_Grids.RadPts()) {
+			radiativeRAA1.push_back(dAp410(ph, currNorm));
+
+			radiativeRAA2.emplace_back();
+			radiativeRAA2.back().reserve(numFdp);
+			for (const auto &Fdp : m_Grids.FdpPts()) {
+        		radiativeRAA2.back().push_back(FdA(ph, Fdp, currNorm, currDndx));
+    		}
+		}
+
+		std::vector<double> currCollF(numL);
+        const std::size_t numPColl = m_Grids.pCollPts().size();
+        collisionalEL.reserve(numPColl);
+
+		for (const auto &p : m_Grids.pCollPts()) 
+        {
+            for (std::size_t iL = 0; iL < numL; ++iL) {
+                currCollF[iL] = m_LColl.interpolate(p, currLTTabT[iL]);
+            }
+            collisionalEL.push_back(poly::linearIntegrate(currLTTabL, currCollF));
+        }
+
+		pathLength = currLTTabL.back(); // NOTE (dusan): average path-length and temperature
+        double sumTemp = 0.0;
+        for (const double tVal : currLTTabT) {
+            sumTemp += tVal;
+        }
+        temp = sumTemp / static_cast<double>(numL);
 	}
-	
-	if (currLTTabL.size() > 1) { //calculating energy loss if path-length is longer than thermalization time
-		
-		///////////////////////////////////////////////////////////////////////////////////////////////////
-		//Radiative EnergyLoss calculation:
 
-		std::vector<double> currNormTabTau(currLTTabL.size()), currNormTabVal(currLTTabL.size()); //LNorm table to be integrated over tau
-		std::vector<double> NormSparseP, NormSparseV;											  //table for currNormInterp
-		
-		std::vector<double> currDndxTabTau(currLTTabL.size()), currDndxTabVal(currLTTabL.size()); //Ldndx table to be integrated over tau
-		std::vector<double> dndxSparseP, dndxSparseX, dndxSparseV;			  				 	  //table for currDndxInterp
+	else { // NOTE (dusan): path-length is smaller than thermalization time
 
-		for (const auto &p : m_Grids.pPts()) //loop over ppts
-		{
-			for (std::size_t iL=0; iL<currLTTabL.size(); iL++) //loop over current path-length and temperature table
-			{
-				currNormTabTau[iL] = currLTTabL[iL]; 								         //setting path-lengths
-				currNormTabVal[iL] = m_LNorm.interpolate(currLTTabL[iL], p, currLTTabT[iL]); //setting current norm values by integrating over time
-			}
-
-			NormSparseP.push_back(p);												//setting p of current norm table
-			NormSparseV.push_back(poly::linearIntegrate(currNormTabTau, currNormTabVal)); //setting value of current norm table
-
-			for (const auto &x : m_Grids.xPts()) //loop over xpts
-			{
-				for (std::size_t iL=0; iL<currLTTabL.size(); iL++) //loop over current path-length and temperature table
-				{
-					currDndxTabTau[iL] = currLTTabL[iL]; 									        //setting path-lengths
-					currDndxTabVal[iL] = m_Ldndx.interpolate(currLTTabL[iL], p, currLTTabT[iL], x); //setting Ldndx values
-				}
-
-				dndxSparseP.push_back(p); 												//setting p of current dndx table
-				dndxSparseX.push_back(x);												//setting x of current dndx table
-				dndxSparseV.push_back(poly::linearIntegrate(currDndxTabTau, currDndxTabVal)); //setting curernt dndx values by integrating over time
-			}
-		}
-		
-		LinearInterpolator<double> currNorm(NormSparseP, NormSparseV); 			    //constructing interpolated current norm
-		LinearInterpolator<double> currDndx(dndxSparseP, dndxSparseX, dndxSparseV); //constructing interpolated current dndx
-		
-		for (const auto &ph : m_Grids.RadPts()) //loop over Radpts
-		{
-			radiativeRAA1.push_back(dAp410(ph, currNorm)); //calculating radiative energy loss for dA410
-
-			radiativeRAA2.push_back(std::vector<double>()); //resizing radiativeRAA2 2d vector
-
-			for (const auto &Fdp : m_Grids.FdpPts())
-				radiativeRAA2.back().push_back(FdA(ph, Fdp, currNorm, currDndx)); //calculating radiative energy loss for rest of the dA integrals
-
-		}
-		
-		///////////////////////////////////////////////////////////////////////////////////////////////////
-		//Collisional EnergyLoss calculation:
-
-		std::vector<double> currCollTabTau(currLTTabL.size()), currCollTabVal(currLTTabL.size()); //collisional table to be integrated over tau
-
-		for (const auto& p : m_Grids.pCollPts()) //loop over pCollPts
-		{
-			for (std::size_t iL=0; iL<currLTTabL.size(); iL++) //loop over current path-length and temperature table
-			{
-				currCollTabTau[iL] = currLTTabL[iL]; 				         //setting path-lengths
-				currCollTabVal[iL] = m_LColl.interpolate(p, currLTTabT[iL]); //setting LColl values
-			}
-
-			collisionalEL.push_back(poly::linearIntegrate(currCollTabTau, currCollTabVal)); //calculating collisional energy loss by integrating over time
-		}
-		
-		pathLength = currLTTabL.back(); //setting value of path-length for single trajectory
-
-		//calculating mean temperature along path
-		temp = 0.0;
-		for (std::size_t iL=0; iL<currLTTabL.size(); iL++) temp += currLTTabT[iL];
-		temp /= static_cast<double>(currLTTabL.size());
-	}
-	else { //if path-length is smaller than thermalization time:
-
-		pathLength = 0.0; //setting path-length and temperature
+		pathLength = 0.0;
 		temp       = 0.0;
 	}
 }
 
-void EnergyLoss::RadCollEL(double X0, double Y0, double phi0, const LinearInterpolator<double> &TProfile, std::vector<double> &radiativeRAA, std::vector<double> &collisionalEL, double &pathLenght, double &temp) const
-//function that calculates radiative and collisional EL for particles created in (X0, Y0) with direction phi0 (standard algorithm)
-//X0, Y0, phi0  - inital position and angle 					  <- input
-//radiativeRAA  - radiative RAA for single trajectory 			  <- output
-//collisionalEL - collisional energy loss for single trajectory   <- output
-//pathL, temp - path-length and temperature for single trajectory <- output
+void EnergyLoss::RadCollEL(double X0, double Y0, double phi0,
+						   const LinearInterpolator<double> &TProfile,
+						   std::vector<double> &radiativeRAA,
+						   std::vector<double> &collisionalEL,
+						   double &pathLength, double &temp) const noexcept
 {
-	std::vector<double> currLTTabL, currLTTabT; //defining arrays that will store current path-lengths and temperatures
+	std::vector<double> currLTTabL, currLTTabT; // NOTE (dusan): holds tau (L) and T for a given trajectory
+	currLTTabL.reserve(256);                    // NOTE (dusan): default reservation to prevent vector growth overhead
+    currLTTabT.reserve(256);
 
-	double t = m_tau0, currTemp; //defining current path-length (time) and temperature
+	double t = m_tau0;
+    double currTemp;
+    const double cos_phi0 = std::cos(phi0);
+    const double sin_phi0 = std::sin(phi0);
 
-	while ((currTemp = TProfile.interpolate(t, X0 + t*cos(phi0), Y0 + t*sin(phi0))) > m_TCRIT) { //calculating current path-length and temp table
-		currLTTabL.push_back(t);
-		currLTTabT.push_back(currTemp);
-		t += m_TIMESTEP;
-	}
+	// NOTE (dusan): profile trajectory propagation
+	while ((currTemp = TProfile.interpolate(t, X0 + t * cos_phi0, Y0 + t * sin_phi0)) > m_TCRIT) {
+        currLTTabL.push_back(t);
+        currLTTabT.push_back(currTemp);
+        t += m_TIMESTEP;
+    }
 	
-	if (currLTTabL.size() > 1) { //calculating energy loss if path-length is longer than thermalization time
+	if (currLTTabL.size() > 1) { // NOTE (dusan): calculating energy loss if path-length is longer than thermalization time
 		
 		///////////////////////////////////////////////////////////////////////////////////////////////////
 		//Radiative EnergyLoss calculation:
 
-		std::vector<double> currNormTabTau(currLTTabL.size()), currNormTabVal(currLTTabL.size()); //LNorm table to be integrated over tau
-		std::vector<double> NormSparseP, NormSparseV;											 //table for currNormInterp
-		
-		std::vector<double> currDndxTabTau(currLTTabL.size()), currDndxTabVal(currLTTabL.size()); //Ldndx table to be integrated over tau
-		std::vector<double> dndxSparseP, dndxSparseX, dndxSparseV;			  				 	 //table for currDndxInterp
+		const std::size_t numL = currLTTabL.size();
+        const std::size_t numP = m_Grids.pPts().size();
+        const std::size_t numX = m_Grids.xPts().size();
 
-		for (const auto &p : m_Grids.pPts()) //loop over ppts
-		{
-			for (std::size_t iL=0; iL<currLTTabL.size(); iL++) //loop over current path-length and temperature table
-			{
-				currNormTabTau[iL] = currLTTabL[iL]; 								         //setting path-lengths
-				currNormTabVal[iL] = m_LNorm.interpolate(currLTTabL[iL], p, currLTTabT[iL]); //setting current norm values by integrating over time
-			}
+		std::vector<double> currNormF(numL);   // NOTE (dusan): norm = norm(L) for current trajectory and p
+        std::vector<double> normSparseP(numP); // NOTE (dusan): norm = norm(p) integrated over L
+		std::vector<double> normSparseF(numP);
 
-			NormSparseP.push_back(p);												//setting p of current norm table
-			NormSparseV.push_back(poly::linearIntegrate(currNormTabTau, currNormTabVal)); //setting value of current norm table
+		std::vector<double> currDndxF(numL);          // NOTE (dusan): dndx = dndx(L) for current trajectory and p, x
+        std::vector<double> dndxSparseP(numP * numX); // NOTE (dusan): dndx = dndx(p, x) integrated over L
+		std::vector<double> dndxSparseX(numP * numX);
+		std::vector<double> dndxSparseF(numP * numX);
 
-			for (const auto &x : m_Grids.xPts()) //loop over xpts
-			{
-				for (std::size_t iL=0; iL<currLTTabL.size(); iL++) //loop over current path-length and temperature table
-				{
-					currDndxTabTau[iL] = currLTTabL[iL]; 									        //setting path-lengths
-					currDndxTabVal[iL] = m_Ldndx.interpolate(currLTTabL[iL], p, currLTTabT[iL], x); //setting Ldndx values
-				}
+		for (std::size_t iP = 0; iP < numP; ++iP) {
+			const double p = m_Grids.pPts()[iP];
 
-				dndxSparseP.push_back(p); 												//setting p of current dndx table
-				dndxSparseX.push_back(x);												//setting x of current dndx table
-				dndxSparseV.push_back(poly::linearIntegrate(currDndxTabTau, currDndxTabVal)); //setting curernt dndx values by integrating over time
+			for (std::size_t iL = 0; iL < numL; ++iL) {
+        		currNormF[iL] = m_LNorm.interpolate(currLTTabL[iL], p, currLTTabT[iL]);
+    		}
+			normSparseP[iP] = p;
+    		normSparseF[iP] = poly::linearIntegrate(currLTTabL, currNormF);
+
+			for (std::size_t ix = 0; ix < numX; ++ix) {
+				const double x = m_Grids.xPts()[ix];
+				for (std::size_t iL = 0; iL < numL; ++iL) {
+        		    currDndxF[iL] = m_Ldndx.interpolate(currLTTabL[iL], p, currLTTabT[iL], x);
+        		}
+				dndxSparseP[iP * numX + ix] = p;
+        		dndxSparseX[iP * numX + ix] = x;
+        		dndxSparseF[iP * numX + ix] = poly::linearIntegrate(currLTTabL, currDndxF);
 			}
 		}
+
+		LinearInterpolator<double> currNorm(normSparseP, normSparseF);
+        LinearInterpolator<double> currDndx(dndxSparseP, dndxSparseX, dndxSparseF);
 		
-		LinearInterpolator<double> currNorm(NormSparseP, NormSparseV); 			   //constructing interpolated current norm
-		LinearInterpolator<double> currDndx(dndxSparseP, dndxSparseX, dndxSparseV); //constructing interpolated current dndx
+		radiativeRAA.reserve(m_Grids.RadPts().size());
 		
 		for (const auto &p : m_Grids.RadPts())
-			radiativeRAA.push_back(dA41(p, currNorm, currDndx)/m_dsdpti2.interpolate(p)); //calculating radiative RAA
+			radiativeRAA.push_back(dA41(p, currNorm, currDndx) / m_dsdpti2.interpolate(p));
 		
-		///////////////////////////////////////////////////////////////////////////////////////////////////
-		//Collisional EnergyLoss calculation:
+		std::vector<double> currCollF(numL);
+        const std::size_t numPColl = m_Grids.pCollPts().size();
+        collisionalEL.reserve(numPColl);
 
-		std::vector<double> currCollTabTau(currLTTabL.size()), currCollTabVal(currLTTabL.size()); //collisional table to be integrated over tau
+		for (const auto &p : m_Grids.pCollPts()) 
+        {
+            for (std::size_t iL = 0; iL < numL; ++iL) {
+                currCollF[iL] = m_LColl.interpolate(p, currLTTabT[iL]);
+            }
+            collisionalEL.push_back(poly::linearIntegrate(currLTTabL, currCollF));
+        }
 
-		for (const auto &p : m_Grids.pCollPts()) //loop over pCollPts
-		{
-			for (std::size_t iL=0; iL<currLTTabL.size(); iL++) //loop over current path-length and temperature table
-			{
-				currCollTabTau[iL] = currLTTabL[iL]; 				         //setting path-lengths
-				currCollTabVal[iL] = m_LColl.interpolate(p, currLTTabT[iL]); //setting LColl values
-			}
-
-			collisionalEL.push_back(poly::linearIntegrate(currCollTabTau, currCollTabVal)); //calculating collisional energy loss by integrating over time
-		}
-		
-		pathLenght = currLTTabL.back(); //setting value of path-length for single trajectory
-
-		//calculating mean temperature along path
-		temp = 0.0;
-		for (std::size_t iL=0; iL<currLTTabL.size(); iL++) temp += currLTTabT[iL];
-		temp /= static_cast<double>(currLTTabL.size());
+		pathLength = currLTTabL.back(); // NOTE (dusan): average path-length and temperature
+        double sumTemp = 0.0;
+        for (const double tVal : currLTTabT) {
+            sumTemp += tVal;
+        }
+        temp = sumTemp / static_cast<double>(numL);
 	}
-	else { //if path-length is smaller than thermalization time:
+	
+	else { // NOTE (dusan): path-length is smaller than thermalization time
 
-		pathLenght = 0.0; //setting path-length and temperature
-		     temp  = 0.0;
+		pathLength = 0.0;
+		temp       = 0.0;
 	}
 }
-
 
 void EnergyLoss::runELossHeavyFlavour()
 {
@@ -933,7 +942,6 @@ void EnergyLoss::gaussFilterIntegrate(const std::vector<double> &radiativeRAA1, 
 		}
 	}
 }
-
 
 void EnergyLoss::runELossLightQuarks()
 {
@@ -1138,7 +1146,6 @@ void EnergyLoss::gaussFilterIntegrate(const LinearInterpolator<double> &dsdpti2l
 		}
 	}
 }
-
 
 void EnergyLoss::runELossLightFlavour()
 {

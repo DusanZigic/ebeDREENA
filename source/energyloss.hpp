@@ -57,7 +57,7 @@ private:
     std::size_t m_dAMaxPoints1, m_dAMaxPoints2, m_dAMaxPoints3, m_dAMaxPoints4, m_dAMaxPoints5, m_dAMaxPoints6, m_dAMaxPoints7; //number of points for dA integration
     std::vector<double> m_dAHS1, m_dAHS2, m_dAHS3, m_dAHS4, m_dAHS5, m_dAHS6, m_dAHS7; 								 	        //vectors that store Halton sequences for dA integrals
 
-    int loaddsdpti2(const std::string &pname, LinearInterpolator<double> &dsdpti2int) const;
+    int loaddsdpti2(const std::string &pname, LinearInterpolator<double> &dsdpti2int);
     int loadLdndx();
     int loadLNorm();
     int loadLColl();
@@ -67,8 +67,8 @@ private:
     int generateInitPosPoints(std::size_t event_id, std::vector<double> &xPoints, std::vector<double> &yPoints);
     int loadTProfile(std::size_t event_id, LinearInterpolator<double> &tempProfile);
 
-    void RadCollEL(double X0, double Y0, double phi0, const LinearInterpolator<double> &TProfile, std::vector<double> &radiativeRAA1, std::vector<std::vector<double>> &radiativeRAA2, std::vector<double> &collisionalEL, double &pathLength, double &temp) const;
-    void RadCollEL(double X0, double Y0, double phi0, const LinearInterpolator<double> &TProfile, std::vector<double> &radiativeRAA, std::vector<double> &collisionalEL, double &pathLenght, double &temp) const;
+    void RadCollEL(double X0, double Y0, double phi0, const LinearInterpolator<double> &TProfile, std::vector<double> &radiativeRAA1, std::vector<std::vector<double>> &radiativeRAA2, std::vector<double> &collisionalEL, double &pathLength, double &temp) const noexcept;
+    void RadCollEL(double X0, double Y0, double phi0, const LinearInterpolator<double> &TProfile, std::vector<double> &radiativeRAA, std::vector<double> &collisionalEL, double &pathLenght, double &temp) const noexcept;
 
     void FdAHaltonSeqInit(std::size_t FdAMaxPts);
     double dAp410(double ph, const LinearInterpolator<double> &norm) const noexcept;
