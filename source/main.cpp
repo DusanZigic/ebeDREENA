@@ -26,7 +26,7 @@ int main(int argc, const char* argv[])
 	} else if (mode == "eLoss") {
 		auto cfg = parser::parseEnergyLossArgs(argc, argv);
 		EnergyLoss energyLoss(cfg);
-		// energyLoss.runEnergyLoss();
+		energyLoss.runEnergyLoss();
 	} else {
 		std::cerr << "Error: Unknown mode '" << mode << "'\n";
 		parser::printGlobalUsage(argv[0]);
