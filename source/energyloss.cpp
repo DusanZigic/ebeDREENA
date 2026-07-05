@@ -1006,97 +1006,140 @@ void EnergyLoss::runELossHeavyFlavour()
 void EnergyLoss::runELossLightQuarks()
 {
 	const std::vector<std::string> lightQuarksList{"Down", "DownBar", "Strange", "Up", "UpBar"};
+	const std::size_t lqSize = lightQuarksList.size();
 
-	std::vector<LinearInterpolator<double>> dsdpti2LightQuarks(lightQuarksList.size());
-
-	for (std::size_t iLQ=0; iLQ<lightQuarksList.size(); iLQ++)
+	std::vector<LinearInterpolator<double>> dsdpti2LightQuarks(lqSize);
+	for (std::size_t iLQ=0; iLQ<lightQuarksList.size(); iLQ++) {
 		if (loaddsdpti2(lightQuarksList[iLQ], dsdpti2LightQuarks[iLQ]) != 0) return;
+	}
 
 	FdAHaltonSeqInit(100);
 
+	const auto& radPts   = m_Grids.RadPts();
+	const auto& fdpPts   = m_Grids.FdpPts();
+	const auto& pCollPts = m_Grids.pCollPts();
+	const auto& finPts   = m_Grids.finPts();
+
 	#pragma omp parallel for schedule(dynamic)
-	for (std::size_t eventID=0; eventID<m_eventN; eventID++)
+	for (std::size_t eventID = 0; eventID < m_eventN; ++eventID)
 	{
-		std::vector<double> xPoints, yPoints; generateInitPosPoints(eventID, xPoints, yPoints);
+		std::vector<double> xPoints, yPoints;
+		generateInitPosPoints(eventID, xPoints, yPoints);
 
-		LinearInterpolator<double> tProfile; loadTProfile(eventID, tProfile);
+		LinearInterpolator<double> tProfile;
+		loadTProfile(eventID, tProfile);
 
-		std::vector<std::vector<std::vector<double>>> RAAdist(lightQuarksList.size(), std::vector<std::vector<double>>(m_Grids.finPtsLength(), std::vector<double>(m_phiGridN, 0.0)));
-
+		std::vector<std::vector<std::vector<double>>> RAAdist(lqSize, std::vector<std::vector<double>>(finPts.size(), std::vector<double>(m_phiGridN, 0.0)));
 		std::vector<double> pathLenghDist(m_phiGridN, 0.0), temperatureDist(m_phiGridN, 0.0);
 
 		std::size_t trajectoryNum = 0, energylossNum = 0;
 
-		for (std::size_t iPhi=0; iPhi<m_phiGridN; iPhi++)
-		{
-			double phi = m_phiGridPts[iPhi];
+		std::vector<double> radRAA1(radPts.size(), 0.0);
+		std::vector<std::vector<double>> radRAA2(radPts.size(), std::vector<double>(fdpPts.size(), 0.0));
+		std::vector<double> collEL(pCollPts.size(), 0.0);
+		
+		std::vector<std::vector<double>> singleRAA1(
+			lightQuarksList.size(), std::vector<double>(
+				finPts.size(), 0.0
+			)
+		);
+		std::vector<std::vector<std::vector<double>>> singleRAA2(
+			lqSize, std::vector<std::vector<double>>(
+				finPts.size(), std::vector<double>(
+					fdpPts.size(), 0.0
+				)
+			)
+		);
+		
+		std::vector<std::vector<double>> sumRAA1(
+			lqSize, std::vector<double>(
+				finPts.size(), 0.0
+			)
+		);
+		std::vector<std::vector<std::vector<double>>> sumRAA2(
+			lqSize, std::vector<std::vector<double>>(
+				finPts.size(), std::vector<double>(
+					fdpPts.size(), 0.0
+				)
+			)
+		);
 
-			std::vector<std::vector<double>> sumRAA1(lightQuarksList.size(), std::vector<double>(m_Grids.finPtsLength(), 0.0));
+		for (std::size_t iPhi=0; iPhi<m_phiGridN; iPhi++) {
+			const double phi = m_phiGridPts[iPhi];
 
-			std::vector<std::vector<std::vector<double>>> sumRAA2(lightQuarksList.size(), std::vector<std::vector<double>>(m_Grids.finPtsLength(), std::vector<double>(m_Grids.FdpPtsLength(), 0.0)));
+			for (std::size_t iLQ = 0; iLQ < lqSize; ++iLQ) {
+                std::fill(sumRAA1[iLQ].begin(), sumRAA1[iLQ].end(), 0.0);
+				for (auto& row : sumRAA2[iLQ]) {
+            		std::fill(row.begin(), row.end(), 0.0);
+        		}
+            }
 
-			std::size_t pltCNT = 0; //path-length and temperature distribution counter
+			std::size_t pltCNT = 0;
 
-			for (std::size_t iXY=0; iXY<xPoints.size(); iXY++) //loop over x and y initial position points
-			{
-				trajectoryNum++;
+			for (std::size_t iXY = 0; iXY < xPoints.size(); ++iXY) {
+				++trajectoryNum;
 
-				double x = xPoints[iXY], y = yPoints[iXY];
+				const double x = xPoints[iXY];
+				const double y = yPoints[iXY];
 
-				std::vector<double> radRAA1; std::vector<std::vector<double>> radRAA2; std::vector<double> collEL;
 				double pathLength, temperature;
 				RadCollEL(x, y, phi, tProfile, radRAA1, radRAA2, collEL, pathLength, temperature);
 
-				if (pathLength > m_tau0) { //checking if path-length is larger than thermalization time
-
-					energylossNum++; //adding to number of energy loss calculations
-
-					pltCNT++;
-					pathLenghDist[iPhi] += pathLength;
+				if (pathLength > m_tau0) { // NOTE (dusan): jet has traversed through the medium
+					++energylossNum;
+					++pltCNT;
+					pathLenghDist[iPhi]   += pathLength;
 					temperatureDist[iPhi] += temperature;
 
-					for (auto &coll : collEL) coll += 1e-12; //modifying collEL to prevent division by 0
+					for (auto &coll : collEL) coll += 1e-12; // NOTE (dusan): to prevent division by 0
 
-					std::vector<std::vector<double>> singleRAA1(lightQuarksList.size());
-					std::vector<std::vector<std::vector<double>>> singleRAA2(lightQuarksList.size());
-
-					for (std::size_t iLQ=0; iLQ<lightQuarksList.size(); iLQ++)
+					for (std::size_t iLQ = 0; iLQ < lqSize; ++iLQ) {
 						gaussFilterIntegrate(dsdpti2LightQuarks[iLQ], radRAA1, radRAA2, collEL, singleRAA1[iLQ], singleRAA2[iLQ]);
+					}
 
-					for (std::size_t iLQ=0; iLQ<lightQuarksList.size(); iLQ++) {
-						for (std::size_t iFinPts=0; iFinPts<m_Grids.finPtsLength(); iFinPts++) {
-							sumRAA1[iLQ][iFinPts] += singleRAA1[iLQ][iFinPts];
-							for (std::size_t iFdp=0; iFdp<m_Grids.FdpPtsLength(); iFdp++)
-								sumRAA2[iLQ][iFinPts][iFdp] += singleRAA2[iLQ][iFinPts][iFdp];
+					for (std::size_t iLQ = 0; iLQ < lqSize; ++iLQ) {
+						for (std::size_t iFin = 0; iFin < finPts.size(); ++iFin) {
+							sumRAA1[iLQ][iFin] += singleRAA1[iLQ][iFin];
+							for (std::size_t iFdp = 0; iFdp < fdpPts.size(); ++iFdp)
+								sumRAA2[iLQ][iFin][iFdp] += singleRAA2[iLQ][iFin][iFdp];
 						}
 					}
 				}
 				else {
-					for (std::size_t iLQ=0; iLQ<lightQuarksList.size(); iLQ++)
-						for (std::size_t iFinPts=0; iFinPts<m_Grids.finPtsLength(); iFinPts++)
-							sumRAA1[iLQ][iFinPts] += 1.0;
+					// NOTE (dusan): adding RAA1, which is 1.0, to RAA sum; RAA2 is 0 in this case
+					for (std::size_t iLQ = 0; iLQ < lqSize; ++iLQ) {
+						for (std::size_t iFin = 0; iFin < finPts.size(); ++iFin) {
+							sumRAA1[iLQ][iFin] += 1.0;
+						}
+					}
 				}
 			}
 
 			double weightsum = static_cast<double>(xPoints.size());
-			for (std::size_t iLQ=0; iLQ<lightQuarksList.size(); iLQ++) {
-				std::for_each(sumRAA1[iLQ].begin(), sumRAA1[iLQ].end(), [weightsum](double &c){ c/=weightsum; });
-				for (std::size_t iFinPts=0; iFinPts<m_Grids.finPtsLength(); iFinPts++)
-					std::for_each(sumRAA2[iLQ][iFinPts].begin(), sumRAA2[iLQ][iFinPts].end(), [weightsum](double &c){ c/=weightsum; });
+
+			for (std::size_t iLQ = 0; iLQ < lqSize; ++iLQ) {
+				for (std::size_t iFin = 0; iFin < finPts.size(); ++iFin) {
+					sumRAA1[iLQ][iFin] /= weightsum;
+					for (std::size_t iFdp = 0; iFdp < fdpPts.size(); ++iFdp) {
+						sumRAA2[iLQ][iFin][iFdp] /= weightsum;
+					}
+					RAAdist[iLQ][iFin][iPhi] = sumRAA1[iLQ][iFin] + poly::cubicIntegrate(fdpPts, sumRAA2[iLQ][iFin]) / finPts[iFin];
+				}
 			}
 
-			//setting RAA(pT,phi) value by integrating over p:
-			for (std::size_t iLQ=0; iLQ<lightQuarksList.size(); iLQ++)
-				for (std::size_t iFinPts=0; iFinPts<m_Grids.finPtsLength(); iFinPts++)
-					RAAdist[iLQ][iFinPts][iPhi] = sumRAA1[iLQ][iFinPts] + poly::cubicIntegrate(m_Grids.FdpPts(), sumRAA2[iLQ][iFinPts])/m_Grids.finPts(iFinPts);
-
-			pathLenghDist[iPhi] /= static_cast<double>(pltCNT); temperatureDist[iPhi] /= static_cast<double>(pltCNT);
+			if (pltCNT > 0) {
+                pathLenghDist[iPhi]   /= static_cast<double>(pltCNT);
+                temperatureDist[iPhi] /= static_cast<double>(pltCNT);
+            } else {
+                pathLenghDist[iPhi]   = 0.0;
+                temperatureDist[iPhi] = 0.0;
+            }
 		}
 
 		std::vector<double> avgPathLength, avgTemp;
 		calculateAvgPathlenTemps(pathLenghDist, temperatureDist, avgPathLength, avgTemp);
 		
-		for (std::size_t iLQ=0; iLQ<lightQuarksList.size(); iLQ++)
+		for (std::size_t iLQ=0; iLQ<lqSize; iLQ++)
 			exportResults(lightQuarksList[iLQ], eventID, RAAdist[iLQ], avgPathLength, avgTemp, trajectoryNum, energylossNum);
 	}
 }
