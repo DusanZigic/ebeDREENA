@@ -1,6 +1,7 @@
 #include "energyloss.hpp"
 
 #include <iostream>
+#include <utility>
 #include <sstream>
 #include <algorithm>
 #include <random>
@@ -40,6 +41,14 @@ EnergyLoss::EnergyLoss(const config::energyLossConfig &cfg)
 		m_MC = mu*utils::constants::INV_SQRT_6;
 	}
 	m_TCollConst = 3.0/2.0*m_TCRIT;
+
+	// NOTE (dusan): setting up master seed only once during initialization
+	if (m_BCPSEED == 0) {
+        std::random_device rd;
+        m_masterSeed = rd();
+    } else {
+        m_masterSeed = static_cast<std::uint32_t>(m_BCPSEED);
+    }
 }
 
 EnergyLoss::~EnergyLoss() {}
@@ -360,7 +369,7 @@ int EnergyLoss::loadPhiPoints()
 	return 0;
 }
 
-int EnergyLoss::loadBinCollPoints(std::size_t event_id, std::vector<std::vector<double>> &bcpoints)
+int EnergyLoss::loadBinCollPoints(std::size_t event_id, std::vector<std::pair<double, double>> &bcpoints) const
 {
 	const std::string path_in = "./binarycollpts/binarycollpts_cent=" + m_centrality + "/binarycollpts" + std::to_string(event_id) + ".dat";
 
@@ -370,29 +379,25 @@ int EnergyLoss::loadBinCollPoints(std::size_t event_id, std::vector<std::vector<
 		return 1;
 	}
 
-	std::string line; double buffer;
+	bcpoints.clear();
+    bcpoints.reserve(2000);
+
+	std::string line;
+	double x_buf, y_buf;
+	std::stringstream ss;
 
 	std::vector<double> xpoints, ypoints;
 
 	while (std::getline(file_in, line))
 	{
-		if (line.length() == 0)
-            continue;
-        
-        if (line.at(0) == '#')
+		if (line.empty() || line[0] == '#')
             continue;
 
-		std::stringstream ss(line);
-		ss >> buffer; xpoints.push_back(buffer);
-		ss >> buffer; ypoints.push_back(buffer);
-	}
-
-	bcpoints.resize(xpoints.size());
-
-	for (std::size_t iBCP=0; iBCP<xpoints.size(); iBCP++)
-	{
-		bcpoints[iBCP].push_back(xpoints[iBCP]);
-        bcpoints[iBCP].push_back(ypoints[iBCP]);
+		ss.clear();
+        ss.str(line);
+		if (ss >> x_buf >> y_buf) {
+            bcpoints.push_back({x_buf, y_buf});
+        }
 	}
 
 	file_in.close();
@@ -400,32 +405,34 @@ int EnergyLoss::loadBinCollPoints(std::size_t event_id, std::vector<std::vector<
 	return 0;
 }
 
-int EnergyLoss::generateInitPosPoints(std::size_t event_id, std::vector<double> &xPoints, std::vector<double> &yPoints)
+int EnergyLoss::generateInitPosPoints(std::size_t event_id, std::vector<double> &xPoints, std::vector<double> &yPoints) const
 {
-	std::vector<std::vector<double>> bcpts; if (loadBinCollPoints(event_id, bcpts) != 0) return 1;
+	std::vector<std::pair<double, double>> bcpts;
+	if (loadBinCollPoints(event_id, bcpts) != 0) return 1;
 
-	std::size_t bsptsNum = static_cast<std::size_t>(m_BCPP*static_cast<double>(bcpts.size()));
+	std::size_t bsptsNum = static_cast<std::size_t>(m_BCPP * static_cast<double>(bcpts.size()));
+    if (bsptsNum < 1) bsptsNum = 1;
 
-	if (bsptsNum < 1) bsptsNum = 1;
+	// NOTE (dusan): each event will use different seed ensuring shuffles are uncorrelated
+	//               if fixed no-zero m_BCPSEED is set, the sequence remains entirely deterministic since each event 
+	//               will always generate the exact same seed (m_BCPSEED + event_id)
+	std::uint32_t eventSeed = m_masterSeed + static_cast<std::uint32_t>(event_id);
+    std::default_random_engine rng{eventSeed};
 
-	if (m_BCPSEED == 0) {
-		std::random_device rd; auto rng = std::default_random_engine{rd()};
-		std::shuffle(bcpts.begin(), bcpts.end(), rng);
-	}
-	else {
-		auto rng = std::default_random_engine{static_cast<long unsigned int>(m_BCPSEED)};
-		std::shuffle(bcpts.begin(), bcpts.end(), rng);
-	}
+	std::shuffle(bcpts.begin(), bcpts.end(), rng);
 
-	for (std::size_t iBCP=0; iBCP<bsptsNum; iBCP++) {
-		xPoints.push_back(bcpts[iBCP][0]);
-        yPoints.push_back(bcpts[iBCP][1]);
-	}
+	xPoints.reserve(bsptsNum);
+    yPoints.reserve(bsptsNum);
+
+    for (std::size_t iBCP = 0; iBCP < bsptsNum; ++iBCP) {
+        xPoints.push_back(bcpts[iBCP].first);
+        yPoints.push_back(bcpts[iBCP].second);
+    }
 
 	return 0;
 }
 
-int EnergyLoss::loadTProfile(std::size_t event_id, LinearInterpolator<double> &tempProfile)
+int EnergyLoss::loadTProfile(std::size_t event_id, LinearInterpolator<double> &tempProfile) const
 {
     const std::string path_in = "./evols/evols_cent=" + m_centrality + "/tempevol" + std::to_string(event_id) + ".dat";
 

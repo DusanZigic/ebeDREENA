@@ -28,6 +28,7 @@ private:
     double m_TIMESTEP;           // jets' traversal step in fm
     double m_TCRIT;	             // temperature at which eloss stops
     int m_BCPSEED;			     // seed for generating initial position points
+    std::uint32_t m_masterSeed;  // master seed for binary collision points shuffler
     
     double m_nf;			     // effective number of flavours
     
@@ -63,9 +64,9 @@ private:
     int loadLColl();
     int generateTempGrid();
     int loadPhiPoints();
-    int loadBinCollPoints(std::size_t event_id, std::vector<std::vector<double>> &bcpoints);
-    int generateInitPosPoints(std::size_t event_id, std::vector<double> &xPoints, std::vector<double> &yPoints);
-    int loadTProfile(std::size_t event_id, LinearInterpolator<double> &tempProfile);
+    int loadBinCollPoints(std::size_t event_id, std::vector<std::pair<double, double>> &bcpoints) const;
+    int generateInitPosPoints(std::size_t event_id, std::vector<double> &xPoints, std::vector<double> &yPoints) const;
+    int loadTProfile(std::size_t event_id, LinearInterpolator<double> &tempProfile) const;
 
     void FdAHaltonSeqInit(std::size_t FdAMaxPts);
     double dAp410(double ph, const LinearInterpolator<double> &norm) const noexcept;
