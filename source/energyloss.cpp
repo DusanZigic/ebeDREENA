@@ -251,57 +251,87 @@ int EnergyLoss::loadLColl()
 
 int EnergyLoss::generateTempGrid()
 {
-	const std::string path_in = "./evols/evols_cent=" + m_centrality + "/evolgridparams.dat";
+    const std::string path_in = "./evols/evols_cent=" + m_centrality + "/evolgridparams.dat";
 
-	std::ifstream file_in(path_in);
-	if (!file_in.is_open()) {
-		std::cerr << "Error: unable to open evolution grid parameters file." << std::endl;
-		return -1;
-	}
+    std::ifstream file_in(path_in);
+    if (!file_in.is_open()) {
+        std::cerr << "Error: unable to open evolution grid parameters file." << std::endl;
+        return -1;
+    }
 
-	std::string line; double buffer;
+    // NOTE (dusan): helper lambda to get the next line containing actual data
+    auto readNextDataLine = [](std::ifstream &file, std::string &line) -> bool {
+        while (std::getline(file, line)) {
+            if (!line.empty() && line[0] != '#') {
+                return true;
+            }
+        }
+        return false;
+    };
 
-	{//tau
-		std::getline(file_in, line);
-		std::getline(file_in, line);
-		std::stringstream ss(line); ss >> buffer; m_tempTau0    = buffer;
-							        ss >> buffer; m_tempTauStep = buffer;
-							   			          m_tempTauMax  = 0;
-		double tau = m_tempTau0; while (tau < (m_tauMaxFM+m_tempTauStep)) {m_tempTauMax++; tau+=m_tempTauStep;}
-		m_tau0 = m_tempTau0;
-	}
+    std::string line;
 
-	{//x
-		double xMax;
-		std::getline(file_in, line);
-		std::getline(file_in, line);
-		std::stringstream ss(line); ss >> buffer;    m_tempX0 = buffer;
-							        ss >> buffer;        xMax = buffer;
-							        ss >> buffer; m_tempXStep = buffer;
-		double x = m_tempX0; m_tempXMax = 0; while (x <= xMax) {m_tempXMax++; x+=m_tempXStep;}
-	}
+    // NOTE (dusan): parse and generate tau grid
+    if (!readNextDataLine(file_in, line)) {
+        std::cerr << "Error: failed to read tau parameters from 'evolgridparams' file." << std::endl;
+        return -2;
+    }
+    {
+        std::stringstream ss(line);
+        ss >> m_tempTau0 >> m_tempTauStep;
+        m_tau0 = m_tempTau0;
 
-	{//y
-		double yMax;
-		std::getline(file_in, line);
-		std::getline(file_in, line);
-		std::stringstream ss(line); ss >> buffer;    m_tempY0 = buffer;
-							        ss >> buffer;        yMax = buffer;
-							        ss >> buffer; m_tempYStep = buffer;
-		double y = m_tempY0; m_tempYMax = 0; while (y <= yMax) {m_tempYMax++; y+=m_tempYStep;}
-	}
+        m_tempTauGrid.clear();
+        std::size_t i = 0;
+        while (true) {
+            double current_tau = m_tempTau0 + i * m_tempTauStep;
+            if (current_tau >= (m_tauMaxFM + m_tempTauStep - 1e-9)) break;            
+            m_tempTauGrid.push_back(current_tau);
+            i++;
+        }
+        m_tempTauMax = m_tempTauGrid.size();
+    }
 
-	for (std::size_t iTau=0; iTau<m_tempTauMax; iTau++) {
-		for (std::size_t iX=0; iX<m_tempXMax; iX++) {
-			for (std::size_t iY=0; iY<m_tempYMax; iY++) {
-				m_tempTauGrid.push_back(m_tempTau0 + iTau*m_tempTauStep);
-				  m_tempXGrid.push_back(  m_tempX0 +   iX*m_tempXStep);
-				  m_tempYGrid.push_back(  m_tempY0 +   iY*m_tempYStep);
-			}
-		}		
-	}
+    // NOTE (dusan): parse and generate x grid
+    if (!readNextDataLine(file_in, line)) {
+        std::cerr << "Error: failed to read x parameters from 'evolgridparams' file." << std::endl;
+        return -3;
+    }
+    {
+        double xMax;
+        std::stringstream ss(line);
+        ss >> m_tempX0 >> xMax >> m_tempXStep;
 
-	return 1;
+        m_tempXGrid.clear();
+        m_tempXMax = static_cast<std::size_t>(std::round((xMax - m_tempX0) / m_tempXStep)) + 1;
+        
+        m_tempXGrid.reserve(m_tempXMax);
+        for (std::size_t i = 0; i < m_tempXMax; ++i) {
+            m_tempXGrid.push_back(m_tempX0 + i * m_tempXStep);
+        }
+    }
+
+    // NOTE (dusan): parse and generate y grid
+    if (!readNextDataLine(file_in, line)) {
+        std::cerr << "Error: Failed to read y parameters from 'evolgridparams' file." << std::endl;
+        return -4;
+    }
+    {
+        double yMax;
+        std::stringstream ss(line);
+        ss >> m_tempY0 >> yMax >> m_tempYStep;
+
+        m_tempYGrid.clear();
+        m_tempYMax = static_cast<std::size_t>(std::round((yMax - m_tempY0) / m_tempYStep)) + 1;
+        
+        m_tempYGrid.reserve(m_tempYMax);
+        for (std::size_t i = 0; i < m_tempYMax; ++i) {
+            m_tempYGrid.push_back(m_tempY0 + i * m_tempYStep);
+        }
+    }
+
+    file_in.close();
+    return 1;
 }
 
 int EnergyLoss::loadPhiPoints()
@@ -398,32 +428,44 @@ int EnergyLoss::generateInitPosPoints(std::size_t event_id, std::vector<double> 
 
 int EnergyLoss::loadTProfile(std::size_t event_id, LinearInterpolator<double> &tempProfile)
 {
-	const std::string path_in = "./evols/evols_cent=" + m_centrality + "/tempevol" + std::to_string(event_id) + ".dat";
+    const std::string path_in = "./evols/evols_cent=" + m_centrality + "/tempevol" + std::to_string(event_id) + ".dat";
 
-	std::ifstream file_in(path_in, std::ios_base::in | std::ios_base::binary);
-	if (!file_in.is_open()) {
-		std::cerr << "Error: unable to open temperature evolution file for event " + std::to_string(event_id) + "." << std::endl;
-		return -1;
-	}
+    std::ifstream file_in(path_in, std::ios_base::in | std::ios_base::binary);
+    if (!file_in.is_open()) {
+        std::cerr << "Error: unable to open temperature evolution file for event " + std::to_string(event_id) + "." << std::endl;
+        return -1;
+    }
 
-    std::vector<double> temps; float buffer;
+    std::vector<double> temps; 
+    float buffer;
 
-    while (true) {
-        file_in.read((char*)&buffer, sizeof(buffer));
-        if (file_in.eof()) break;
+    while (file_in.read(reinterpret_cast<char*>(&buffer), sizeof(buffer))) { // NOTE (dusan): reading 32bit floats from binary data file
         temps.push_back(static_cast<double>(buffer));
     }
 
-	file_in.close();
+    file_in.close();
 
-	if (temps.size() > m_tempTauGrid.size()) {
-		std::cerr << "Error: imported profile's size larger than grid size." << std::endl;
-		return -2;
-	}
+    std::size_t spatialGridSize = m_tempXMax * m_tempYMax;
+    if (temps.size() % spatialGridSize != 0) {
+        std::cerr << "Error: data size is not a perfect multiple of the spatial grid layout." << std::endl;
+        return -2;
+    }
 
-	tempProfile.setData(m_tempTauGrid, m_tempXGrid, m_tempYGrid, temps);
+    std::size_t currentTauN = temps.size() / spatialGridSize;
 
-	return 1;
+    if (currentTauN > m_tempTauGrid.size()) {
+        std::cerr << "Error: imported profile's tau length larger than maximum pre-allocated grid size." << std::endl;
+        return -3;
+    }
+
+    tempProfile.setData(
+        std::vector<double>(m_tempTauGrid.begin(), m_tempTauGrid.begin() + currentTauN),
+        m_tempXGrid,
+        m_tempYGrid,
+        temps
+    );
+
+    return 1;
 }
 
 void EnergyLoss::generateGaussTab(std::vector<double> &qGTab, std::vector<double> &fGTab) const
