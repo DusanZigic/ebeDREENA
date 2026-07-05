@@ -3,3 +3,13 @@
 /ptDists
 /ebeDREENA
 /build
+/ltables/**/*Bottom*
+/ltables/**/*Gluon*
+/ltables/**/*LQuarks*
+/results/resultsBottom
+/results/resultsDown
+/results/resultsDownBar
+/results/resultsGluon
+/results/resultsStrange
+/results/resultsUp
+/results/resultsUpBar
