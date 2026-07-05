@@ -70,25 +70,25 @@ private:
     void RadCollEL(double X0, double Y0, double phi0, const LinearInterpolator<double> &TProfile, std::vector<double> &radiativeRAA1, std::vector<std::vector<double>> &radiativeRAA2, std::vector<double> &collisionalEL, double &pathLength, double &temp) const;
     void RadCollEL(double X0, double Y0, double phi0, const LinearInterpolator<double> &TProfile, std::vector<double> &radiativeRAA, std::vector<double> &collisionalEL, double &pathLenght, double &temp) const;
 
-    double haltonSequence(int index, int base) const;
     void FdAHaltonSeqInit(std::size_t FdAMaxPts);
-    double dAp410(double ph, const LinearInterpolator<double> &norm) const;
-    double FdA411(double ph, double dp, const LinearInterpolator<double> &norm, const LinearInterpolator<double> &dndx) const;
-    double FdA412(double ph, double dp, const LinearInterpolator<double> &norm, const LinearInterpolator<double> &dndx) const;
-    double FdA413(double ph, double dp, const LinearInterpolator<double> &norm, const LinearInterpolator<double> &dndx) const;
-    double FdA414(double ph, double dp, const LinearInterpolator<double> &norm, const LinearInterpolator<double> &dndx) const;
-    double FdA415(double ph, double dp, const LinearInterpolator<double> &norm, const LinearInterpolator<double> &dndx) const;
-    double FdA(double ph, double dp, const LinearInterpolator<double> &currnorm, const LinearInterpolator<double> &currdndx) const;
+    double dAp410(double ph, const LinearInterpolator<double> &norm) const noexcept;
+    double FdA411(double ph, double dp, const LinearInterpolator<double> &norm, const LinearInterpolator<double> &dndx) const noexcept;
+    double FdA412(double ph, double dp, const LinearInterpolator<double> &norm, const LinearInterpolator<double> &dndx) const noexcept;
+    double FdA413(double ph, double dp, const LinearInterpolator<double> &norm, const LinearInterpolator<double> &dndx) const noexcept;
+    double FdA414(double ph, double dp, const LinearInterpolator<double> &norm, const LinearInterpolator<double> &dndx) const noexcept;
+    double FdA415(double ph, double dp, const LinearInterpolator<double> &norm, const LinearInterpolator<double> &dndx) const noexcept;
+    double FdA(double ph, double dp, const LinearInterpolator<double> &currnorm, const LinearInterpolator<double> &currdndx) const noexcept;
+
     void dAHaltonSeqInit(std::size_t dAMaxPts);
-    double dA410(double ph, const LinearInterpolator<double> &norm) const;
-    double dA411(double ph, const LinearInterpolator<double> &norm, const LinearInterpolator<double> &dndx) const;
-    double dA412(double ph, const LinearInterpolator<double> &norm, const LinearInterpolator<double> &dndx) const;
-    double dA413(double ph, const LinearInterpolator<double> &norm, const LinearInterpolator<double> &dndx) const;
-    double dA414(double ph, const LinearInterpolator<double> &norm, const LinearInterpolator<double> &dndx) const;
-    double dA415(double ph, const LinearInterpolator<double> &norm, const LinearInterpolator<double> &dndx) const;
-    double dA416(double ph, const LinearInterpolator<double> &norm, const LinearInterpolator<double> &dndx) const;
-    double dA417(double ph, const LinearInterpolator<double> &norm, const LinearInterpolator<double> &dndx) const;
-    double dA41(double ph, LinearInterpolator<double> &currnorm, LinearInterpolator<double> &currdndx) const;
+    double dA410(double ph, const LinearInterpolator<double> &norm) const noexcept;
+    double dA411(double ph, const LinearInterpolator<double> &norm, const LinearInterpolator<double> &dndx) const noexcept;
+    double dA412(double ph, const LinearInterpolator<double> &norm, const LinearInterpolator<double> &dndx) const noexcept;
+    double dA413(double ph, const LinearInterpolator<double> &norm, const LinearInterpolator<double> &dndx) const noexcept;
+    double dA414(double ph, const LinearInterpolator<double> &norm, const LinearInterpolator<double> &dndx) const noexcept;
+    double dA415(double ph, const LinearInterpolator<double> &norm, const LinearInterpolator<double> &dndx) const noexcept;
+    double dA416(double ph, const LinearInterpolator<double> &norm, const LinearInterpolator<double> &dndx) const noexcept;
+    double dA417(double ph, const LinearInterpolator<double> &norm, const LinearInterpolator<double> &dndx) const noexcept;
+    double dA41(double ph, LinearInterpolator<double> &currnorm, LinearInterpolator<double> &currdndx) const noexcept;
 
     void generateGaussTab(std::vector<double> &qGTab, std::vector<double> &fGTab) const;
     void calculateAvgPathlenTemps(const std::vector<double> &pathLenghDist, const std::vector<double> &temperatureDist, std::vector<double> &avgPathLength, std::vector<double> &avgTemp) const;
