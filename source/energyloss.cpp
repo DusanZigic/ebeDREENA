@@ -47,13 +47,11 @@ void EnergyLoss::runEnergyLoss()
 {
 	m_Grids.setGridPoints(m_sNN, m_pName, m_TCRIT);
 
-	if (loadLdndx() != 1) return;
-	if (loadLNorm() != 1) return;
-	if (loadLColl() != 1) return;
-
-	if (generateTempGrid() != 1) return;
-	
- 	if (loadPhiPoints() != 1) return;
+	if (loadLdndx()        != 0) return;
+	if (loadLNorm()        != 0) return;
+	if (loadLColl()        != 0) return;
+	if (generateTempGrid() != 0) return;
+ 	if (loadPhiPoints()    != 0) return;
 
 	if ((m_pName == "Bottom") || (m_pName == "Charm")) {
 		runELossHeavyFlavour();
@@ -73,7 +71,7 @@ int EnergyLoss::loaddsdpti2(const std::string &pname, LinearInterpolator<double>
 	std::ifstream file_in(path_in);
 	if (!file_in.is_open()) {
 		std::cerr << "Error: unable to open initial pT distribution file." << std::endl;
-		return -1;
+		return 1;
 	}
 
 	std::vector<double> pTdistX, pTdistF;
@@ -94,7 +92,7 @@ int EnergyLoss::loaddsdpti2(const std::string &pname, LinearInterpolator<double>
 
 	file_in.close();
 
-	return 1;
+	return 0;
 }
 
 int EnergyLoss::loadLdndx()
@@ -113,7 +111,7 @@ int EnergyLoss::loadLdndx()
 	std::ifstream file_in(path_in);
 	if (!file_in.is_open()) {
 		std::cerr << "Error: unable to open Ldndx table file." << std::endl;
-		return -1;
+		return 1;
 	}
 
 	std::vector<double> Ldndx_tau, Ldndx_p, Ldndx_T, Ldndx_x, Ldndx_f;
@@ -148,7 +146,7 @@ int EnergyLoss::loadLdndx()
 	// if (m_Grids.xPts(0)    < domain[3][0]) {std::cerr << "Error:   x grid point(s) out of lower bound of Ldndx domain. Aborting..." << std::endl; return -1;}
 	// if (m_Grids.xPts(-1)   > domain[3][1]) {std::cerr << "Error:   x grid point(s) out of upper bound of Ldndx domain. Aborting..." << std::endl; return -1;}
 
-	return 1;
+	return 0;
 }
 
 int EnergyLoss::loadLNorm()
@@ -167,7 +165,7 @@ int EnergyLoss::loadLNorm()
 	std::ifstream file_in(path_in);
 	if (!file_in.is_open()) {
 		std::cerr << "Error: unable to open LNorm table file." << std::endl;
-		return -1;
+		return 1;
 	}
 
 	std::vector<double> LNorm_tau, LNorm_p, LNorm_T, LNorm_f; //defining vectors that store LNorm table values
@@ -199,7 +197,7 @@ int EnergyLoss::loadLNorm()
 	// if (m_Grids.TPts(0)    < domain[2][0]) {std::cerr << "Error:   T grid point(s) out of lower bound of LNorm domain. Aborting..." << std::endl; return -1;}
 	// if (m_Grids.TPts(-1)   > domain[2][1]) {std::cerr << "Error:   T grid point(s) out of upeer bound of LNorm domain. Aborting..." << std::endl; return -1;}
 
-	return 1;
+	return 0;
 }
 
 int EnergyLoss::loadLColl()
@@ -217,7 +215,7 @@ int EnergyLoss::loadLColl()
 	std::ifstream file_in(path_in);
 	if (!file_in.is_open()) {
 		std::cerr << "Error: unable to open LColl table file." << std::endl;
-		return -1;
+		return 1;
 	}
 
 	std::vector<double> LColl_p, LColl_T, LColl_f;
@@ -246,7 +244,7 @@ int EnergyLoss::loadLColl()
 	// if (m_Grids.TCollPts(0)  < domain[1][0]) {std::cerr << "Error: T grid point(s) out of lower bound of LColl domain. Aborting..." << std::endl; return -1;}
 	// if (m_Grids.TCollPts(-1) > domain[1][1]) {std::cerr << "Error: T grid point(s) out of upper bound of LColl domain. Aborting..." << std::endl; return -1;}
 
-	return 1;
+	return 0;
 }
 
 int EnergyLoss::generateTempGrid()
@@ -256,7 +254,7 @@ int EnergyLoss::generateTempGrid()
     std::ifstream file_in(path_in);
     if (!file_in.is_open()) {
         std::cerr << "Error: unable to open evolution grid parameters file." << std::endl;
-        return -1;
+        return 1;
     }
 
     // NOTE (dusan): helper lambda to get the next line containing actual data
@@ -274,7 +272,7 @@ int EnergyLoss::generateTempGrid()
     // NOTE (dusan): parse and generate tau grid
     if (!readNextDataLine(file_in, line)) {
         std::cerr << "Error: failed to read tau parameters from 'evolgridparams' file." << std::endl;
-        return -2;
+        return 1;
     }
     {
         std::stringstream ss(line);
@@ -295,7 +293,7 @@ int EnergyLoss::generateTempGrid()
     // NOTE (dusan): parse and generate x grid
     if (!readNextDataLine(file_in, line)) {
         std::cerr << "Error: failed to read x parameters from 'evolgridparams' file." << std::endl;
-        return -3;
+        return 1;
     }
     {
         double xMax;
@@ -314,7 +312,7 @@ int EnergyLoss::generateTempGrid()
     // NOTE (dusan): parse and generate y grid
     if (!readNextDataLine(file_in, line)) {
         std::cerr << "Error: Failed to read y parameters from 'evolgridparams' file." << std::endl;
-        return -4;
+        return 1;
     }
     {
         double yMax;
@@ -331,7 +329,7 @@ int EnergyLoss::generateTempGrid()
     }
 
     file_in.close();
-    return 1;
+    return 0;
 }
 
 int EnergyLoss::loadPhiPoints()
@@ -340,7 +338,7 @@ int EnergyLoss::loadPhiPoints()
 	std::ifstream file_in(path_in);
 	if (!file_in.is_open()) {
 		std::cerr << "Error: unable to open phi points file. Aborting..." << std::endl;
-		return -1;
+		return 1;
 	}
 
 	std::string line; double buffer;
@@ -355,10 +353,10 @@ int EnergyLoss::loadPhiPoints()
 
 	if (m_phiGridN != m_phiGridPts.size()) {
 		std::cerr << "Error: phiGridN not equal to number of point imported from a file. Aborting..." << std::endl;
-		return -2;
+		return 1;
 	}
 
-	return 1;
+	return 0;
 }
 
 int EnergyLoss::loadBinCollPoints(std::size_t event_id, std::vector<std::vector<double>> &bcpoints)
@@ -368,7 +366,7 @@ int EnergyLoss::loadBinCollPoints(std::size_t event_id, std::vector<std::vector<
 	std::ifstream file_in(path_in, std::ios_base::in);
 	if (!file_in.is_open()) {
 		std::cerr << "Error: unable to open binary collision points file for event: " + std::to_string(event_id) + "." << std::endl;
-		return -1;
+		return 1;
 	}
 
 	std::string line; double buffer;
@@ -398,12 +396,12 @@ int EnergyLoss::loadBinCollPoints(std::size_t event_id, std::vector<std::vector<
 
 	file_in.close();
 
-	return 1;
+	return 0;
 }
 
 int EnergyLoss::generateInitPosPoints(std::size_t event_id, std::vector<double> &xPoints, std::vector<double> &yPoints)
 {
-	std::vector<std::vector<double>> bcpts; if (loadBinCollPoints(event_id, bcpts) != 1) return -1;
+	std::vector<std::vector<double>> bcpts; if (loadBinCollPoints(event_id, bcpts) != 0) return 1;
 
 	std::size_t bsptsNum = static_cast<std::size_t>(m_BCPP*static_cast<double>(bcpts.size()));
 
@@ -423,7 +421,7 @@ int EnergyLoss::generateInitPosPoints(std::size_t event_id, std::vector<double> 
         yPoints.push_back(bcpts[iBCP][1]);
 	}
 
-	return 1;
+	return 0;
 }
 
 int EnergyLoss::loadTProfile(std::size_t event_id, LinearInterpolator<double> &tempProfile)
@@ -433,7 +431,7 @@ int EnergyLoss::loadTProfile(std::size_t event_id, LinearInterpolator<double> &t
     std::ifstream file_in(path_in, std::ios_base::in | std::ios_base::binary);
     if (!file_in.is_open()) {
         std::cerr << "Error: unable to open temperature evolution file for event " + std::to_string(event_id) + "." << std::endl;
-        return -1;
+        return 1;
     }
 
     std::vector<double> temps; 
@@ -448,14 +446,14 @@ int EnergyLoss::loadTProfile(std::size_t event_id, LinearInterpolator<double> &t
     std::size_t spatialGridSize = m_tempXMax * m_tempYMax;
     if (temps.size() % spatialGridSize != 0) {
         std::cerr << "Error: data size is not a perfect multiple of the spatial grid layout." << std::endl;
-        return -2;
+        return 1;
     }
 
     std::size_t currentTauN = temps.size() / spatialGridSize;
 
     if (currentTauN > m_tempTauGrid.size()) {
         std::cerr << "Error: imported profile's tau length larger than maximum pre-allocated grid size." << std::endl;
-        return -3;
+        return 1;
     }
 
     tempProfile.setData(
@@ -465,7 +463,7 @@ int EnergyLoss::loadTProfile(std::size_t event_id, LinearInterpolator<double> &t
         temps
     );
 
-    return 1;
+    return 0;
 }
 
 void EnergyLoss::generateGaussTab(std::vector<double> &qGTab, std::vector<double> &fGTab) const
@@ -541,7 +539,7 @@ int EnergyLoss::exportResults(const std::string &particleName, std::size_t event
 	std::ofstream file_out(path_out, std::ios_base::out);
 	if (!file_out.is_open()) {
 		std::cerr << "Error: unable to open RAA(pT,phi) distribution file for event " + std::to_string(event_id) + "." << std::endl;
-		return -1;
+		return 1;
 	}
 
 	for (const auto &h : header) file_out << h << "\n";
@@ -555,7 +553,7 @@ int EnergyLoss::exportResults(const std::string &particleName, std::size_t event
 
 	file_out.close();
 
-	return 1;
+	return 0;
 }
 
 
@@ -749,7 +747,7 @@ void EnergyLoss::RadCollEL(double X0, double Y0, double phi0, const LinearInterp
 
 void EnergyLoss::runELossHeavyFlavour()
 {
-	if (loaddsdpti2(m_pName, m_dsdpti2) != 1) return;
+	if (loaddsdpti2(m_pName, m_dsdpti2) != 0) return;
 
 	FdAHaltonSeqInit(150);
 
@@ -944,7 +942,7 @@ void EnergyLoss::runELossLightQuarks()
 	std::vector<LinearInterpolator<double>> dsdpti2LightQuarks(lightQuarksList.size());
 
 	for (std::size_t iLQ=0; iLQ<lightQuarksList.size(); iLQ++)
-		if (loaddsdpti2(lightQuarksList[iLQ], dsdpti2LightQuarks[iLQ]) != 1) return;
+		if (loaddsdpti2(lightQuarksList[iLQ], dsdpti2LightQuarks[iLQ]) != 0) return;
 
 	FdAHaltonSeqInit(100);
 
@@ -1144,7 +1142,7 @@ void EnergyLoss::gaussFilterIntegrate(const LinearInterpolator<double> &dsdpti2l
 
 void EnergyLoss::runELossLightFlavour()
 {
-	if (loaddsdpti2(m_pName, m_dsdpti2)  != 1) return;
+	if (loaddsdpti2(m_pName, m_dsdpti2) != 0) return;
 
 	dAHaltonSeqInit(1000);
 
