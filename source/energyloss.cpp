@@ -85,17 +85,23 @@ int EnergyLoss::loaddsdpti2(const std::string &pname, LinearInterpolator<double>
 	}
 
 	std::vector<double> pTdistX, pTdistF;
+	pTdistX.reserve(1000); pTdistF.reserve(1000);
 
-	std::string line; double buffer;
+	std::string line;
+	double b1, b2;
+	std::stringstream ss;
 
 	while (std::getline(file_in, line))
 	{
-        if (line.at(0) == '#')
+        if (line.empty() || line[0] == '#')
             continue;
 
-		std::stringstream ss(line);
-		ss >> buffer; pTdistX.push_back(buffer);
-		ss >> buffer; pTdistF.push_back(buffer);
+		ss.clear();
+        ss.str(line);
+        if (ss >> b1 >> b2) {
+			pTdistX.push_back(b1);
+			pTdistF.push_back(b2);
+		}
 	}
 
 	dsdpti2int.setData(pTdistX, pTdistF);
@@ -105,156 +111,173 @@ int EnergyLoss::loaddsdpti2(const std::string &pname, LinearInterpolator<double>
 	return 0;
 }
 
+std::string EnergyLoss::resolveLTablePath(const std::string &tablePrefix, bool includeXB) const
+{
+    std::string partName = (m_pName == "Bottom" || m_pName == "Charm" || m_pName == "Gluon") ? m_pName : "LQuarks";
+    
+    std::stringstream ss;
+    ss << std::fixed << std::setprecision(1);
+    
+    std::string path = "./ltables/" + tablePrefix + "_nf=";
+    ss << m_nf; path += ss.str() + "_" + partName;
+    
+    if (includeXB) {
+        ss.str(""); ss.clear();
+        ss << m_xB; path += "_xB=" + ss.str();
+    }
+    
+    return path + ".dat";
+}
+
 int EnergyLoss::loadLdndx()
 {
-	std::string partName;
-	if (m_pName == "Bottom") partName = "Bottom";
-	else if (m_pName == "Charm") partName = "Charm";
-	else if (m_pName == "Gluon") partName = "Gluon";
-	else partName = "LQuarks";
+    const std::string path_in = resolveLTablePath("ldndx", true);
 
-	std::stringstream xBss; xBss << std::fixed << std::setprecision(1) << m_xB;
-	std::stringstream nfss; nfss << std::fixed << std::setprecision(1) << m_nf;
+    std::ifstream file_in(path_in);
+    if (!file_in.is_open()) {
+        std::cerr << "Error: unable to open Ldndx table file from: " << path_in << std::endl;
+        return 1;
+    }
 
-	const std::string path_in = "./ltables/ldndx_nf=" + nfss.str() + "_" + partName + "_xB=" + xBss.str() + ".dat";
+    std::vector<double> Ldndx_tau, Ldndx_p, Ldndx_T, Ldndx_x, Ldndx_f;
+    Ldndx_tau.reserve(2200000); Ldndx_p.reserve(2200000); Ldndx_T.reserve(2200000);
+    Ldndx_x.reserve(2200000);   Ldndx_f.reserve(2200000);
 
-	std::ifstream file_in(path_in);
-	if (!file_in.is_open()) {
-		std::cerr << "Error: unable to open Ldndx table file." << std::endl;
-		return 1;
-	}
+    std::string line; 
+    double b1, b2, b3, b4, b5;
+    std::stringstream ss;
 
-	std::vector<double> Ldndx_tau, Ldndx_p, Ldndx_T, Ldndx_x, Ldndx_f;
-
-	std::string line; double buffer;
-
-	while (std::getline(file_in, line))
-	{
-        if (line.at(0) == '#')
+    while (std::getline(file_in, line))
+    {
+        if (line.empty() || line[0] == '#')
             continue;
 
-		std::stringstream ss(line);
-		ss >> buffer; Ldndx_tau.push_back(buffer);
-		ss >> buffer; Ldndx_p.push_back(buffer);
-		ss >> buffer; Ldndx_T.push_back(buffer);
-		ss >> buffer; Ldndx_x.push_back(buffer);
-		ss >> buffer; Ldndx_f.push_back(buffer);
-	}
+        ss.clear();
+        ss.str(line);
+        if (ss >> b1 >> b2 >> b3 >> b4 >> b5) {
+            Ldndx_tau.push_back(b1);
+            Ldndx_p.push_back(b2);
+            Ldndx_T.push_back(b3);
+            Ldndx_x.push_back(b4);
+            Ldndx_f.push_back(b5);
+        }
+    }
+    file_in.close();
 
-	file_in.close();
+    m_Ldndx.setData(Ldndx_tau, Ldndx_p, Ldndx_T, Ldndx_x, Ldndx_f);
 
-	m_Ldndx.setData(Ldndx_tau, Ldndx_p, Ldndx_T, Ldndx_x, Ldndx_f);
+    // // TODO (dusan): implement domain check (LinearInterpolator's getMinDomain and getMaxDomain methods)
+    // constexpr double eps = 1e-9;
+    // if (m_Grids.tauPts().front() < m_Ldndx.getMinDomain(0) - eps || m_Grids.tauPts().back() > m_Ldndx.getMaxDomain(0) + eps) {
+    //     std::cerr << "Error: tau grid points out of Ldndx domain boundaries." << std::endl; return 1;
+    // }
+    // if (m_Grids.pPts().front() < m_Ldndx.getMinDomain(1) - eps || m_Grids.pPts().back() > m_Ldndx.getMaxDomain(1) + eps) {
+    //     std::cerr << "Error: p grid points out of Ldndx domain boundaries." << std::endl; return 1;
+    // }
+    // if (m_Grids.TPts().front() < m_Ldndx.getMinDomain(2) - eps || m_Grids.TPts().back() > m_Ldndx.getMaxDomain(2) + eps) {
+    //     std::cerr << "Error: T grid points out of Ldndx domain boundaries." << std::endl; return 1;
+    // }
+    // if (m_Grids.xPts().front() < m_Ldndx.getMinDomain(3) - eps || m_Grids.xPts().back() > m_Ldndx.getMaxDomain(3) + eps) {
+    //     std::cerr << "Error: x grid points out of Ldndx domain boundaries." << std::endl; return 1;
+    // }
 
-	// TODO: domain check
-	// std::vector<std::vector<double>> domain = m_Ldndx.domain();
-	// if (m_Grids.tauPts(0)  < domain[0][0]) {std::cerr << "Error: tau grid point(s) out of lower bound of Ldndx domain. Aborting..." << std::endl; return -1;}
-	// if (m_Grids.tauPts(-1) > domain[0][1]) {std::cerr << "Error: tau grid point(s) out of upper bound of Ldndx domain. Aborting..." << std::endl; return -1;}
-	// if (m_Grids.pPts(0)    < domain[1][0]) {std::cerr << "Error:   p grid point(s) out of lower bound of Ldndx domain. Aborting..." << std::endl; return -1;}
-	// if (m_Grids.pPts(-1)   > domain[1][1]) {std::cerr << "Error:   p grid point(s) out of upper bound of Ldndx domain. Aborting..." << std::endl; return -1;}
-	// if (m_Grids.TPts(0)    < domain[2][0]) {std::cerr << "Error:   T grid point(s) out of lower bound of Ldndx domain. Aborting..." << std::endl; return -1;}
-	// if (m_Grids.TPts(-1)   > domain[2][1]) {std::cerr << "Error:   T grid point(s) out of upper bound of Ldndx domain. Aborting..." << std::endl; return -1;}
-	// if (m_Grids.xPts(0)    < domain[3][0]) {std::cerr << "Error:   x grid point(s) out of lower bound of Ldndx domain. Aborting..." << std::endl; return -1;}
-	// if (m_Grids.xPts(-1)   > domain[3][1]) {std::cerr << "Error:   x grid point(s) out of upper bound of Ldndx domain. Aborting..." << std::endl; return -1;}
-
-	return 0;
+    return 0;
 }
 
 int EnergyLoss::loadLNorm()
 {
-	std::string partName;
-	if (m_pName == "Bottom") partName = "Bottom";
-	else if (m_pName == "Charm") partName = "Charm";
-	else if (m_pName == "Gluon") partName = "Gluon";
-	else partName = "LQuarks";
+    const std::string path_in = resolveLTablePath("lnorm", true);
 
-	std::stringstream xBss; xBss << std::fixed << std::setprecision(1) << m_xB;
-	std::stringstream nfss; nfss << std::fixed << std::setprecision(1) << m_nf;
+    std::ifstream file_in(path_in);
+    if (!file_in.is_open()) {
+        std::cerr << "Error: unable to open LNorm table file from: " << path_in << std::endl;
+        return 1;
+    }
 
-	const std::string path_in = "./ltables/lnorm_nf=" + nfss.str() + "_" + partName + "_xB=" + xBss.str() + ".dat";
+    std::vector<double> LNorm_tau, LNorm_p, LNorm_T, LNorm_f;
+    LNorm_tau.reserve(50000); LNorm_p.reserve(50000); LNorm_T.reserve(50000); LNorm_f.reserve(50000);
 
-	std::ifstream file_in(path_in);
-	if (!file_in.is_open()) {
-		std::cerr << "Error: unable to open LNorm table file." << std::endl;
-		return 1;
-	}
+    std::string line;
+    double b1, b2, b3, b4;
+    std::stringstream ss;
 
-	std::vector<double> LNorm_tau, LNorm_p, LNorm_T, LNorm_f; //defining vectors that store LNorm table values
-
-	std::string line; double buffer;
-
-	while (std::getline(file_in, line))
-	{
-        if (line.at(0) == '#')
+    while (std::getline(file_in, line))
+    {
+        if (line.empty() || line[0] == '#')
             continue;
 
-		std::stringstream ss(line);
-		ss >> buffer; LNorm_tau.push_back(buffer);
-		ss >> buffer; LNorm_p.push_back(buffer);
-		ss >> buffer; LNorm_T.push_back(buffer);
-		ss >> buffer; LNorm_f.push_back(buffer);
-	}
+        ss.clear();
+        ss.str(line);
+        if (ss >> b1 >> b2 >> b3 >> b4) {
+            LNorm_tau.push_back(b1);
+            LNorm_p.push_back(b2);
+            LNorm_T.push_back(b3);
+            LNorm_f.push_back(b4);
+        }
+    }
+    file_in.close();
 
-	file_in.close();
+    m_LNorm.setData(LNorm_tau, LNorm_p, LNorm_T, LNorm_f);
 
-	m_LNorm.setData(LNorm_tau, LNorm_p, LNorm_T, LNorm_f);
+    // // TODO (dusan): implement domain check (LinearInterpolator's getMinDomain and getMaxDomain methods)
+	// constexpr double eps = 1e-9;
+    // if (m_Grids.tauPts().front() < m_LNorm.getMinDomain(0) - eps || m_Grids.tauPts().back() > m_LNorm.getMaxDomain(0) + eps) {
+    //     std::cerr << "Error: tau grid points out of LNorm domain boundaries." << std::endl; return 1;
+    // }
+    // if (m_Grids.pPts().front() < m_LNorm.getMinDomain(1) - eps || m_Grids.pPts().back() > m_LNorm.getMaxDomain(1) + eps) {
+    //     std::cerr << "Error: p grid points out of LNorm domain boundaries." << std::endl; return 1;
+    // }
+    // if (m_Grids.TPts().front() < m_LNorm.getMinDomain(2) - eps || m_Grids.TPts().back() > m_LNorm.getMaxDomain(2) + eps) {
+    //     std::cerr << "Error: T grid points out of LNorm domain boundaries." << std::endl; return 1;
+    // }
 
-	// TODO: domain check
-	// std::vector<std::vector<double>> domain = m_LNorm.domain();
-	// if (m_Grids.tauPts(0)  < domain[0][0]) {std::cerr << "Error: tau grid point(s) out of lower bound of LNorm domain. Aborting..." << std::endl; return -1;}
-	// if (m_Grids.tauPts(-1) > domain[0][1]) {std::cerr << "Error: tau grid point(s) out of upeer bound of LNorm domain. Aborting..." << std::endl; return -1;}
-	// if (m_Grids.pPts(0)    < domain[1][0]) {std::cerr << "Error:   p grid point(s) out of lower bound of LNorm domain. Aborting..." << std::endl; return -1;}
-	// if (m_Grids.pPts(-1)   > domain[1][1]) {std::cerr << "Error:   p grid point(s) out of upeer bound of LNorm domain. Aborting..." << std::endl; return -1;}
-	// if (m_Grids.TPts(0)    < domain[2][0]) {std::cerr << "Error:   T grid point(s) out of lower bound of LNorm domain. Aborting..." << std::endl; return -1;}
-	// if (m_Grids.TPts(-1)   > domain[2][1]) {std::cerr << "Error:   T grid point(s) out of upeer bound of LNorm domain. Aborting..." << std::endl; return -1;}
-
-	return 0;
+    return 0;
 }
 
 int EnergyLoss::loadLColl()
 {
-	std::string partName;
-	if (m_pName == "Bottom") partName = "Bottom";
-	else if (m_pName == "Charm") partName = "Charm";
-	else if (m_pName == "Gluon") partName = "Gluon";
-	else partName = "LQuarks";
+    const std::string path_in = resolveLTablePath("lcoll", false);
 
-	std::stringstream nfss; nfss << std::fixed << std::setprecision(1) << m_nf;
+    std::ifstream file_in(path_in);
+    if (!file_in.is_open()) {
+        std::cerr << "Error: unable to open LColl table file from: " << path_in << std::endl;
+        return 1;
+    }
 
-	const std::string path_in = "./ltables/lcoll_nf=" + nfss.str() + "_" + partName + ".dat";
+    std::vector<double> LColl_p, LColl_T, LColl_f;
+    LColl_p.reserve(2000); LColl_T.reserve(2000); LColl_f.reserve(2000);
 
-	std::ifstream file_in(path_in);
-	if (!file_in.is_open()) {
-		std::cerr << "Error: unable to open LColl table file." << std::endl;
-		return 1;
-	}
+    std::string line;
+    double b1, b2, b3;
+    std::stringstream ss;
 
-	std::vector<double> LColl_p, LColl_T, LColl_f;
-
-	std::string line; double buffer;
-
-	while (std::getline(file_in, line))
-	{
-        if (line.at(0) == '#')
+    while (std::getline(file_in, line))
+    {
+        if (line.empty() || line[0] == '#')
             continue;
             
-		std::stringstream ss(line);
-		ss >> buffer; LColl_p.push_back(buffer);
-		ss >> buffer; LColl_T.push_back(buffer);
-		ss >> buffer; LColl_f.push_back(buffer);
-	}
+        ss.clear();
+        ss.str(line);
+        if (ss >> b1 >> b2 >> b3) {
+            LColl_p.push_back(b1);
+            LColl_T.push_back(b2);
+            LColl_f.push_back(b3);
+        }
+    }
+    file_in.close();
 
-	file_in.close();
+    m_LColl.setData(LColl_p, LColl_T, LColl_f);
 
-	m_LColl.setData(LColl_p, LColl_T, LColl_f);
+    // // TODO (dusan): implement domain check (LinearInterpolator's getMinDomain and getMaxDomain methods)
+	// constexpr double eps = 1e-9;
+    // if (m_Grids.pCollPts().front() < m_LColl.getMinDomain(0) - eps || m_Grids.pCollPts().back() > m_LColl.getMaxDomain(0) + eps) {
+    //     std::cerr << "Error: pColl grid points out of LColl domain boundaries." << std::endl; return -1;
+    // }
+    // if (m_Grids.TCollPts().front() < m_LColl.getMinDomain(1) - eps || m_Grids.TCollPts().back() > m_LColl.getMaxDomain(1) + eps) {
+    //     std::cerr << "Error: TColl grid points out of LColl domain boundaries." << std::endl; return -1;
+    // }
 
-	// TODO: domain check
-	// std::vector<std::vector<double>> domain = m_LColl.domain();
-	// if (m_Grids.pCollPts(0)  < domain[0][0]) {std::cerr << "Error: p grid point(s) out of lower bound of LColl domain. Aborting..." << std::endl; return -1;}
-	// if (m_Grids.pCollPts(-1) > domain[0][1]) {std::cerr << "Error: p grid point(s) out of upper bound of LColl domain. Aborting..." << std::endl; return -1;}
-	// if (m_Grids.TCollPts(0)  < domain[1][0]) {std::cerr << "Error: T grid point(s) out of lower bound of LColl domain. Aborting..." << std::endl; return -1;}
-	// if (m_Grids.TCollPts(-1) > domain[1][1]) {std::cerr << "Error: T grid point(s) out of upper bound of LColl domain. Aborting..." << std::endl; return -1;}
-
-	return 0;
+    return 0;
 }
 
 int EnergyLoss::generateTempGrid()

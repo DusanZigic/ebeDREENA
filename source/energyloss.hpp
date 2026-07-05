@@ -59,6 +59,7 @@ private:
     std::vector<double> m_dAHS1, m_dAHS2, m_dAHS3, m_dAHS4, m_dAHS5, m_dAHS6, m_dAHS7; 								 	        //vectors that store Halton sequences for dA integrals
    
     int loaddsdpti2(const std::string &pname, LinearInterpolator<double> &dsdpti2int);
+    std::string resolveLTablePath(const std::string &tablePrefix, bool includeXB) const;
     int loadLdndx();
     int loadLNorm();
     int loadLColl();
