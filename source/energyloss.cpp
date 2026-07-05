@@ -586,32 +586,23 @@ void EnergyLoss::RadCollEL(
 		LinearInterpolator<double> currNorm(normSparseP, normSparseF);
         LinearInterpolator<double> currDndx(dndxSparseP, dndxSparseX, dndxSparseF);
 
-		const std::size_t numRad = m_Grids.RadPts().size();
-        const std::size_t numFdp = m_Grids.FdpPts().size();
+		const auto& radPts = m_Grids.RadPts();
+		const auto& fdpPts = m_Grids.FdpPts();
+		for (std::size_t iRad = 0; iRad < radPts.size(); ++iRad) {
+			radiativeRAA1[iRad] = dAp410(radPts[iRad], currNorm);
 
-		radiativeRAA1.reserve(numRad);
-        radiativeRAA2.reserve(numRad);
-
-		for (const auto &ph : m_Grids.RadPts()) {
-			radiativeRAA1.push_back(dAp410(ph, currNorm));
-
-			radiativeRAA2.emplace_back();
-			radiativeRAA2.back().reserve(numFdp);
-			for (const auto &Fdp : m_Grids.FdpPts()) {
-        		radiativeRAA2.back().push_back(FdA(ph, Fdp, currNorm, currDndx));
+			for (std::size_t iFdp = 0; iFdp < fdpPts.size(); ++iFdp) {
+        		radiativeRAA2[iRad][iFdp] = FdA(radPts[iRad], fdpPts[iFdp], currNorm, currDndx);
     		}
 		}
 
 		std::vector<double> currCollF(numL);
-        const std::size_t numPColl = m_Grids.pCollPts().size();
-        collisionalEL.reserve(numPColl);
-
-		for (const auto &p : m_Grids.pCollPts()) 
-        {
+		const auto& pCollPts = m_Grids.pCollPts();
+		for (std::size_t iPColl = 0; iPColl < pCollPts.size(); ++iPColl) {
             for (std::size_t iL = 0; iL < numL; ++iL) {
-                currCollF[iL] = m_LColl.interpolate(p, currLTTabT[iL]);
+                currCollF[iL] = m_LColl.interpolate(pCollPts[iPColl], currLTTabT[iL]);
             }
-            collisionalEL.push_back(poly::linearIntegrate(currLTTabL, currCollF));
+            collisionalEL[iPColl] = poly::linearIntegrate(currLTTabL, currCollF);
         }
 
 		pathLength = currLTTabL.back(); // NOTE (dusan): average path-length and temperature
@@ -743,14 +734,12 @@ void EnergyLoss::gaussFilterIntegrate(
 	const auto &finPts = m_Grids.finPts();
     const auto &FdpPts = m_Grids.FdpPts();
 
-	singRAA1.reserve(finPts.size());
-    singRAA2.reserve(finPts.size());
-
 	std::vector<double> qGaussTab, fGaussTab; // NOTE (dusan): reused across loop cycles to eliminate repetitive allocations
     qGaussTab.reserve(qGaussTabOG.size());
     fGaussTab.reserve(fGaussTabOG.size());
 
-	for (const double pT : finPts) {
+	for (std::size_t iFin = 0; iFin < finPts.size(); ++iFin) {
+		const double pT            = finPts[iFin];
 		const double inv_dsdpti2   = 1.0 / dsdpti2.interpolate(pT);
         const double muCollCurrVal = muCollInt.interpolate(pT);
         const double sigmaColl     = std::sqrt(2.0 * m_TCollConst * muCollCurrVal);
@@ -778,26 +767,22 @@ void EnergyLoss::gaussFilterIntegrate(
 
 		// NOTE (dusan): perform Gauss integration of dAp410 (singRAA1)
 		double GFSum1 = 0.0;
-        for (std::size_t iG = 0; iG < gSize; ++iG)
-        {
+        for (std::size_t iG = 0; iG < gSize; ++iG) {
             const double comb_pT = comb_pT_plus_dppT[iG];
             GFSum1 += (dsdpti2.interpolate(comb_pT) * RadRelInt1.interpolate(comb_pT) * (comb_pT / pT) * fGaussTab[iG]);
         }
-        singRAA1.push_back(inv_dsdpti2 * GFSum1);
+        singRAA1[iFin] = inv_dsdpti2 * GFSum1;
 
 		// NOTE (dusan): perform Gauss integration of FdA (singRAA2)
-        singRAA2.emplace_back(); 
-        auto &currentSingRAA2Row = singRAA2.back();
-        currentSingRAA2Row.reserve(FdpPts.size());
-
-		for (const double dpT : FdpPts) {
+		for (std::size_t iFdp = 0; iFdp < FdpPts.size(); ++iFdp) {
+			const double dpT = FdpPts[iFdp];
 			double GFSum2 = 0.0;
             for (std::size_t iG = 0; iG < gSize; ++iG) {
 				const double comb_pT = comb_pT_plus_dppT[iG];
                 const double total_pT = comb_pT + dpT;
 				GFSum2 += (dsdpti2.interpolate(total_pT) * RadRelInt2.interpolate(comb_pT, dpT) * (comb_pT / total_pT) * fGaussTab[iG]);
 			}
-			currentSingRAA2Row.push_back(inv_dsdpti2 * GFSum2);
+			singRAA2[iFin][iFdp] = inv_dsdpti2 * GFSum2;
 		}
 	}
 }
@@ -922,75 +907,93 @@ void EnergyLoss::runELossHeavyFlavour()
 
 	FdAHaltonSeqInit(150);
 
+    const auto& radPts   = m_Grids.RadPts();
+	const auto& fdpPts   = m_Grids.FdpPts();
+	const auto& pCollPts = m_Grids.pCollPts();
+	const auto& finPts   = m_Grids.finPts();
+
 	#pragma omp parallel for schedule(dynamic)
-	for (std::size_t eventID=0; eventID<m_eventN; eventID++)
+	for (std::size_t eventID = 0; eventID < m_eventN; ++eventID)
 	{
-		std::vector<double> xPoints, yPoints; generateInitPosPoints(eventID, xPoints, yPoints);
+		std::vector<double> xPoints, yPoints;
+		generateInitPosPoints(eventID, xPoints, yPoints);
 
-		LinearInterpolator<double> tProfile; loadTProfile(eventID, tProfile);
+		LinearInterpolator<double> tProfile;
+		loadTProfile(eventID, tProfile);
 
-		std::vector<std::vector<double>> RAAdist(m_Grids.finPtsLength(), std::vector<double>(m_phiGridN, 0.0));
-
-		std::vector<double> pathLenghDist(m_phiGridN, 0.0), temperatureDist(m_phiGridN, 0.0);
+		std::vector<std::vector<double>> RAAdist(finPts.size(), std::vector<double>(m_phiGridN, 0.0));
+        std::vector<double> pathLenghDist(m_phiGridN, 0.0), temperatureDist(m_phiGridN, 0.0);
 
 		std::size_t trajectoryNum = 0, energylossNum = 0;
 
-		for (std::size_t iPhi=0; iPhi<m_phiGridN; iPhi++)
-		{
-			double phi = m_phiGridPts[iPhi];
+		std::vector<double> radRAA1(radPts.size(), 0.0);
+		std::vector<std::vector<double>> radRAA2(radPts.size(), std::vector<double>(fdpPts.size(), 0.0));
+		std::vector<double> collEL(pCollPts.size(), 0.0);
+		std::vector<double> singleRAA1(finPts.size(), 0.0);
+        std::vector<std::vector<double>> singleRAA2(finPts.size(), std::vector<double>(fdpPts.size(), 0.0));
+		std::vector<double> sumRAA1(finPts.size(), 0.0);
+		std::vector<std::vector<double>> sumRAA2(finPts.size(), std::vector<double>(fdpPts.size(), 0.0));
 
-			std::vector<double> sumRAA1(m_Grids.finPtsLength(), 0.0);
+		for (std::size_t iPhi=0; iPhi<m_phiGridN; iPhi++) {
+			const double phi = m_phiGridPts[iPhi];
 
-			std::vector<std::vector<double>> sumRAA2(m_Grids.finPtsLength(), std::vector<double>(m_Grids.FdpPtsLength(), 0.0));
+			std::fill(sumRAA1.begin(), sumRAA1.end(), 0.0);
+			for (auto& row : sumRAA2) {
+            	std::fill(row.begin(), row.end(), 0.0);
+        	}
 
-			std::size_t pltCNT = 0; //path-length and temperature distribution counter
+			std::size_t pltCNT = 0;
 
-			for (std::size_t iXY=0; iXY<xPoints.size(); iXY++)
-			{
-				trajectoryNum++;
+			for (std::size_t iXY = 0; iXY < xPoints.size(); ++iXY) {
+				++trajectoryNum;
 
-				double x = xPoints[iXY], y = yPoints[iXY];
+				const double x = xPoints[iXY];
+				const double y = yPoints[iXY];
 
-				std::vector<double> radRAA1; std::vector<std::vector<double>> radRAA2; std::vector<double> collEL;
 				double pathLength, temperature;
 				RadCollEL(x, y, phi, tProfile, radRAA1, radRAA2, collEL, pathLength, temperature);
 
-				if (pathLength > m_tau0) { //checking if path-length is larger than thermalization time
-
-					energylossNum++;
-
-					pltCNT++;
-					pathLenghDist[iPhi] += pathLength;
+				if (pathLength > m_tau0) { // NOTE (dusan): jet has traversed through the medium
+					++energylossNum;
+					++pltCNT;
+					pathLenghDist[iPhi]   += pathLength;
 					temperatureDist[iPhi] += temperature;
 
-					for (auto &coll : collEL) coll += 1e-12; //modifying collEL to prevent division by 0
+					for (auto &coll : collEL) coll += 1e-12; // NOTE (dusan): to prevent division by 0
 
-					std::vector<double> singleRAA1; std::vector<std::vector<double>> singleRAA2;
 					gaussFilterIntegrate(m_dsdpti2, radRAA1, radRAA2, collEL, singleRAA1, singleRAA2);
 
-					for (std::size_t iFinPts=0; iFinPts<m_Grids.finPtsLength(); iFinPts++) {
-						sumRAA1[iFinPts] += singleRAA1[iFinPts];
-						for (std::size_t iFdp=0; iFdp<m_Grids.FdpPtsLength(); iFdp++)
-							sumRAA2[iFinPts][iFdp] += singleRAA2[iFinPts][iFdp];
+					for (std::size_t iFin = 0; iFin < finPts.size(); ++iFin) {
+						sumRAA1[iFin] += singleRAA1[iFin];
+						for (std::size_t iFdp = 0; iFdp < fdpPts.size(); ++iFdp)
+							sumRAA2[iFin][iFdp] += singleRAA2[iFin][iFdp];
 					}
 				}
-				else { //if path length is smaller than tau0:
-
-					for (std::size_t iFinPts=0; iFinPts<m_Grids.finPtsLength(); iFinPts++) //adding RAA1, which is 1.0, to RAA sum; RAA2 is 0 in this case
-						sumRAA1[iFinPts] += 1.0; 
+				else {
+					// NOTE (dusan): adding RAA1, which is 1.0, to RAA sum; RAA2 is 0 in this case
+					for (std::size_t iFin = 0; iFin < finPts.size(); ++iFin) {
+						sumRAA1[iFin] += 1.0; 
+					}
 				}
 			}
 
 			double weightsum = static_cast<double>(xPoints.size());
-			std::for_each(sumRAA1.begin(), sumRAA1.end(), [weightsum](double &c){ c/=weightsum; });
-			for (std::size_t iFinPts=0; iFinPts<m_Grids.finPtsLength(); iFinPts++)
-				std::for_each(sumRAA2[iFinPts].begin(), sumRAA2[iFinPts].end(), [weightsum](double &c){ c/=weightsum; });
 
-			//setting RAA(pT,phi) value by integrating over p:
-			for (std::size_t iFinPts=0; iFinPts<m_Grids.finPtsLength(); iFinPts++)
-				RAAdist[iFinPts][iPhi] = sumRAA1[iFinPts] + poly::cubicIntegrate(m_Grids.FdpPts(), sumRAA2[iFinPts])/m_Grids.finPts(iFinPts);
+			for (std::size_t iFin = 0; iFin < finPts.size(); ++iFin) {
+                sumRAA1[iFin] /= weightsum;
+                for (std::size_t iFdp = 0; iFdp < fdpPts.size(); ++iFdp) {
+                    sumRAA2[iFin][iFdp] /= weightsum;
+                }
+                RAAdist[iFin][iPhi] = sumRAA1[iFin] + poly::cubicIntegrate(m_Grids.FdpPts(), sumRAA2[iFin]) / finPts[iFin];
+            }
 
-			pathLenghDist[iPhi] /= static_cast<double>(pltCNT); temperatureDist[iPhi] /= static_cast<double>(pltCNT);
+            if (pltCNT > 0) {
+                pathLenghDist[iPhi]   /= static_cast<double>(pltCNT);
+                temperatureDist[iPhi] /= static_cast<double>(pltCNT);
+            } else {
+                pathLenghDist[iPhi]   = 0.0;
+                temperatureDist[iPhi] = 0.0;
+            }
 		}
 
 		std::vector<double> avgPathLength, avgTemp;
