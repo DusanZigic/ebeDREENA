@@ -855,11 +855,13 @@ void EnergyLoss::gaussFilterIntegrate(
 
 void EnergyLoss::calculateAvgPathlenTemps(const std::vector<double> &pathLenghDist, const std::vector<double> &temperatureDist, std::vector<double> &avgPathLength, std::vector<double> &avgTemp) const
 {
+	avgPathLength.reserve(3);
 	LinearInterpolator<double> pathLenghDistInt(m_phiGridPts, pathLenghDist);
 	avgPathLength.push_back(poly::cubicIntegrate(m_phiGridPts, pathLenghDist)/2.0/utils::constants::PI);
 	avgPathLength.push_back((pathLenghDistInt.interpolate(m_phiGridPts.front())     + pathLenghDistInt.interpolate(m_phiGridPts.back()))          / 2.0);
 	avgPathLength.push_back((pathLenghDistInt.interpolate(utils::constants::PI/2.0) + pathLenghDistInt.interpolate(3.0*utils::constants::PI/2.0)) / 2.0);
-
+	
+    avgTemp.reserve(3);
 	LinearInterpolator<double> temperatureDistInt(m_phiGridPts, temperatureDist);
 	avgTemp.push_back(poly::cubicIntegrate(m_phiGridPts, temperatureDist)/2.0/utils::constants::PI);
 	avgTemp.push_back((temperatureDistInt.interpolate(m_phiGridPts.front())      + temperatureDistInt.interpolate(m_phiGridPts.back()))          / 2.0);
@@ -868,52 +870,46 @@ void EnergyLoss::calculateAvgPathlenTemps(const std::vector<double> &pathLenghDi
 
 int EnergyLoss::exportResults(const std::string &particleName, std::size_t event_id, const std::vector<std::vector<double>> &RAApTphi, const std::vector<double> &avgPathLength, const std::vector<double> &avgTemp, std::size_t trajecNum, std::size_t elossNum) const
 {
-	std::vector<std::string> header;
-    header.push_back("#collision_system: " + m_collsys);
-	header.push_back("#collision_energy: " + m_sNN);
-	header.push_back("#particle_type: " + particleName);
-	header.push_back("#centrality: " + m_centrality);
+	std::stringstream xbsstr; 
+    xbsstr << std::fixed << std::setprecision(1) << m_xB;
 
-	std::stringstream xbsstr; xbsstr << std::fixed << std::setprecision(1) << m_xB;
-	header.push_back("#xB = " + xbsstr.str());
-
-	header.push_back("#event_id: " + std::to_string(event_id));
-
-	std::stringstream avgPathLengthSStr[3];
-    for (std::size_t i=0; i<3; i++) avgPathLengthSStr[i] << std::fixed << std::setprecision(6) << avgPathLength[i];
-	header.push_back("#average_path-lengths: " + avgPathLengthSStr[0].str() + ", " + avgPathLengthSStr[1].str() + ", " + avgPathLengthSStr[2].str());
-
-	std::stringstream avgTempSStr[3];
-    for (std::size_t i=0; i<3; i++) avgTempSStr[i] << std::fixed << std::setprecision(6) << avgTemp[i];
-	header.push_back("#average_temperatures: " + avgTempSStr[0].str() + ", " + avgTempSStr[1].str() + ", " + avgTempSStr[2].str());
-	
-	header.push_back("#number_of_angles:                " + std::to_string(m_phiGridN));
-	
-	header.push_back("#total_number_of_trajectories:    " + std::to_string(trajecNum));
-	header.push_back("#total_number_of_jet_energy_loss: " + std::to_string(elossNum));
-
-	header.push_back("#BCPSEED: " + std::to_string(m_BCPSEED));
-
-	header.push_back("#-------------------------------------------------------");
-	header.push_back("#   pT [GeV]       phi          R_AA   ");
-
-	//setting file path:
 	const std::string path_out = "./results/results" + particleName + "/" + particleName + "_" + m_collsys + "_sNN=" + m_sNN + "_cent=" + m_centrality + "_xB=" + xbsstr.str() + "_dist_" + std::to_string(event_id) + ".dat";
 
 	std::ofstream file_out(path_out, std::ios_base::out);
-	if (!file_out.is_open()) {
-		std::cerr << "Error: unable to open RAA(pT,phi) distribution file for event " + std::to_string(event_id) + "." << std::endl;
-		return 1;
-	}
+    if (!file_out.is_open()) {
+        std::cerr << "Error: unable to open RAA(pT,phi) distribution file for event " + std::to_string(event_id) + "." << std::endl;
+        return 1;
+    }
 
-	for (const auto &h : header) file_out << h << "\n";
+	file_out << "# collision_system: " << m_collsys << "\n"
+             << "# collision_energy: " << m_sNN << "\n"
+             << "# particle_type: "    << particleName << "\n"
+             << "# centrality: "       << m_centrality << "\n"
+             << "# xB = "              << xbsstr.str() << "\n"
+             << "# event_id: "         << event_id << "\n";
 
-	for (std::size_t ipT= 0; ipT<m_Grids.finPtsLength(); ipT++) //printing RAA(pT,phi) to file
-		for (std::size_t iPhi=0; iPhi<m_phiGridN; iPhi++) {
-			file_out << std::fixed << std::setw(14) << std::setprecision(10) <<   m_Grids.finPts(ipT) << " ";
-			file_out << std::fixed << std::setw(12) << std::setprecision(10) <<    m_phiGridPts[iPhi] << " ";
-			file_out << std::fixed << std::setw(12) << std::setprecision(10) << RAApTphi[ipT][iPhi] << "\n";
-		}
+	file_out << std::fixed << std::setprecision(6);
+    file_out << "# average_path-lengths: " << avgPathLength[0] << ", " << avgPathLength[1] << ", " << avgPathLength[2] << "\n"
+             << "# average_temperatures: " <<       avgTemp[0] << ", " <<       avgTemp[1] << ", " <<       avgTemp[2] << "\n";
+
+	file_out << "# number_of_angles:                " << m_phiGridN << "\n"
+             << "# total_number_of_trajectories:    " << trajecNum << "\n"
+             << "# total_number_of_jet_energy_loss: " << elossNum << "\n"
+             << "# BCPSEED: "                         << m_BCPSEED << "\n"
+             << "#-------------------------------------------------------\n"
+             << "#   pT [GeV]       phi          R_AA   \n";
+		
+	file_out << std::fixed << std::setprecision(10);
+
+	std::size_t ptLength = m_Grids.finPtsLength();
+    for (std::size_t ipT = 0; ipT < ptLength; ++ipT)  {
+        double currentPt = m_Grids.finPts(ipT);        
+        for (std::size_t iPhi = 0; iPhi < m_phiGridN; ++iPhi) {
+            file_out << std::setw(14) << currentPt << " "
+                     << std::setw(12) << m_phiGridPts[iPhi] << " "
+                     << std::setw(12) << RAApTphi[ipT][iPhi] << "\n";
+        }
+    }
 
 	file_out.close();
 
