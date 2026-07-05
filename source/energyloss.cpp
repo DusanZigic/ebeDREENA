@@ -467,101 +467,41 @@ int EnergyLoss::loadTProfile(std::size_t event_id, LinearInterpolator<double> &t
     return 0;
 }
 
-void EnergyLoss::generateGaussTab(std::vector<double> &qGTab, std::vector<double> &fGTab) const
-//function that generates sampling points for Gaussian integration
-//qGTab, fGTab - vectors that store sampling point <- output
-{	
-	double sigmaNum = 3.5; //setting sigma
-	double sigmaStep = 0.25; //setting step
-	std::size_t GTabLen = 2 * static_cast<std::size_t>(sigmaNum / sigmaStep) + 1; //setting length of sampling points
-	
-	double GaussTabSum = 0.0; //setting normalization sum to zero
-	
-	for (std::size_t iG=0; iG<GTabLen; iG++) //calculating sampling points
-	{
-		qGTab.push_back(-1.0*sigmaNum + static_cast<double>(iG)*sigmaStep); //setting qGaussTab values
-		fGTab.push_back(std::exp(-qGTab.back()*qGTab.back()/2.0));          //setting fGaussTab values
-		GaussTabSum += fGTab.back();                                        //adding to normalization sum
-	}
-	
-	for (std::size_t iG=0; iG<GTabLen; iG++)  //normalizing
-	{
-		fGTab[iG] /= GaussTabSum; //dividing fGaussTab values with total sum
-	}
-}
-
-void EnergyLoss::calculateAvgPathlenTemps(const std::vector<double> &pathLenghDist, const std::vector<double> &temperatureDist, std::vector<double> &avgPathLength, std::vector<double> &avgTemp) const
+void EnergyLoss::generateGaussTab(std::vector<double> &qGTab, std::vector<double> &fGTab) const noexcept
 {
-	LinearInterpolator<double> pathLenghDistInt(m_phiGridPts, pathLenghDist);
-	avgPathLength.push_back(poly::cubicIntegrate(m_phiGridPts, pathLenghDist)/2.0/utils::constants::PI);
-	avgPathLength.push_back((pathLenghDistInt.interpolate(m_phiGridPts.front())     + pathLenghDistInt.interpolate(m_phiGridPts.back()))          / 2.0);
-	avgPathLength.push_back((pathLenghDistInt.interpolate(utils::constants::PI/2.0) + pathLenghDistInt.interpolate(3.0*utils::constants::PI/2.0)) / 2.0);
+	const double sigmaNum = 3.5; 
+    const double sigmaStep = 0.25; 
+    const std::size_t GTabLen = 2 * static_cast<std::size_t>(sigmaNum / sigmaStep) + 1; 
 
-	LinearInterpolator<double> temperatureDistInt(m_phiGridPts, temperatureDist);
-	avgTemp.push_back(poly::cubicIntegrate(m_phiGridPts, temperatureDist)/2.0/utils::constants::PI);
-	avgTemp.push_back((temperatureDistInt.interpolate(m_phiGridPts.front())      + temperatureDistInt.interpolate(m_phiGridPts.back()))          / 2.0);
-	avgTemp.push_back((temperatureDistInt.interpolate(utils::constants::PI/2.0)  + temperatureDistInt.interpolate(3.0*utils::constants::PI/2.0)) / 2.0);
+	qGTab.clear();
+    fGTab.clear();
+    qGTab.reserve(GTabLen);
+    fGTab.reserve(GTabLen);
+
+	double GaussTabSum = 0.0;
+
+	for (std::size_t iG = 0; iG < GTabLen; ++iG) 
+    {
+        const double qVal = -sigmaNum + static_cast<double>(iG) * sigmaStep;
+        qGTab.push_back(qVal);
+        
+        const double fVal = std::exp(-qVal * qVal / 2.0);
+        fGTab.push_back(fVal);
+        GaussTabSum += fVal;
+    }
+	
+	for (double &fVal : fGTab) {
+        fVal /= GaussTabSum;
+    }
 }
 
-int EnergyLoss::exportResults(const std::string &particleName, std::size_t event_id, const std::vector<std::vector<double>> &RAApTphi, const std::vector<double> &avgPathLength, const std::vector<double> &avgTemp, std::size_t trajecNum, std::size_t elossNum) const
-{
-	std::vector<std::string> header;
-    header.push_back("#collision_system: " + m_collsys);
-	header.push_back("#collision_energy: " + m_sNN);
-	header.push_back("#particle_type: " + particleName);
-	header.push_back("#centrality: " + m_centrality);
-
-	std::stringstream xbsstr; xbsstr << std::fixed << std::setprecision(1) << m_xB;
-	header.push_back("#xB = " + xbsstr.str());
-
-	header.push_back("#event_id: " + std::to_string(event_id));
-
-	std::stringstream avgPathLengthSStr[3];
-    for (std::size_t i=0; i<3; i++) avgPathLengthSStr[i] << std::fixed << std::setprecision(6) << avgPathLength[i];
-	header.push_back("#average_path-lengths: " + avgPathLengthSStr[0].str() + ", " + avgPathLengthSStr[1].str() + ", " + avgPathLengthSStr[2].str());
-
-	std::stringstream avgTempSStr[3];
-    for (std::size_t i=0; i<3; i++) avgTempSStr[i] << std::fixed << std::setprecision(6) << avgTemp[i];
-	header.push_back("#average_temperatures: " + avgTempSStr[0].str() + ", " + avgTempSStr[1].str() + ", " + avgTempSStr[2].str());
-	
-	header.push_back("#number_of_angles:                " + std::to_string(m_phiGridN));
-	
-	header.push_back("#total_number_of_trajectories:    " + std::to_string(trajecNum));
-	header.push_back("#total_number_of_jet_energy_loss: " + std::to_string(elossNum));
-
-	header.push_back("#BCPSEED: " + std::to_string(m_BCPSEED));
-
-	header.push_back("#-------------------------------------------------------");
-	header.push_back("#   pT [GeV]       phi          R_AA   ");
-
-	//setting file path:
-	const std::string path_out = "./results/results" + particleName + "/" + particleName + "_" + m_collsys + "_sNN=" + m_sNN + "_cent=" + m_centrality + "_xB=" + xbsstr.str() + "_dist_" + std::to_string(event_id) + ".dat";
-
-	std::ofstream file_out(path_out, std::ios_base::out);
-	if (!file_out.is_open()) {
-		std::cerr << "Error: unable to open RAA(pT,phi) distribution file for event " + std::to_string(event_id) + "." << std::endl;
-		return 1;
-	}
-
-	for (const auto &h : header) file_out << h << "\n";
-
-	for (std::size_t ipT= 0; ipT<m_Grids.finPtsLength(); ipT++) //printing RAA(pT,phi) to file
-		for (std::size_t iPhi=0; iPhi<m_phiGridN; iPhi++) {
-			file_out << std::fixed << std::setw(14) << std::setprecision(10) <<   m_Grids.finPts(ipT) << " ";
-			file_out << std::fixed << std::setw(12) << std::setprecision(10) <<    m_phiGridPts[iPhi] << " ";
-			file_out << std::fixed << std::setw(12) << std::setprecision(10) << RAApTphi[ipT][iPhi] << "\n";
-		}
-
-	file_out.close();
-
-	return 0;
-}
-
-void EnergyLoss::RadCollEL(double X0, double Y0, double phi0,
-						   const LinearInterpolator<double> &TProfile,
-						   std::vector<double> &radiativeRAA1, std::vector<std::vector<double>> &radiativeRAA2,
-						   std::vector<double> &collisionalEL,
-						   double &pathLength, double &temp) const noexcept
+void EnergyLoss::RadCollEL(
+	double X0, double Y0, double phi0,
+	const LinearInterpolator<double> &TProfile,
+	std::vector<double> &radiativeRAA1, std::vector<std::vector<double>> &radiativeRAA2,
+	std::vector<double> &collisionalEL,
+	double &pathLength, double &temp
+) const noexcept
 {
 	std::vector<double> currLTTabL, currLTTabT; // NOTE (dusan): holds tau (L) and T for a given trajectory
 	currLTTabL.reserve(256);                    // NOTE (dusan): default reservation to prevent vector growth overhead
@@ -659,11 +599,13 @@ void EnergyLoss::RadCollEL(double X0, double Y0, double phi0,
 	}
 }
 
-void EnergyLoss::RadCollEL(double X0, double Y0, double phi0,
-						   const LinearInterpolator<double> &TProfile,
-						   std::vector<double> &radiativeRAA,
-						   std::vector<double> &collisionalEL,
-						   double &pathLength, double &temp) const noexcept
+void EnergyLoss::RadCollEL(
+	double X0, double Y0, double phi0,
+	const LinearInterpolator<double> &TProfile,
+	std::vector<double> &radiativeRAA,
+	std::vector<double> &collisionalEL,
+	double &pathLength, double &temp
+) const noexcept
 {
 	std::vector<double> currLTTabL, currLTTabT; // NOTE (dusan): holds tau (L) and T for a given trajectory
 	currLTTabL.reserve(256);                    // NOTE (dusan): default reservation to prevent vector growth overhead
@@ -754,6 +696,200 @@ void EnergyLoss::RadCollEL(double X0, double Y0, double phi0,
 	}
 }
 
+void EnergyLoss::gaussFilterIntegrate(
+	const LinearInterpolator<double> &dsdpti2,
+	const std::vector<double> &radiativeRAA1, const std::vector<std::vector<double>> &radiativeRAA2,
+	const std::vector<double> &collisionalEL,
+	std::vector<double> &singRAA1, std::vector<std::vector<double>> &singRAA2
+) const noexcept
+{
+	LinearInterpolator<double> muCollInt(m_Grids.pCollPts(), collisionalEL);
+    LinearInterpolator<double> RadRelInt1(m_Grids.RadPts(), radiativeRAA1);
+    LinearInterpolator<double> RadRelInt2(m_Grids.RadPts(), m_Grids.FdpPts(), radiativeRAA2);
+
+    std::vector<double> qGaussTabOG, fGaussTabOG; // NOTE (dusan): generate baseline Gauss configurations once
+    generateGaussTab(qGaussTabOG, fGaussTabOG);
+
+	const auto &finPts = m_Grids.finPts();
+    const auto &FdpPts = m_Grids.FdpPts();
+
+	singRAA1.reserve(finPts.size());
+    singRAA2.reserve(finPts.size());
+
+	std::vector<double> qGaussTab, fGaussTab; // NOTE (dusan): reused across loop cycles to eliminate repetitive allocations
+    qGaussTab.reserve(qGaussTabOG.size());
+    fGaussTab.reserve(fGaussTabOG.size());
+
+	for (const double pT : finPts) {
+		const double inv_dsdpti2   = 1.0 / dsdpti2.interpolate(pT);
+        const double muCollCurrVal = muCollInt.interpolate(pT);
+        const double sigmaColl     = std::sqrt(2.0 * m_TCollConst * muCollCurrVal);
+
+		qGaussTab = qGaussTabOG; // NOTE (dusan): reset and populate current Gauss grids
+        fGaussTab = fGaussTabOG;
+
+		// NOTE (dusan): rescaling if out of bounds
+		if ((muCollCurrVal + sigmaColl * qGaussTab.front()) < -3.0) {
+            double rescale_factor = ((-3.0 + 1e-12) - muCollCurrVal) / (sigmaColl * qGaussTab.front());
+            for (double &c : qGaussTab) c *= rescale_factor;
+        }
+		if ((muCollCurrVal + sigmaColl * qGaussTab.back()) > 20.0) {
+            double rescale_factor = ((20.0 - 1e-12) - muCollCurrVal) / (sigmaColl * qGaussTab.back());
+            for (double &c : qGaussTab) c *= rescale_factor;
+        }
+
+		const std::size_t gSize = qGaussTab.size();
+
+		// NOTE (dusan): caching the combined momentum calculations (pT + dppT)
+		std::vector<double> comb_pT_plus_dppT(gSize);
+        for (std::size_t iG = 0; iG < gSize; ++iG) {
+            comb_pT_plus_dppT[iG] = pT + muCollCurrVal + sigmaColl * qGaussTab[iG];
+        }
+
+		// NOTE (dusan): perform Gauss integration of dAp410 (singRAA1)
+		double GFSum1 = 0.0;
+        for (std::size_t iG = 0; iG < gSize; ++iG)
+        {
+            const double comb_pT = comb_pT_plus_dppT[iG];
+            GFSum1 += (dsdpti2.interpolate(comb_pT) * RadRelInt1.interpolate(comb_pT) * (comb_pT / pT) * fGaussTab[iG]);
+        }
+        singRAA1.push_back(inv_dsdpti2 * GFSum1);
+
+		// NOTE (dusan): perform Gauss integration of FdA (singRAA2)
+        singRAA2.emplace_back(); 
+        auto &currentSingRAA2Row = singRAA2.back();
+        currentSingRAA2Row.reserve(FdpPts.size());
+
+		for (const double dpT : FdpPts) {
+			double GFSum2 = 0.0;
+            for (std::size_t iG = 0; iG < gSize; ++iG) {
+				const double comb_pT = comb_pT_plus_dppT[iG];
+                const double total_pT = comb_pT + dpT;
+				GFSum2 += (dsdpti2.interpolate(total_pT) * RadRelInt2.interpolate(comb_pT, dpT) * (comb_pT / total_pT) * fGaussTab[iG]);
+			}
+			currentSingRAA2Row.push_back(inv_dsdpti2 * GFSum2);
+		}
+	}
+}
+
+void EnergyLoss::gaussFilterIntegrate(
+	const std::vector<double> &radiativeRAA,
+	const std::vector<double> &collisionalEL,
+	std::vector<double> &singRAA
+) const noexcept
+{
+    LinearInterpolator<double> muCollInt(m_Grids.pCollPts(), collisionalEL);
+    LinearInterpolator<double> RadRelInt(m_Grids.RadPts(),   radiativeRAA);
+
+	std::vector<double> qGaussTabOG, fGaussTabOG; // NOTE (dusan): generate baseline Gauss configurations once
+    generateGaussTab(qGaussTabOG, fGaussTabOG);
+
+	const auto &finPts = m_Grids.finPts();
+
+	singRAA.reserve(finPts.size());
+
+	std::vector<double> qGaussTab, fGaussTab; // NOTE (dusan): reused across loop cycles to eliminate repetitive allocations
+    qGaussTab.reserve(qGaussTabOG.size());
+    fGaussTab.reserve(fGaussTabOG.size());
+
+	for (const double pT : finPts) {
+		const double inv_dsdpti2   = 1.0 / m_dsdpti2.interpolate(pT);
+        const double muCollCurrVal = muCollInt.interpolate(pT);
+        const double sigmaColl     = std::sqrt(2.0 * m_TCollConst * muCollCurrVal);
+
+		qGaussTab = qGaussTabOG; // NOTE (dusan): reset and populate current Gauss grids
+        fGaussTab = fGaussTabOG;
+
+		// NOTE (dusan): rescaling if out of bounds
+		if ((muCollCurrVal + sigmaColl * qGaussTab.front()) < -3.0) {
+            double rescale_factor = ((-3.0 + 1e-12) - muCollCurrVal) / (sigmaColl * qGaussTab.front());
+            for (double &c : qGaussTab) c *= rescale_factor;
+        }
+		if ((muCollCurrVal + sigmaColl * qGaussTab.back()) > 20.0) {
+            double rescale_factor = ((20.0 - 1e-12) - muCollCurrVal) / (sigmaColl * qGaussTab.back());
+            for (double &c : qGaussTab) c *= rescale_factor;
+        }
+
+		const std::size_t gSize = qGaussTab.size();
+
+		// NOTE (dusan): perform Gauss integration of full energy loss
+		double GFSum1 = 0.0;
+        for (std::size_t iG = 0; iG < gSize; ++iG)
+        {
+            const double comb_pT = pT + muCollCurrVal + sigmaColl * qGaussTab[iG];
+            GFSum1 += (m_dsdpti2.interpolate(comb_pT) * RadRelInt.interpolate(comb_pT) * (comb_pT / pT) * fGaussTab[iG]);
+        }
+        singRAA.push_back(inv_dsdpti2 * GFSum1);
+	}
+}
+
+void EnergyLoss::calculateAvgPathlenTemps(const std::vector<double> &pathLenghDist, const std::vector<double> &temperatureDist, std::vector<double> &avgPathLength, std::vector<double> &avgTemp) const
+{
+	LinearInterpolator<double> pathLenghDistInt(m_phiGridPts, pathLenghDist);
+	avgPathLength.push_back(poly::cubicIntegrate(m_phiGridPts, pathLenghDist)/2.0/utils::constants::PI);
+	avgPathLength.push_back((pathLenghDistInt.interpolate(m_phiGridPts.front())     + pathLenghDistInt.interpolate(m_phiGridPts.back()))          / 2.0);
+	avgPathLength.push_back((pathLenghDistInt.interpolate(utils::constants::PI/2.0) + pathLenghDistInt.interpolate(3.0*utils::constants::PI/2.0)) / 2.0);
+
+	LinearInterpolator<double> temperatureDistInt(m_phiGridPts, temperatureDist);
+	avgTemp.push_back(poly::cubicIntegrate(m_phiGridPts, temperatureDist)/2.0/utils::constants::PI);
+	avgTemp.push_back((temperatureDistInt.interpolate(m_phiGridPts.front())      + temperatureDistInt.interpolate(m_phiGridPts.back()))          / 2.0);
+	avgTemp.push_back((temperatureDistInt.interpolate(utils::constants::PI/2.0)  + temperatureDistInt.interpolate(3.0*utils::constants::PI/2.0)) / 2.0);
+}
+
+int EnergyLoss::exportResults(const std::string &particleName, std::size_t event_id, const std::vector<std::vector<double>> &RAApTphi, const std::vector<double> &avgPathLength, const std::vector<double> &avgTemp, std::size_t trajecNum, std::size_t elossNum) const
+{
+	std::vector<std::string> header;
+    header.push_back("#collision_system: " + m_collsys);
+	header.push_back("#collision_energy: " + m_sNN);
+	header.push_back("#particle_type: " + particleName);
+	header.push_back("#centrality: " + m_centrality);
+
+	std::stringstream xbsstr; xbsstr << std::fixed << std::setprecision(1) << m_xB;
+	header.push_back("#xB = " + xbsstr.str());
+
+	header.push_back("#event_id: " + std::to_string(event_id));
+
+	std::stringstream avgPathLengthSStr[3];
+    for (std::size_t i=0; i<3; i++) avgPathLengthSStr[i] << std::fixed << std::setprecision(6) << avgPathLength[i];
+	header.push_back("#average_path-lengths: " + avgPathLengthSStr[0].str() + ", " + avgPathLengthSStr[1].str() + ", " + avgPathLengthSStr[2].str());
+
+	std::stringstream avgTempSStr[3];
+    for (std::size_t i=0; i<3; i++) avgTempSStr[i] << std::fixed << std::setprecision(6) << avgTemp[i];
+	header.push_back("#average_temperatures: " + avgTempSStr[0].str() + ", " + avgTempSStr[1].str() + ", " + avgTempSStr[2].str());
+	
+	header.push_back("#number_of_angles:                " + std::to_string(m_phiGridN));
+	
+	header.push_back("#total_number_of_trajectories:    " + std::to_string(trajecNum));
+	header.push_back("#total_number_of_jet_energy_loss: " + std::to_string(elossNum));
+
+	header.push_back("#BCPSEED: " + std::to_string(m_BCPSEED));
+
+	header.push_back("#-------------------------------------------------------");
+	header.push_back("#   pT [GeV]       phi          R_AA   ");
+
+	//setting file path:
+	const std::string path_out = "./results/results" + particleName + "/" + particleName + "_" + m_collsys + "_sNN=" + m_sNN + "_cent=" + m_centrality + "_xB=" + xbsstr.str() + "_dist_" + std::to_string(event_id) + ".dat";
+
+	std::ofstream file_out(path_out, std::ios_base::out);
+	if (!file_out.is_open()) {
+		std::cerr << "Error: unable to open RAA(pT,phi) distribution file for event " + std::to_string(event_id) + "." << std::endl;
+		return 1;
+	}
+
+	for (const auto &h : header) file_out << h << "\n";
+
+	for (std::size_t ipT= 0; ipT<m_Grids.finPtsLength(); ipT++) //printing RAA(pT,phi) to file
+		for (std::size_t iPhi=0; iPhi<m_phiGridN; iPhi++) {
+			file_out << std::fixed << std::setw(14) << std::setprecision(10) <<   m_Grids.finPts(ipT) << " ";
+			file_out << std::fixed << std::setw(12) << std::setprecision(10) <<    m_phiGridPts[iPhi] << " ";
+			file_out << std::fixed << std::setw(12) << std::setprecision(10) << RAApTphi[ipT][iPhi] << "\n";
+		}
+
+	file_out.close();
+
+	return 0;
+}
+
 void EnergyLoss::runELossHeavyFlavour()
 {
 	if (loaddsdpti2(m_pName, m_dsdpti2) != 0) return;
@@ -804,7 +940,7 @@ void EnergyLoss::runELossHeavyFlavour()
 					for (auto &coll : collEL) coll += 1e-12; //modifying collEL to prevent division by 0
 
 					std::vector<double> singleRAA1; std::vector<std::vector<double>> singleRAA2;
-					gaussFilterIntegrate(radRAA1, radRAA2, collEL, singleRAA1, singleRAA2);
+					gaussFilterIntegrate(m_dsdpti2, radRAA1, radRAA2, collEL, singleRAA1, singleRAA2);
 
 					for (std::size_t iFinPts=0; iFinPts<m_Grids.finPtsLength(); iFinPts++) {
 						sumRAA1[iFinPts] += singleRAA1[iFinPts];
@@ -835,111 +971,6 @@ void EnergyLoss::runELossHeavyFlavour()
 		calculateAvgPathlenTemps(pathLenghDist, temperatureDist, avgPathLength, avgTemp);
 		
 		exportResults(m_pName, eventID, RAAdist, avgPathLength, avgTemp, trajectoryNum, energylossNum);
-	}
-}
-
-void EnergyLoss::gaussFilterIntegrate(const std::vector<double> &radiativeRAA1, const std::vector<std::vector<double>> &radiativeRAA2, const std::vector<double> &collisionalEL, std::vector<double> &singRAA1, std::vector<std::vector<double>> &singRAA2) const
-//function that performs Gauss filter integration - modefied pT integration algorithm
-//radiativeRAA1 - raditive RAA (dA410)											  <- input
-//radiativeRAA2 - raditive RAA (rest of dA integrals)							  <- input
-//collisionalEL - collisional energy loss										  <- input
-//singRAA1 		- RAA array after Gauss filter integration (dA410)				  <- output
-//singRAA2 		- RAA array after Gauss filter integration (rest of dA integrals) <- output
-{
-    LinearInterpolator<double> muCollInt(m_Grids.pCollPts(), collisionalEL); //creating collisional energy loss interpolated function
-
-	std::vector<double> qGaussTabOG, fGaussTabOG; //defining vectors that will store original Gauss filter sampling points
-	generateGaussTab(qGaussTabOG, fGaussTabOG);   //generating sampling points and settin number of sampling poins
-
-	std::vector<double> qGaussTab, fGaussTab; //defining vectors that will store Gauss filter sampling points
-
-	//////////////////////////////////////////////////////////////////////////////////
-	//Gauss integration of dAp410:
-	{
-        LinearInterpolator<double> RadRelInt(m_Grids.RadPts(), radiativeRAA1); //creating radiative RAA1 interpolated function
-
-		double GFSum; //defining sum variable for Gauss filter
-		double dppT;  //defining integration variable
-
-		double muCollCurrVal; //defining variable that stores value of interpolated muColl for specific pT, ie current value
-		double sigmaColl;     //defining variable for collisional sigma
-
-		for (const auto &pT : m_Grids.finPts())
-		{
-			GFSum = 0.0;
-
-			muCollCurrVal = muCollInt.interpolate(pT);
-
-			sigmaColl = std::sqrt(2.0*m_TCollConst*muCollCurrVal);
-
-			qGaussTab = qGaussTabOG; fGaussTab = fGaussTabOG; //setting Gauss filter
-
-			if ((muCollCurrVal + sigmaColl * qGaussTab.front()) < -3.0) { 						        //checking if Gauss is out of bound on lower bound
-				double resfac = ((-3.0 + 1e-12) - muCollCurrVal)/sigmaColl/qGaussTab.front(); 	        //setting rescaling factor
-				std::for_each(qGaussTab.begin(), qGaussTab.end(), [resfac](double &c){ c *= resfac; }); //rescaling sampling points if they are out of bounds
-			}			
-		
-			if ((muCollCurrVal + sigmaColl * qGaussTab.back()) > 20.0) {						        //checking if Gauss is out of bound on upper bound
-				double resfac = ((20.0 - 1e-12) - muCollCurrVal)/sigmaColl/qGaussTab.back();	        //setting rescaling factor
-				std::for_each(qGaussTab.begin(), qGaussTab.end(), [resfac](double &c){ c *= resfac; }); //rescaling sampling points if they are out of bounds
-			}
-
-			//calculating Gauss filter
-			for (std::size_t iG=0; iG<qGaussTab.size(); iG++)
-			{
-				dppT = muCollCurrVal + sigmaColl * qGaussTab[iG];			
-				GFSum += (m_dsdpti2.interpolate(pT + dppT)*RadRelInt.interpolate(pT + dppT)*(pT + dppT) / pT * fGaussTab[iG]);
-			}
-
-			singRAA1.push_back(1.0 / m_dsdpti2.interpolate(pT) * GFSum);
-		}
-	}
-
-	//////////////////////////////////////////////////////////////////////////////////
-	//Gauss integration of FdA:
-	{
-		LinearInterpolator<double> RadRelInt(m_Grids.RadPts(), m_Grids.FdpPts(), radiativeRAA2);
-
-		double GFSum; //defining sum variable for Gauss filter
-		double dppT;  //defining integration variable
-
-		double muCollCurrVal; //defining variable that stores value of interpolated muColl for specific pT, ie current value
-		double sigmaColl;     //defining variable for collisional sigma
-
-		for (const auto &pT : m_Grids.finPts())
-		{
-			singRAA2.push_back(std::vector<double>()); //resizing single RAA vector
-
-			muCollCurrVal = muCollInt.interpolate(pT);
-
-			sigmaColl = std::sqrt(2.0*m_TCollConst*muCollCurrVal);
-
-			qGaussTab = qGaussTabOG; fGaussTab = fGaussTabOG; //setting Gauss filter
-
-			if ((muCollCurrVal + sigmaColl * qGaussTab.front()) < -3.0) { 						        //checking if Gauss is out of bound on lower bound
-				double resfac = ((-3.0 + 1e-12) - muCollCurrVal)/sigmaColl/qGaussTab.front(); 	        //setting rescaling factor
-				std::for_each(qGaussTab.begin(), qGaussTab.end(), [resfac](double &c){ c *= resfac; }); //rescaling sampling points if they are out of bounds
-			}			
-		
-			if ((muCollCurrVal + sigmaColl * qGaussTab.back()) > 20.0) {						        //checking if Gauss is out of bound on upper bound
-				double resfac = ((20.0 - 1e-12) - muCollCurrVal)/sigmaColl/qGaussTab.back();            //setting rescaling factor
-				std::for_each(qGaussTab.begin(), qGaussTab.end(), [resfac](double &c){ c *= resfac; }); //rescaling sampling points if they are out of bounds
-			}
-
-			for (const auto &dpT : m_Grids.FdpPts()) //loop over FdpPts
-			{
-				GFSum = 0.0; //setting sum to 0
-
-				//calculating Gauss filter
-				for (std::size_t iG=0; iG<qGaussTab.size(); iG++)
-				{
-					dppT = muCollCurrVal + sigmaColl * qGaussTab[iG];
-					GFSum += (m_dsdpti2.interpolate(pT + dpT + dppT)*RadRelInt.interpolate(pT + dppT, dpT)*(pT + dppT)/(pT+ dpT + dppT)*fGaussTab[iG]);
-				}
-
-				singRAA2.back().push_back(1.0 / m_dsdpti2.interpolate(pT) * GFSum);
-			}
-		}
 	}
 }
 
@@ -1041,112 +1072,6 @@ void EnergyLoss::runELossLightQuarks()
 	}
 }
 
-void EnergyLoss::gaussFilterIntegrate(const LinearInterpolator<double> &dsdpti2lquark, const std::vector<double> &radiativeRAA1, const std::vector<std::vector<double>> &radiativeRAA2, const std::vector<double> &collisionalEL, std::vector<double> &singRAA1, std::vector<std::vector<double>> &singRAA2) const
-//function that performs Gauss filter integration - modefied pT integration algorithm used in all lquarks algorithm
-//dsdpti2lquark - light quark initial pT distribution      						  <- input
-//radiativeRAA1 - raditive RAA (dA410)											  <- input
-//radiativeRAA2 - raditive RAA (rest of dA integrals)							  <- input
-//collisionalEL - collisional energy loss										  <- input
-//singRAA1 		- RAA array after Gauss filter integration (dA410)				  <- output
-//singRAA2 		- RAA array after Gauss filter integration (rest of dA integrals) <- output
-{
-    LinearInterpolator<double> muCollInt(m_Grids.pCollPts(), collisionalEL); //creating collisional energy loss interpolated function
-
-	std::vector<double> qGaussTabOG, fGaussTabOG; //defining vectors that will store original Gauss filter sampling points
-	generateGaussTab(qGaussTabOG, fGaussTabOG);   //generating sampling points and settin number of sampling poins
-
-	std::vector<double> qGaussTab, fGaussTab; //defining vectors that will store Gauss filter sampling points
-
-	//////////////////////////////////////////////////////////////////////////////////
-	//Gauss integration of dAp410:
-	{
-        LinearInterpolator<double> RadRelInt(m_Grids.RadPts(), radiativeRAA1); //creating radiative RAA1 interpolated function
-
-		double GFSum; //defining sum variable for Gauss filter
-		double dppT;  //defining integration variable
-
-		double muCollCurrVal; //defining variable that stores value of interpolated muColl for specific pT, ie current value
-		double sigmaColl;     //defining variable for collisional sigma
-
-		for (const auto &pT : m_Grids.finPts())
-		{
-			GFSum = 0.0;
-
-			muCollCurrVal = muCollInt.interpolate(pT);
-
-			sigmaColl = std::sqrt(2.0*m_TCollConst*muCollCurrVal);
-
-			qGaussTab = qGaussTabOG; fGaussTab = fGaussTabOG; //setting Gauss filter
-
-			if ((muCollCurrVal + sigmaColl * qGaussTab.front()) < -3.0) { 						        //checking if Gauss is out of bound on lower bound
-				double resfac = ((-3.0 + 1e-12) - muCollCurrVal)/sigmaColl/qGaussTab.front(); 	        //setting rescaling factor
-				std::for_each(qGaussTab.begin(), qGaussTab.end(), [resfac](double &c){ c *= resfac; }); //rescaling sampling points if they are out of bounds
-			}			
-		
-			if ((muCollCurrVal + sigmaColl * qGaussTab.back()) > 20.0) {						        //checking if Gauss is out of bound on upper bound
-				double resfac = ((20.0 - 1e-12) - muCollCurrVal)/sigmaColl/qGaussTab.back();	        //setting rescaling factor
-				std::for_each(qGaussTab.begin(), qGaussTab.end(), [resfac](double &c){ c *= resfac; }); //rescaling sampling points if they are out of bounds
-			}
-
-			//calculating Gauss filter
-			for (std::size_t iG=0; iG<qGaussTab.size(); iG++)
-			{
-				dppT = muCollCurrVal + sigmaColl * qGaussTab[iG];			
-				GFSum += (dsdpti2lquark.interpolate(pT + dppT)*RadRelInt.interpolate(pT + dppT)*(pT + dppT) / pT * fGaussTab[iG]);
-			}
-
-			singRAA1.push_back(1.0 / dsdpti2lquark.interpolate(pT) * GFSum);
-		}
-	}
-
-	//////////////////////////////////////////////////////////////////////////////////
-	//Gauss integration of FdA:
-	{
-		LinearInterpolator<double> RadRelInt(m_Grids.RadPts(), m_Grids.FdpPts(), radiativeRAA2);
-
-		double GFSum; //defining sum variable for Gauss filter
-		double dppT;  //defining integration variable
-
-		double muCollCurrVal; //defining variable that stores value of interpolated muColl for specific pT, ie current value
-		double sigmaColl;     //defining variable for collisional sigma
-
-		for (const auto &pT : m_Grids.finPts())
-		{
-			singRAA2.push_back(std::vector<double>()); //resizing single RAA vector
-
-			muCollCurrVal = muCollInt.interpolate(pT);
-
-			sigmaColl = std::sqrt(2.0*m_TCollConst*muCollCurrVal);
-
-			qGaussTab = qGaussTabOG; fGaussTab = fGaussTabOG; //setting Gauss filter
-
-			if ((muCollCurrVal + sigmaColl * qGaussTab.front()) < -3.0) { 						        //checking if Gauss is out of bound on lower bound
-				double resfac = ((-3.0 + 1e-12) - muCollCurrVal)/sigmaColl/qGaussTab.front(); 	        //setting rescaling factor
-				std::for_each(qGaussTab.begin(), qGaussTab.end(), [resfac](double &c){ c *= resfac; }); //rescaling sampling points if they are out of bounds
-			}			
-		
-			if ((muCollCurrVal + sigmaColl * qGaussTab.back()) > 20.0) {						        //checking if Gauss is out of bound on upper bound
-				double resfac = ((20.0 - 1e-12) - muCollCurrVal)/sigmaColl/qGaussTab.back();	        //setting rescaling factor
-				std::for_each(qGaussTab.begin(), qGaussTab.end(), [resfac](double &c){ c *= resfac; }); //rescaling sampling points if they are out of bounds
-			}
-
-			for (const auto &dpT : m_Grids.FdpPts()) //loop over FdpPts
-			{
-				GFSum = 0.0; //setting sum to 0
-
-				//calculating Gauss filter
-				for (std::size_t iG=0; iG<qGaussTab.size(); iG++)
-				{
-					dppT = muCollCurrVal + sigmaColl * qGaussTab[iG];
-					GFSum += (dsdpti2lquark.interpolate(pT + dpT + dppT)*RadRelInt.interpolate(pT + dppT, dpT)*(pT + dppT)/(pT+ dpT + dppT)*fGaussTab[iG]);
-				}
-
-				singRAA2.back().push_back(1.0 / dsdpti2lquark.interpolate(pT) * GFSum);
-			}
-		}
-	}
-}
-
 void EnergyLoss::runELossLightFlavour()
 {
 	if (loaddsdpti2(m_pName, m_dsdpti2) != 0) return;
@@ -1217,59 +1142,5 @@ void EnergyLoss::runELossLightFlavour()
 		calculateAvgPathlenTemps(pathLenghDist, temperatureDist, avgPathLength, avgTemp);
 
 		exportResults(m_pName, eventID, RAAdist, avgPathLength, avgTemp, trajectoryNum, energylossNum);
-	}
-}
-
-void EnergyLoss::gaussFilterIntegrate(const std::vector<double> &radiativeRAA, const std::vector<double> &collisionalEL, std::vector<double> &singRAA) const
-//function that performs Gauss filter integration - default algorithm
-//radiativeRAA  - raditive RAA 							   <- input
-//collisionalEL - collisional energy loss				   <- input
-//singRAA 		- RAA array after Gauss filter integration <- output
-{
-    LinearInterpolator<double> RadRelInt(m_Grids.RadPts(),   radiativeRAA);  //creating radiative RAA interpolated function
-    LinearInterpolator<double> muCollInt(m_Grids.pCollPts(), collisionalEL); //creating collisional energy loss interpolated function
-
-	std::vector<double> qGaussTabOG, fGaussTabOG; //defining vectors that will store original Gauss filter sampling points
-	generateGaussTab(qGaussTabOG, fGaussTabOG);   //generating sampling points and settin number of sampling poins
-
-	std::vector<double> qGaussTab, fGaussTab; //defining vectors that will store Gauss filter sampling points
-
-	double GFSum; //defining sum variable for Gauss filter
-
-	double dpT; //defining pT and dpT variables
-
-	double muCollCurrVal; //defining variable that stores value of interpolated muColl for specific pT, ie current value
-
-	double sigmaColl; //defining variable for collisional sigma
-	
-	//Gauss filter
-	for (const auto &pT : m_Grids.finPts())
-	{
-		GFSum = 0.0L;
-
-		muCollCurrVal = muCollInt.interpolate(pT);
-
-		sigmaColl = std::sqrt(2.0*m_TCollConst*muCollCurrVal);
-
-		qGaussTab = qGaussTabOG; fGaussTab = fGaussTabOG; //setting Gauss filter
-
-		if ((muCollCurrVal + sigmaColl * qGaussTab.front()) < -3.0) { 						        //checking if Gauss is out of bound on lower bound
-			double resfac = ((-3.0 + 1e-12) - muCollCurrVal)/sigmaColl/qGaussTab.front(); 	        //setting rescaling factor
-			std::for_each(qGaussTab.begin(), qGaussTab.end(), [resfac](double &c){ c *= resfac; }); //rescaling sampling points if they are out of bounds
-		}		
-		
-		if ((muCollCurrVal + sigmaColl * qGaussTab.back()) > 20.0) {						        //checking if Gauss is out of bound on upper bound
-			double resfac = ((20.0 - 1e-12) - muCollCurrVal)/sigmaColl/qGaussTab.back();	        //setting rescaling factor
-			std::for_each(qGaussTab.begin(), qGaussTab.end(), [resfac](double &c){ c *= resfac; }); //rescaling sampling points if they are out of bounds
-		}
-		
-		//calculating Gauss filter
-		for (std::size_t iG=0; iG<qGaussTab.size(); iG++)
-		{
-			dpT = muCollCurrVal + sigmaColl * qGaussTab[iG];			
-			GFSum += (m_dsdpti2.interpolate(pT + dpT)*RadRelInt.interpolate(pT + dpT)*(pT + dpT) / pT * fGaussTab[iG]);
-		}
-
-		singRAA.push_back(1.0 / m_dsdpti2.interpolate(pT) * GFSum);
 	}
 }
