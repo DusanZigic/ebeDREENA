@@ -39,7 +39,7 @@ double EnergyLoss::FdA411(double ph, double dp, double invExpNorm, double ph_ove
 
 double EnergyLoss::FdA412(double ph, double dp, double mFactor, double invExpNorm, double ph_over_p, const LinearInterpolator<double> &dndx) const noexcept
 {
-	if (dp < 2.0 * m_mgC / 2.0) return 0.0;
+	if (dp < 2.0 * m_mgC_over_2) return 0.0;
 
 	const double p = ph + dp;
 
@@ -61,7 +61,7 @@ double EnergyLoss::FdA412(double ph, double dp, double mFactor, double invExpNor
 
 double EnergyLoss::FdA413(double ph, double dp, double mFactor, double invExpNorm, double ph_over_p, const LinearInterpolator<double> &dndx) const noexcept
 {
-	if (dp < 3.0 * m_mgC / 2.0) return 0.0;
+	if (dp < 3.0 * m_mgC_over_2) return 0.0;
 	
 	const double p = ph + dp;
 
@@ -91,7 +91,7 @@ double EnergyLoss::FdA413(double ph, double dp, double mFactor, double invExpNor
 
 double EnergyLoss::FdA414(double ph, double dp, double mFactor, double invExpNorm, double ph_over_p, const LinearInterpolator<double> &dndx) const noexcept
 {
-	if (dp < 4.0*m_mgC / 2.0) return 0.0;
+	if (dp < 4.0 * m_mgC_over_2) return 0.0;
 
 	const double p = ph + dp;
 
@@ -130,7 +130,7 @@ double EnergyLoss::FdA414(double ph, double dp, double mFactor, double invExpNor
 
 double EnergyLoss::FdA415(double ph, double dp, double mFactor, double invExpNorm, double ph_over_p, const LinearInterpolator<double> &dndx) const noexcept
 {
-	if (dp < 5.0*m_mgC / 2.0) return 0.0;
+	if (dp < 5.0 * m_mgC_over_2) return 0.0;
 
 	const double p = ph + dp;
 
@@ -226,7 +226,7 @@ double EnergyLoss::dA410(double ph, const LinearInterpolator<double> &norm) cons
 
 double EnergyLoss::dA411(double ph, double p2, const LinearInterpolator<double> &norm, const LinearInterpolator<double> &dndx) const noexcept
 {
-	const double p1 = ph + m_mgC / 2.0;
+	const double p1 = ph + m_mgC_over_2;
 	const double pq = p2 - p1;
 	double p;
 	double ph_over_p;
@@ -245,7 +245,7 @@ double EnergyLoss::dA411(double ph, double p2, const LinearInterpolator<double> 
 
 double EnergyLoss::dA412(double ph, double p2, const LinearInterpolator<double> &norm, const LinearInterpolator<double> &dndx) const noexcept
 {
-	const double p1 = ph + 2.0 * m_mgC / 2.0;
+	const double p1 = ph + 2.0 * m_mgC_over_2;
 	const double pq = p2 - p1;
 	double p;
 	
@@ -278,7 +278,7 @@ double EnergyLoss::dA412(double ph, double p2, const LinearInterpolator<double> 
 
 double EnergyLoss::dA413(double ph, double p2, const LinearInterpolator<double> &norm, const LinearInterpolator<double> &dndx) const noexcept
 {
-	const double p1 = ph + 3.0 * m_mgC / 2.0;
+	const double p1 = ph + 3.0 * m_mgC_over_2;
 	const double pq = p2 - p1;
 	double p;
 	
@@ -319,7 +319,7 @@ double EnergyLoss::dA413(double ph, double p2, const LinearInterpolator<double> 
 
 double EnergyLoss::dA414(double ph, double p2, const LinearInterpolator<double> &norm, const LinearInterpolator<double> &dndx) const noexcept
 {
-	const double p1 = ph + 4.0 * m_mgC / 2.0;
+	const double p1 = ph + 4.0 * m_mgC_over_2;
 	const double pq = p2 - p1;
 	double p;
 	
@@ -368,7 +368,7 @@ double EnergyLoss::dA414(double ph, double p2, const LinearInterpolator<double> 
 
 double EnergyLoss::dA415(double ph, double p2, const LinearInterpolator<double> &norm, const LinearInterpolator<double> &dndx) const noexcept
 {
-	const double p1 = ph + 5.0 * m_mgC / 2.0;
+	const double p1 = ph + 5.0 * m_mgC_over_2;
 	const double pq = p2 - p1;
 	double p;
 
@@ -425,7 +425,7 @@ double EnergyLoss::dA415(double ph, double p2, const LinearInterpolator<double> 
 
 double EnergyLoss::dA416(double ph, double p2, const LinearInterpolator<double> &norm, const LinearInterpolator<double> &dndx) const noexcept
 {
-	const double p1 = ph + 6.0 * m_mgC / 2.0;
+	const double p1 = ph + 6.0 * m_mgC_over_2;
 	const double pq = p2 - p1;
 	double p;
 
@@ -490,7 +490,7 @@ double EnergyLoss::dA416(double ph, double p2, const LinearInterpolator<double> 
 
 double EnergyLoss::dA417(double ph, double p2, const LinearInterpolator<double> &norm, const LinearInterpolator<double> &dndx) const noexcept
 {
-	const double p1 = ph + 7.0 * m_mgC / 2.0;
+	const double p1 = ph + 7.0 * m_mgC_over_2;
 	const double pq = p2 - p1;
 	double p;
 

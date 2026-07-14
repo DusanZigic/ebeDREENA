@@ -41,7 +41,8 @@ EnergyLoss::EnergyLoss(const config::energyLossConfig &cfg)
 		m_MC = mu*utils::constants::INV_SQRT_6;
 	}
 	m_TCollConst = 3.0/2.0*m_TCRIT;
-	m_MC_sq = m_MC * m_MC;
+	m_mgC_over_2 = m_mgC / 2.0;
+	m_MC_sq      = m_MC * m_MC;
 
 	// NOTE (dusan): setting up master seed only once during initialization
 	if (m_BCPSEED == 0) {
