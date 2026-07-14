@@ -82,11 +82,11 @@ private:
 
     void FdAHaltonSeqInit(std::size_t FdAMaxPts);
     double dAp410(double ph, const LinearInterpolator<double> &norm) const noexcept;
-    double FdA411(double ph, double dp,                 double invExpNorm, const LinearInterpolator<double> &dndx) const noexcept;
-    double FdA412(double ph, double dp, double mFactor, double invExpNorm, const LinearInterpolator<double> &dndx) const noexcept;
-    double FdA413(double ph, double dp, double mFactor, double invExpNorm, const LinearInterpolator<double> &dndx) const noexcept;
-    double FdA414(double ph, double dp, double mFactor, double invExpNorm, const LinearInterpolator<double> &dndx) const noexcept;
-    double FdA415(double ph, double dp, double mFactor, double invExpNorm, const LinearInterpolator<double> &dndx) const noexcept;
+    double FdA411(double ph, double dp,                 double invExpNorm, double ph_over_p, const LinearInterpolator<double> &dndx) const noexcept;
+    double FdA412(double ph, double dp, double mFactor, double invExpNorm, double ph_over_p, const LinearInterpolator<double> &dndx) const noexcept;
+    double FdA413(double ph, double dp, double mFactor, double invExpNorm, double ph_over_p, const LinearInterpolator<double> &dndx) const noexcept;
+    double FdA414(double ph, double dp, double mFactor, double invExpNorm, double ph_over_p, const LinearInterpolator<double> &dndx) const noexcept;
+    double FdA415(double ph, double dp, double mFactor, double invExpNorm, double ph_over_p, const LinearInterpolator<double> &dndx) const noexcept;
     double FdA(double ph, double dp, const LinearInterpolator<double> &currnorm, const LinearInterpolator<double> &currdndx) const noexcept;
 
     void dAHaltonSeqInit(std::size_t dAMaxPts);

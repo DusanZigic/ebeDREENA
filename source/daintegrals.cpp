@@ -29,22 +29,22 @@ double EnergyLoss::dAp410(double ph, const LinearInterpolator<double> &norm) con
 	);
 }
 
-double EnergyLoss::FdA411(double ph, double dp, double invExpNorm, const LinearInterpolator<double> &dndx) const noexcept
+double EnergyLoss::FdA411(double ph, double dp, double invExpNorm, double ph_over_p, const LinearInterpolator<double> &dndx) const noexcept
 {
 	return (
 		invExpNorm *
-		dndx.interpolate(ph + dp, 1.0 - ph / (ph + dp))
+		dndx.interpolate(ph + dp, 1.0 - ph_over_p)
 	);
 }
 
-double EnergyLoss::FdA412(double ph, double dp, double mFactor, double invExpNorm, const LinearInterpolator<double> &dndx) const noexcept
+double EnergyLoss::FdA412(double ph, double dp, double mFactor, double invExpNorm, double ph_over_p, const LinearInterpolator<double> &dndx) const noexcept
 {
 	if (dp < 2.0 * m_mgC / 2.0) return 0.0;
 
 	const double p = ph + dp;
 
 	const double yl = mFactor;
-	const double yh = 1.0 - ph / p - mFactor;
+	const double yh = 1.0 - ph_over_p - mFactor;
 	const double yq = yh - yl;
 	double y;
 
@@ -52,21 +52,21 @@ double EnergyLoss::FdA412(double ph, double dp, double mFactor, double invExpNor
 	for (std::size_t i = 0; i < m_FdAMaxPoints2; ++i) {
 		y = yl + m_FdAHS2[i] * yq;
 		
-		sum += dndx.interpolate(p, 1.0 - ph / p - y) *
+		sum += dndx.interpolate(p, 1.0 - ph_over_p - y) *
 			   dndx.interpolate(p, y);
 	}
 
 	return (sum * invExpNorm * m_dAPoissonFactors[2] * yq / static_cast<double>(m_FdAMaxPoints2));
 }
 
-double EnergyLoss::FdA413(double ph, double dp, double mFactor, double invExpNorm, const LinearInterpolator<double> &dndx) const noexcept
+double EnergyLoss::FdA413(double ph, double dp, double mFactor, double invExpNorm, double ph_over_p, const LinearInterpolator<double> &dndx) const noexcept
 {
 	if (dp < 3.0 * m_mgC / 2.0) return 0.0;
 	
 	const double p = ph + dp;
 
 	const double yl = mFactor;
-	const double yh = 1.0 - ph / p - 2.0 * mFactor;
+	const double yh = 1.0 - ph_over_p - 2.0 * mFactor;
 	const double yq = yh - yl;
 	double y;
 
@@ -77,11 +77,11 @@ double EnergyLoss::FdA413(double ph, double dp, double mFactor, double invExpNor
 	for (std::size_t i = 0; i < m_FdAMaxPoints3; ++i) {
 		y = yl + m_FdAHS2[i] * yq;
 		
-		zh = 1.0 - ph / p - y - mFactor;
+		zh = 1.0 - ph_over_p - y - mFactor;
 		zq = zh - zl;
 		z = zl + m_FdAHS3[i] * zq;
 		
-		sum += dndx.interpolate(p, 1.0 - ph / p - y - z) *
+		sum += dndx.interpolate(p, 1.0 - ph_over_p - y - z) *
 			   dndx.interpolate(p, y) *
 			   dndx.interpolate(p, z) * zq;
 	}
@@ -89,14 +89,14 @@ double EnergyLoss::FdA413(double ph, double dp, double mFactor, double invExpNor
 	return (sum * invExpNorm * m_dAPoissonFactors[3] * yq / static_cast<double>(m_FdAMaxPoints3));
 }
 
-double EnergyLoss::FdA414(double ph, double dp, double mFactor, double invExpNorm, const LinearInterpolator<double> &dndx) const noexcept
+double EnergyLoss::FdA414(double ph, double dp, double mFactor, double invExpNorm, double ph_over_p, const LinearInterpolator<double> &dndx) const noexcept
 {
 	if (dp < 4.0*m_mgC / 2.0) return 0.0;
 
 	const double p = ph + dp;
 
 	const double yl = mFactor;
-	const double yh = 1.0 - ph / p - 3.0 * mFactor;
+	const double yh = 1.0 - ph_over_p - 3.0 * mFactor;
 	const double yq = yh - yl;
 	double y;
 
@@ -110,15 +110,15 @@ double EnergyLoss::FdA414(double ph, double dp, double mFactor, double invExpNor
 	for (std::size_t i = 0; i < m_FdAMaxPoints4; ++i) {
 		y = yl + m_FdAHS2[i] * yq;
 		
-		zh = 1.0 - ph / p - y - 2.0 * mFactor;
+		zh = 1.0 - ph_over_p - y - 2.0 * mFactor;
 		zq = zh - zl;
 		z = zl + m_FdAHS3[i]*zq;
 		
-		zzh = 1.0 - ph / p - y - z - mFactor;
+		zzh = 1.0 - ph_over_p - y - z - mFactor;
 		zzq = zzh - zzl;
 		zz = zzl + m_FdAHS4[i]*zzq;
 		
-		sum += dndx.interpolate(p, 1.0 - ph / p - y - z - zz) *
+		sum += dndx.interpolate(p, 1.0 - ph_over_p - y - z - zz) *
 			   dndx.interpolate(p, y) *
 			   dndx.interpolate(p, z) *
 			   dndx.interpolate(p, zz) *
@@ -128,14 +128,14 @@ double EnergyLoss::FdA414(double ph, double dp, double mFactor, double invExpNor
 	return (sum * invExpNorm * m_dAPoissonFactors[4] * yq / static_cast<double>(m_FdAMaxPoints4));
 }
 
-double EnergyLoss::FdA415(double ph, double dp, double mFactor, double invExpNorm, const LinearInterpolator<double> &dndx) const noexcept
+double EnergyLoss::FdA415(double ph, double dp, double mFactor, double invExpNorm, double ph_over_p, const LinearInterpolator<double> &dndx) const noexcept
 {
 	if (dp < 5.0*m_mgC / 2.0) return 0.0;
 
 	const double p = ph + dp;
 
 	const double yl = mFactor;
-	const double yh = 1.0 - ph / p - 4.0 * mFactor;
+	const double yh = 1.0 - ph_over_p - 4.0 * mFactor;
 	const double yq = yh - yl;
 	double y;
 		
@@ -152,19 +152,19 @@ double EnergyLoss::FdA415(double ph, double dp, double mFactor, double invExpNor
 	for (std::size_t i = 0; i < m_FdAMaxPoints5; ++i) {
 		y = yl + m_FdAHS2[i] * yq;
 		
-		zh = 1.0 - ph / p - y - 3.0 * mFactor;
+		zh = 1.0 - ph_over_p - y - 3.0 * mFactor;
 		zq = zh - zl;
 		z = zl + m_FdAHS3[i] * zq;
 
-		zzh = 1.0 - ph / p - y - z - 2.0 * mFactor;
+		zzh = 1.0 - ph_over_p - y - z - 2.0 * mFactor;
 		zzq = zzh - zzl;
 		zz = zzl + m_FdAHS4[i] * zzq;
 
-		zzzh = 1.0 - ph / p - y - z - zz - mFactor;
+		zzzh = 1.0 - ph_over_p - y - z - zz - mFactor;
 		zzzq = zzzh - zzzl;
 		zzz = zzzl + m_FdAHS5[i] * zzzq;
 
-		sum += dndx.interpolate(p, 1.0 - ph / p - y - z - zz - zzz) *
+		sum += dndx.interpolate(p, 1.0 - ph_over_p - y - z - zz - zzz) *
 			   dndx.interpolate(p, y) *
 			   dndx.interpolate(p, z) *
 			   dndx.interpolate(p, zz) *
@@ -178,17 +178,19 @@ double EnergyLoss::FdA415(double ph, double dp, double mFactor, double invExpNor
 
 double EnergyLoss::FdA(double ph, double dp, const LinearInterpolator<double> &currnorm, const LinearInterpolator<double> &currdndx) const noexcept
 {
+	 // NOTE (dusan): factor out everything that doesn't depend on variable of integration
 	const double p          = ph + dp;
 	const double e          = std::sqrt(m_MC_sq + p * p);
 	const double mFactor    = m_mgC / (p + e);
-	const double invExpNorm = 1.0 / std::exp(currnorm.interpolate(p)); // NOTE (dusan): factor out everything that doesn't depend on variable of integration
+	const double invExpNorm = 1.0 / std::exp(currnorm.interpolate(p));
+	const double ph_over_p  = ph / p;
 
 	return (
-		FdA411(ph, dp,          invExpNorm, currdndx) +
-		FdA412(ph, dp, mFactor, invExpNorm, currdndx) +
-		FdA413(ph, dp, mFactor, invExpNorm, currdndx) +
-		FdA414(ph, dp, mFactor, invExpNorm, currdndx) +
-		FdA415(ph, dp, mFactor, invExpNorm, currdndx)
+		FdA411(ph, dp,          invExpNorm, ph_over_p, currdndx) +
+		FdA412(ph, dp, mFactor, invExpNorm, ph_over_p, currdndx) +
+		FdA413(ph, dp, mFactor, invExpNorm, ph_over_p, currdndx) +
+		FdA414(ph, dp, mFactor, invExpNorm, ph_over_p, currdndx) +
+		FdA415(ph, dp, mFactor, invExpNorm, ph_over_p, currdndx)
 	);
 }
 
@@ -228,13 +230,15 @@ double EnergyLoss::dA411(double ph, const LinearInterpolator<double> &norm, cons
 	const double p2 = (((2.0 * ph) < (ph + 30.0)) ? (2.0 * ph) : (ph + 30.0));
 	const double pq = p2 - p1;
 	double p;
+	double ph_over_p;
 
 	double sum = 0.0;
 	for (std::size_t i = 0; i < m_dAMaxPoints1; ++i) {
-		p = p1 + m_dAHS1[i] * pq;
+		p         = p1 + m_dAHS1[i] * pq;
+		ph_over_p = ph / p;
 		
 		sum += m_dsdpti2.interpolate(p) / p / std::exp(norm.interpolate(p)) *
-			   dndx.interpolate(p, 1.0 - ph / p);
+			   dndx.interpolate(p, 1.0 - ph_over_p);
 	}
 
 	return (sum * pq / static_cast<double>(m_dAMaxPoints1));
@@ -249,7 +253,7 @@ double EnergyLoss::dA412(double ph, const LinearInterpolator<double> &norm, cons
 	
 	double yl, yh, yq, y;
 	
-	double e, mFactor;
+	double e, mFactor, ph_over_p;
 
 	double sum = 0.0;
 	for (std::size_t i = 0; i < m_dAMaxPoints2; ++i) {
@@ -257,15 +261,16 @@ double EnergyLoss::dA412(double ph, const LinearInterpolator<double> &norm, cons
 
 		e = std::sqrt(m_MC_sq + p * p);
 		mFactor = m_mgC / (p + e);
+		ph_over_p = ph / p;
 		
 		yl = mFactor;
-		yh = 1.0 - ph / p - mFactor;
+		yh = 1.0 - ph_over_p - mFactor;
 		yq = yh - yl;
 		y = yl + m_dAHS2[i] * yq;
 		
 		sum += m_dsdpti2.interpolate(p) / p / std::exp(norm.interpolate(p)) *
 			   m_dAPoissonFactors[2] *
-			   dndx.interpolate(p, 1.0 - ph / p - y) *
+			   dndx.interpolate(p, 1.0 - ph_over_p - y) *
 			   dndx.interpolate(p, y) *
 			   yq;
 	}
@@ -284,7 +289,7 @@ double EnergyLoss::dA413(double ph, const LinearInterpolator<double> &norm, cons
 	
 	double zl, zh, zq, z;
 
-	double e, mFactor;
+	double e, mFactor, ph_over_p;
 
 	double sum = 0.0;
 	for (std::size_t i = 0; i < m_dAMaxPoints3; ++i) {
@@ -292,20 +297,21 @@ double EnergyLoss::dA413(double ph, const LinearInterpolator<double> &norm, cons
 
 		e = std::sqrt(m_MC_sq + p * p);
 		mFactor = m_mgC / (p + e);
+		ph_over_p = ph / p;
 		
 		yl = mFactor;
-		yh = 1.0 - ph / p - 2.0 * mFactor;
+		yh = 1.0 - ph_over_p - 2.0 * mFactor;
 		yq = yh - yl;
 		y = yl + m_dAHS2[i] * yq;
 
 		zl = mFactor;
-		zh = 1.0 - ph / p - y - mFactor;
+		zh = 1.0 - ph_over_p - y - mFactor;
 		zq = zh - zl;
 		z = zl + m_dAHS3[i] * zq;
 
 		sum += m_dsdpti2.interpolate(p) / p / std::exp(norm.interpolate(p)) *
 			   m_dAPoissonFactors[3] *
-			   dndx.interpolate(p, 1.0 - ph / p - y - z) *
+			   dndx.interpolate(p, 1.0 - ph_over_p - y - z) *
 			   dndx.interpolate(p, y) *
 			   dndx.interpolate(p, z) *
 			   yq * zq;
@@ -327,7 +333,7 @@ double EnergyLoss::dA414(double ph, const LinearInterpolator<double> &norm, cons
 	
 	double zzl, zzh, zzq, zz;
 	
-	double e, mFactor;
+	double e, mFactor, ph_over_p;
 
 	double sum = 0.0;
 	for (std::size_t i = 0; i < m_dAMaxPoints4; ++i) {
@@ -335,25 +341,26 @@ double EnergyLoss::dA414(double ph, const LinearInterpolator<double> &norm, cons
 
 		e = std::sqrt(m_MC_sq + p * p);
 		mFactor = m_mgC / (p + e);
+		ph_over_p = ph / p;
 		
 		yl = mFactor;
-		yh = 1.0 - ph / p - 3.0 * mFactor;
+		yh = 1.0 - ph_over_p - 3.0 * mFactor;
 		yq = yh - yl;
 		y = yl + m_dAHS2[i] * yq;
 
 		zl = mFactor;
-		zh = 1.0 - ph / p - y - 2.0 * mFactor;
+		zh = 1.0 - ph_over_p - y - 2.0 * mFactor;
 		zq = zh - zl;
 		z = zl + m_dAHS3[i] * zq;
 
 		zzl = mFactor;
-		zzh = 1.0 - ph / p - y - z - mFactor;
+		zzh = 1.0 - ph_over_p - y - z - mFactor;
 		zzq = zzh - zzl;
 		zz = zzl + m_dAHS4[i] * zzq;
 
 		sum += m_dsdpti2.interpolate(p) / p / std::exp(norm.interpolate(p)) *
 			   m_dAPoissonFactors[4] *
-			   dndx.interpolate(p, 1.0 - ph / p - y - z - zz) *
+			   dndx.interpolate(p, 1.0 - ph_over_p - y - z - zz) *
 			   dndx.interpolate(p, y) *
 			   dndx.interpolate(p, z) *
 			   dndx.interpolate(p, zz) *
@@ -378,7 +385,7 @@ double EnergyLoss::dA415(double ph, const LinearInterpolator<double> &norm, cons
 	
 	double zzzl, zzzh, zzzq, zzz;
 	
-	double e, mFactor;
+	double e, mFactor, ph_over_p;
 
 	double sum = 0.0;
 	for (std::size_t i = 0; i < m_dAMaxPoints5; ++i) {
@@ -386,30 +393,31 @@ double EnergyLoss::dA415(double ph, const LinearInterpolator<double> &norm, cons
 
 		e = std::sqrt(m_MC_sq + p * p);
 		mFactor = m_mgC / (p + e);
+		ph_over_p = ph / p;
 		
 		yl = mFactor;
-		yh = 1.0 - ph / p - 4.0 * mFactor;
+		yh = 1.0 - ph_over_p - 4.0 * mFactor;
 		yq = yh - yl;
 		y = yl + m_dAHS2[i] * yq;
 
 		zl = mFactor;
-		zh = 1.0 - ph / p - y - 3.0 * mFactor;
+		zh = 1.0 - ph_over_p - y - 3.0 * mFactor;
 		zq = zh - zl;
 		z = zl + m_dAHS3[i] * zq;
 
 		zzl = mFactor;
-		zzh = 1.0 - ph / p - y - z - 2.0 * mFactor;
+		zzh = 1.0 - ph_over_p - y - z - 2.0 * mFactor;
 		zzq = zzh - zzl;
 		zz = zzl + m_dAHS4[i] * zzq;
 
 		zzzl = mFactor;
-		zzzh = 1.0 - ph / p - y - z - zz - mFactor;
+		zzzh = 1.0 - ph_over_p - y - z - zz - mFactor;
 		zzzq = zzzh - zzzl;
 		zzz = zzzl + m_dAHS5[i] * zzzq;
 
 		sum += m_dsdpti2.interpolate(p) / p / std::exp(norm.interpolate(p)) *
 			   m_dAPoissonFactors[5] *
-			   dndx.interpolate(p, 1.0 - ph / p - y - z - zz - zzz) *
+			   dndx.interpolate(p, 1.0 - ph_over_p - y - z - zz - zzz) *
 			   dndx.interpolate(p, y) *
 			   dndx.interpolate(p, z) *
 			   dndx.interpolate(p, zz) *
@@ -437,7 +445,7 @@ double EnergyLoss::dA416(double ph, const LinearInterpolator<double> &norm, cons
 	
 	double zzzzl, zzzzh, zzzzq, zzzz;
 	
-	double e, mFactor;
+	double e, mFactor, ph_over_p;
 
 	double sum = 0.0;
 	for (std::size_t i = 0; i < m_dAMaxPoints6; ++i) {
@@ -445,14 +453,15 @@ double EnergyLoss::dA416(double ph, const LinearInterpolator<double> &norm, cons
 
 		e = std::sqrt(m_MC_sq + p * p);
 		mFactor = m_mgC / (p + e);
+		ph_over_p = ph / p;
 		
 		yl = mFactor;
-		yh = 1.0 - ph / p - 5.0 * mFactor;
+		yh = 1.0 - ph_over_p - 5.0 * mFactor;
 		yq = yh - yl;
 		y = yl + m_dAHS2[i] * yq;
 
 		zl = mFactor;
-		zh = 1.0 - ph / p - y - 4.0 * mFactor;
+		zh = 1.0 - ph_over_p - y - 4.0 * mFactor;
 		zq = zh - zl;
 		z = zl + m_dAHS3[i] * zq;
 
@@ -462,18 +471,18 @@ double EnergyLoss::dA416(double ph, const LinearInterpolator<double> &norm, cons
 		zz = zzl + m_dAHS4[i] * zzq;
 
 		zzzl = mFactor;
-		zzzh = 1.0 - ph / p - y - z - zz - 2.0 * mFactor;
+		zzzh = 1.0 - ph_over_p - y - z - zz - 2.0 * mFactor;
 		zzzq = zzzh - zzzl;
 		zzz = zzzl + m_dAHS5[i] * zzzq;
 
 		zzzzl = mFactor;
-		zzzzh = 1.0 - ph / p - y - z - zz - zzz - mFactor;
+		zzzzh = 1.0 - ph_over_p - y - z - zz - zzz - mFactor;
 		zzzzq = zzzzh - zzzzl;
 		zzzz = zzzzl + m_dAHS6[i] * zzzzq;
 
 		sum += m_dsdpti2.interpolate(p) / p / std::exp(norm.interpolate(p)) *
 			   m_dAPoissonFactors[6] *
-			   dndx.interpolate(p, 1.0 - ph / p - y - z - zz - zzz - zzzz) *
+			   dndx.interpolate(p, 1.0 - ph_over_p - y - z - zz - zzz - zzzz) *
 			   dndx.interpolate(p, y) *
 			   dndx.interpolate(p, z) *
 			   dndx.interpolate(p, zz) *
@@ -504,7 +513,7 @@ double EnergyLoss::dA417(double ph, const LinearInterpolator<double> &norm, cons
 	
 	double zzzzzl, zzzzzh, zzzzzq, zzzzz;
 	
-	double e, mFactor;
+	double e, mFactor, ph_over_p;
 
 	double sum = 0.0;
 	for (std::size_t i = 0; i < m_dAMaxPoints7; ++i) {
@@ -512,29 +521,30 @@ double EnergyLoss::dA417(double ph, const LinearInterpolator<double> &norm, cons
 
 		e = std::sqrt(m_MC_sq + p * p);
 		mFactor = m_mgC / (p + e);
+		ph_over_p = ph / p;
 
 		yl = mFactor;
-		yh = 1.0 - ph / p - 6.0 * mFactor;
+		yh = 1.0 - ph_over_p - 6.0 * mFactor;
 		yq = yh - yl;
 		y = yl + m_dAHS2[i] * yq;
 
 		zl = mFactor;
-		zh = 1.0 - ph / p - y - 5.0 * mFactor;
+		zh = 1.0 - ph_over_p - y - 5.0 * mFactor;
 		zq = zh - zl;
 		z = zl + m_dAHS3[i] * zq;
 
 		zzl = mFactor;
-		zzh = 1.0 - ph / p - y - z - 4.0 * mFactor;
+		zzh = 1.0 - ph_over_p - y - z - 4.0 * mFactor;
 		zzq = zzh - zzl;
 		zz = zzl + m_dAHS4[i] * zzq;
 
 		zzzl = mFactor;
-		zzzh = 1.0 - ph / p - y - z - zz - 3.0 * mFactor;
+		zzzh = 1.0 - ph_over_p - y - z - zz - 3.0 * mFactor;
 		zzzq = zzzh - zzzl;
 		zzz = zzzl + m_dAHS5[i] * zzzq;
 
 		zzzzl = mFactor;
-		zzzzh = 1.0 - ph / p - y - z - zz - zzz - 2.0 * mFactor;
+		zzzzh = 1.0 - ph_over_p - y - z - zz - zzz - 2.0 * mFactor;
 		zzzzq = zzzzh - zzzzl;
 		zzzz = zzzzl + m_dAHS6[i] * zzzzq;
 
@@ -545,7 +555,7 @@ double EnergyLoss::dA417(double ph, const LinearInterpolator<double> &norm, cons
 
 		sum += m_dsdpti2.interpolate(p) / p / std::exp(norm.interpolate(p)) *
 			   m_dAPoissonFactors[7] *
-			   dndx.interpolate(p, 1.0 - ph / p - y - z - zz - zzz - zzzz - zzzzz) *
+			   dndx.interpolate(p, 1.0 - ph_over_p - y - z - zz - zzz - zzzz - zzzzz) *
 			   dndx.interpolate(p, y) *
 			   dndx.interpolate(p, z) *
 			   dndx.interpolate(p, zz) *
