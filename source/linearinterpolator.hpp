@@ -182,6 +182,29 @@ public:
         return res;
     }
 
+    inline std::size_t locateIndex(int axis, T val) const {
+        return locateGridIndex(axis, val);
+    }
+
+    inline T interpolate_with_cached_x1(std::size_t i1, T x1, T x2) const {
+        VALIDATE_DIMENSIONS(m_dim, 2);
+
+        std::size_t i2 = locateGridIndex(1, x2);
+
+        std::size_t ss1 = m_searchStrides[0], ss2 = m_searchStrides[1];
+        std::size_t s0 = m_memStrides[0];
+
+        T w1 = (x1 - m_axes[0][i1 * ss1]) / (m_axes[0][(i1 + 1) * ss1] - m_axes[0][i1 * ss1]);
+        T w2 = (x2 - m_axes[1][i2 * ss2]) / (m_axes[1][(i2 + 1) * ss2] - m_axes[1][i2 * ss2]);
+
+        std::size_t idx = i1 * s0 + i2;
+        const T v00 = m_values[idx];
+        const T v01 = m_values[idx + 1];
+        const T v10 = m_values[idx + s0];
+        const T v11 = m_values[idx + s0 + 1];
+        return (1-w1)*(1-w2)*v00 + (1-w1)*w2*v01 + w1*(1-w2)*v10 + w1*w2*v11;
+    }
+
 private:
 	const char* m_name;
 	std::vector<std::vector<T>> m_axes;

@@ -40,12 +40,13 @@ double EnergyLoss::FdA411(double ph, double dp, double invExpNorm, double ph_ove
 	);
 }
 
-double EnergyLoss::FdA412(double ph, double dp, double mFactor, double invExpNorm, double ph_over_p, const LinearInterpolator<double> &dndx) const noexcept
+double EnergyLoss::FdA412(double ph, double dp, double mFactor, double invExpNorm, double ph_over_p, const LinearInterpolator<double> &dndx, std::size_t p_idx_dndx) const noexcept
 // NOTE (dusan): factored out variables:
 // * mFactor      = m_mgC / (p + e) =  m_mgC / (p + std::sqrt(m_MC_sq + p * p))
 // * invExpNorm   = 1.0 / std::exp(norm.interpolate(p))
 // * ph_over_p    = ph / p = ph / (ph + dp)
 // * m_mgC_over_2 = m_mgC / 2.0
+// * p_idx_dndx   = dndx.locateIndex(0, p)
 {
 	if (dp < 2.0 * m_mgC_over_2) return 0.0;
 
@@ -60,19 +61,20 @@ double EnergyLoss::FdA412(double ph, double dp, double mFactor, double invExpNor
 	for (std::size_t i = 0; i < m_FdAMaxPoints2; ++i) {
 		y = yl + m_FdAHS2[i] * yq;
 		
-		sum += dndx.interpolate(p, 1.0 - ph_over_p - y) *
-			   dndx.interpolate(p, y);
+		sum += dndx.interpolate_with_cached_x1(p_idx_dndx, p, 1.0 - ph_over_p - y) *
+			   dndx.interpolate_with_cached_x1(p_idx_dndx, p, y);
 	}
 
 	return (sum * invExpNorm * m_dAPoissonFactors[2] * yq / static_cast<double>(m_FdAMaxPoints2));
 }
 
-double EnergyLoss::FdA413(double ph, double dp, double mFactor, double invExpNorm, double ph_over_p, const LinearInterpolator<double> &dndx) const noexcept
+double EnergyLoss::FdA413(double ph, double dp, double mFactor, double invExpNorm, double ph_over_p, const LinearInterpolator<double> &dndx, std::size_t p_idx_dndx) const noexcept
 // NOTE (dusan): factored out variables:
 // * mFactor      = m_mgC / (p + e) =  m_mgC / (p + std::sqrt(m_MC_sq + p * p))
 // * invExpNorm   = 1.0 / std::exp(norm.interpolate(p))
 // * ph_over_p    = ph / p = ph / (ph + dp)
 // * m_mgC_over_2 = m_mgC / 2.0
+// * p_idx_dndx   = dndx.locateIndex(0, p)
 {
 	if (dp < 3.0 * m_mgC_over_2) return 0.0;
 	
@@ -94,20 +96,21 @@ double EnergyLoss::FdA413(double ph, double dp, double mFactor, double invExpNor
 		zq = zh - zl;
 		z = zl + m_FdAHS3[i] * zq;
 		
-		sum += dndx.interpolate(p, 1.0 - ph_over_p - y - z) *
-			   dndx.interpolate(p, y) *
-			   dndx.interpolate(p, z) * zq;
+		sum += dndx.interpolate_with_cached_x1(p_idx_dndx, p, 1.0 - ph_over_p - y - z) *
+			   dndx.interpolate_with_cached_x1(p_idx_dndx, p, y) *
+			   dndx.interpolate_with_cached_x1(p_idx_dndx, p, z) * zq;
 	}
 
 	return (sum * invExpNorm * m_dAPoissonFactors[3] * yq / static_cast<double>(m_FdAMaxPoints3));
 }
 
-double EnergyLoss::FdA414(double ph, double dp, double mFactor, double invExpNorm, double ph_over_p, const LinearInterpolator<double> &dndx) const noexcept
+double EnergyLoss::FdA414(double ph, double dp, double mFactor, double invExpNorm, double ph_over_p, const LinearInterpolator<double> &dndx, std::size_t p_idx_dndx) const noexcept
 // NOTE (dusan): factored out variables:
 // * mFactor      = m_mgC / (p + e) =  m_mgC / (p + std::sqrt(m_MC_sq + p * p))
 // * invExpNorm   = 1.0 / std::exp(norm.interpolate(p))
 // * ph_over_p    = ph / p = ph / (ph + dp)
 // * m_mgC_over_2 = m_mgC / 2.0
+// * p_idx_dndx   = dndx.locateIndex(0, p)
 {
 	if (dp < 4.0 * m_mgC_over_2) return 0.0;
 
@@ -136,22 +139,23 @@ double EnergyLoss::FdA414(double ph, double dp, double mFactor, double invExpNor
 		zzq = zzh - zzl;
 		zz = zzl + m_FdAHS4[i]*zzq;
 		
-		sum += dndx.interpolate(p, 1.0 - ph_over_p - y - z - zz) *
-			   dndx.interpolate(p, y) *
-			   dndx.interpolate(p, z) *
-			   dndx.interpolate(p, zz) *
+		sum += dndx.interpolate_with_cached_x1(p_idx_dndx, p, 1.0 - ph_over_p - y - z - zz) *
+			   dndx.interpolate_with_cached_x1(p_idx_dndx, p, y) *
+			   dndx.interpolate_with_cached_x1(p_idx_dndx, p, z) *
+			   dndx.interpolate_with_cached_x1(p_idx_dndx, p, zz) *
 			   zq * zzq;
 	}
 
 	return (sum * invExpNorm * m_dAPoissonFactors[4] * yq / static_cast<double>(m_FdAMaxPoints4));
 }
 
-double EnergyLoss::FdA415(double ph, double dp, double mFactor, double invExpNorm, double ph_over_p, const LinearInterpolator<double> &dndx) const noexcept
+double EnergyLoss::FdA415(double ph, double dp, double mFactor, double invExpNorm, double ph_over_p, const LinearInterpolator<double> &dndx, std::size_t p_idx_dndx) const noexcept
 // NOTE (dusan): factored out variables:
 // * mFactor      = m_mgC / (p + e) =  m_mgC / (p + std::sqrt(m_MC_sq + p * p))
 // * invExpNorm   = 1.0 / std::exp(norm.interpolate(p))
 // * ph_over_p    = ph / p = ph / (ph + dp)
 // * m_mgC_over_2 = m_mgC / 2.0
+// * p_idx_dndx   = dndx.locateIndex(0, p)
 {
 	if (dp < 5.0 * m_mgC_over_2) return 0.0;
 
@@ -187,11 +191,11 @@ double EnergyLoss::FdA415(double ph, double dp, double mFactor, double invExpNor
 		zzzq = zzzh - zzzl;
 		zzz = zzzl + m_FdAHS5[i] * zzzq;
 
-		sum += dndx.interpolate(p, 1.0 - ph_over_p - y - z - zz - zzz) *
-			   dndx.interpolate(p, y) *
-			   dndx.interpolate(p, z) *
-			   dndx.interpolate(p, zz) *
-			   dndx.interpolate(p, zzz) *
+		sum += dndx.interpolate_with_cached_x1(p_idx_dndx, p, 1.0 - ph_over_p - y - z - zz - zzz) *
+			   dndx.interpolate_with_cached_x1(p_idx_dndx, p, y) *
+			   dndx.interpolate_with_cached_x1(p_idx_dndx, p, z) *
+			   dndx.interpolate_with_cached_x1(p_idx_dndx, p, zz) *
+			   dndx.interpolate_with_cached_x1(p_idx_dndx, p, zzz) *
 			   zq * zzq * zzzq;
 
 	}
@@ -201,19 +205,20 @@ double EnergyLoss::FdA415(double ph, double dp, double mFactor, double invExpNor
 
 double EnergyLoss::FdA(double ph, double dp, const LinearInterpolator<double> &currnorm, const LinearInterpolator<double> &currdndx) const noexcept
 {
-	 // NOTE (dusan): factor out everything that doesn't depend on variable of integration
-	const double p          = ph + dp;
-	const double e          = std::sqrt(m_MC_sq + p * p);
-	const double mFactor    = m_mgC / (p + e);
-	const double invExpNorm = 1.0 / std::exp(currnorm.interpolate(p));
-	const double ph_over_p  = ph / p;
+	// NOTE (dusan): factor out everything that doesn't depend on variable of integration
+	const double      p          = ph + dp;
+	const double      e          = std::sqrt(m_MC_sq + p * p);
+	const double      mFactor    = m_mgC / (p + e);
+	const double      invExpNorm = std::exp(-currnorm.interpolate(p));
+	const double      ph_over_p  = ph / p;
+	const std::size_t p_idx_dndx = currdndx.locateIndex(0, p);
 
 	return (
 		FdA411(ph, dp,          invExpNorm, ph_over_p, currdndx) +
-		FdA412(ph, dp, mFactor, invExpNorm, ph_over_p, currdndx) +
-		FdA413(ph, dp, mFactor, invExpNorm, ph_over_p, currdndx) +
-		FdA414(ph, dp, mFactor, invExpNorm, ph_over_p, currdndx) +
-		FdA415(ph, dp, mFactor, invExpNorm, ph_over_p, currdndx)
+		FdA412(ph, dp, mFactor, invExpNorm, ph_over_p, currdndx, p_idx_dndx) +
+		FdA413(ph, dp, mFactor, invExpNorm, ph_over_p, currdndx, p_idx_dndx) +
+		FdA414(ph, dp, mFactor, invExpNorm, ph_over_p, currdndx, p_idx_dndx) +
+		FdA415(ph, dp, mFactor, invExpNorm, ph_over_p, currdndx, p_idx_dndx)
 	);
 }
 
@@ -261,9 +266,11 @@ double EnergyLoss::dA411(double ph, double p2, const LinearInterpolator<double> 
 	for (std::size_t i = 0; i < m_dAMaxPoints1; ++i) {
 		p = p1 + m_dAHS1[i] * pq;
 		ph_over_p = ph / p;
+
+		std::size_t p_idx_dndx = dndx.locateIndex(0, p);
 		
 		sum += m_dsdpti2.interpolate(p) / p * std::exp(-norm.interpolate(p)) *
-			   dndx.interpolate(p, 1.0 - ph_over_p);
+			   dndx.interpolate_with_cached_x1(p_idx_dndx, p, 1.0 - ph_over_p);
 	}
 
 	return (sum * pq / static_cast<double>(m_dAMaxPoints1));
@@ -294,11 +301,13 @@ double EnergyLoss::dA412(double ph, double p2, const LinearInterpolator<double> 
 		yh = 1.0 - ph_over_p - mFactor;
 		yq = yh - yl;
 		y = yl + m_dAHS2[i] * yq;
+
+		std::size_t p_idx_dndx = dndx.locateIndex(0, p);
 		
 		sum += m_dsdpti2.interpolate(p) / p * std::exp(-norm.interpolate(p)) *
 			   m_dAPoissonFactors[2] *
-			   dndx.interpolate(p, 1.0 - ph_over_p - y) *
-			   dndx.interpolate(p, y) *
+			   dndx.interpolate_with_cached_x1(p_idx_dndx, p, 1.0 - ph_over_p - y) *
+			   dndx.interpolate_with_cached_x1(p_idx_dndx, p, y) *
 			   yq;
 	}
 
@@ -338,11 +347,13 @@ double EnergyLoss::dA413(double ph, double p2, const LinearInterpolator<double> 
 		zq = zh - zl;
 		z = zl + m_dAHS3[i] * zq;
 
+		std::size_t p_idx_dndx = dndx.locateIndex(0, p);
+
 		sum += m_dsdpti2.interpolate(p) / p * std::exp(-norm.interpolate(p)) *
 			   m_dAPoissonFactors[3] *
-			   dndx.interpolate(p, 1.0 - ph_over_p - y - z) *
-			   dndx.interpolate(p, y) *
-			   dndx.interpolate(p, z) *
+			   dndx.interpolate_with_cached_x1(p_idx_dndx, p, 1.0 - ph_over_p - y - z) *
+			   dndx.interpolate_with_cached_x1(p_idx_dndx, p, y) *
+			   dndx.interpolate_with_cached_x1(p_idx_dndx, p, z) *
 			   yq * zq;
 	}
 
@@ -389,12 +400,14 @@ double EnergyLoss::dA414(double ph, double p2, const LinearInterpolator<double> 
 		zzq = zzh - zzl;
 		zz = zzl + m_dAHS4[i] * zzq;
 
+		std::size_t p_idx_dndx = dndx.locateIndex(0, p);
+		
 		sum += m_dsdpti2.interpolate(p) / p * std::exp(-norm.interpolate(p)) *
 			   m_dAPoissonFactors[4] *
-			   dndx.interpolate(p, 1.0 - ph_over_p - y - z - zz) *
-			   dndx.interpolate(p, y) *
-			   dndx.interpolate(p, z) *
-			   dndx.interpolate(p, zz) *
+			   dndx.interpolate_with_cached_x1(p_idx_dndx, p, 1.0 - ph_over_p - y - z - zz) *
+			   dndx.interpolate_with_cached_x1(p_idx_dndx, p, y) *
+			   dndx.interpolate_with_cached_x1(p_idx_dndx, p, z) *
+			   dndx.interpolate_with_cached_x1(p_idx_dndx, p, zz) *
 			   yq * zq * zzq;
 	}
 
@@ -448,13 +461,15 @@ double EnergyLoss::dA415(double ph, double p2, const LinearInterpolator<double> 
 		zzzq = zzzh - zzzl;
 		zzz = zzzl + m_dAHS5[i] * zzzq;
 
+		std::size_t p_idx_dndx = dndx.locateIndex(0, p);
+		
 		sum += m_dsdpti2.interpolate(p) / p * std::exp(-norm.interpolate(p)) *
 			   m_dAPoissonFactors[5] *
-			   dndx.interpolate(p, 1.0 - ph_over_p - y - z - zz - zzz) *
-			   dndx.interpolate(p, y) *
-			   dndx.interpolate(p, z) *
-			   dndx.interpolate(p, zz) *
-			   dndx.interpolate(p, zzz) *
+			   dndx.interpolate_with_cached_x1(p_idx_dndx, p, 1.0 - ph_over_p - y - z - zz - zzz) *
+			   dndx.interpolate_with_cached_x1(p_idx_dndx, p, y) *
+			   dndx.interpolate_with_cached_x1(p_idx_dndx, p, z) *
+			   dndx.interpolate_with_cached_x1(p_idx_dndx, p, zz) *
+			   dndx.interpolate_with_cached_x1(p_idx_dndx, p, zzz) *
 			   yq * zq * zzq * zzzq;
 	}
 
@@ -515,14 +530,16 @@ double EnergyLoss::dA416(double ph, double p2, const LinearInterpolator<double> 
 		zzzzq = zzzzh - zzzzl;
 		zzzz = zzzzl + m_dAHS6[i] * zzzzq;
 
+		std::size_t p_idx_dndx = dndx.locateIndex(0, p);
+		
 		sum += m_dsdpti2.interpolate(p) / p * std::exp(-norm.interpolate(p)) *
 			   m_dAPoissonFactors[6] *
-			   dndx.interpolate(p, 1.0 - ph_over_p - y - z - zz - zzz - zzzz) *
-			   dndx.interpolate(p, y) *
-			   dndx.interpolate(p, z) *
-			   dndx.interpolate(p, zz) *
-			   dndx.interpolate(p, zzz) *
-			   dndx.interpolate(p, zzzz) *
+			   dndx.interpolate_with_cached_x1(p_idx_dndx, p, 1.0 - ph_over_p - y - z - zz - zzz - zzzz) *
+			   dndx.interpolate_with_cached_x1(p_idx_dndx, p, y) *
+			   dndx.interpolate_with_cached_x1(p_idx_dndx, p, z) *
+			   dndx.interpolate_with_cached_x1(p_idx_dndx, p, zz) *
+			   dndx.interpolate_with_cached_x1(p_idx_dndx, p, zzz) *
+			   dndx.interpolate_with_cached_x1(p_idx_dndx, p, zzzz) *
 			   yq * zq * zzq * zzzq * zzzzq;
 	}
 
@@ -590,15 +607,17 @@ double EnergyLoss::dA417(double ph, double p2, const LinearInterpolator<double> 
 		zzzzzq = zzzzzh - zzzzzl;
 		zzzzz = zzzzzl + m_dAHS7[i] * zzzzzq;
 
+		std::size_t p_idx_dndx = dndx.locateIndex(0, p);
+		
 		sum += m_dsdpti2.interpolate(p) / p * std::exp(-norm.interpolate(p)) *
 			   m_dAPoissonFactors[7] *
-			   dndx.interpolate(p, 1.0 - ph_over_p - y - z - zz - zzz - zzzz - zzzzz) *
-			   dndx.interpolate(p, y) *
-			   dndx.interpolate(p, z) *
-			   dndx.interpolate(p, zz) *
-			   dndx.interpolate(p, zzz) *
-			   dndx.interpolate(p, zzzz) *
-			   dndx.interpolate(p, zzzzz) *
+			   dndx.interpolate_with_cached_x1(p_idx_dndx, p, 1.0 - ph_over_p - y - z - zz - zzz - zzzz - zzzzz) *
+			   dndx.interpolate_with_cached_x1(p_idx_dndx, p, y) *
+			   dndx.interpolate_with_cached_x1(p_idx_dndx, p, z) *
+			   dndx.interpolate_with_cached_x1(p_idx_dndx, p, zz) *
+			   dndx.interpolate_with_cached_x1(p_idx_dndx, p, zzz) *
+			   dndx.interpolate_with_cached_x1(p_idx_dndx, p, zzzz) *
+			   dndx.interpolate_with_cached_x1(p_idx_dndx, p, zzzzz) *
 			   yq* zq* zzq* zzzq* zzzzq* zzzzzq;
 	}
 
