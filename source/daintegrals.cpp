@@ -2,6 +2,8 @@
 
 #include <vector>
 #include <cmath>
+#include <numeric>
+#include <algorithm>
 
 #include "utils.hpp"
 #include "linearinterpolator.hpp"
@@ -13,13 +15,28 @@ void EnergyLoss::FdAHaltonSeqInit(std::size_t FdAMaxPts)
 	m_FdAMaxPoints4 = FdAMaxPts - 50;
 	m_FdAMaxPoints5 = FdAMaxPts - 75; // NOTE (dusan): each consequent integral requires lesser precision
 	
-	for (std::size_t i=0; i<FdAMaxPts; i++)
-	{
+	m_FdAHS2.reserve(m_FdAMaxPoints2);
+	m_FdAHS3.reserve(m_FdAMaxPoints3);
+	m_FdAHS4.reserve(m_FdAMaxPoints4);
+	m_FdAHS5.reserve(m_FdAMaxPoints5);
+	
+	for (std::size_t i = 0; i < FdAMaxPts; ++i) {
 		m_FdAHS2.push_back(utils::haltonSequence((i + 1) * 409, 2));
 		m_FdAHS3.push_back(utils::haltonSequence((i + 1) * 409, 3));
 		m_FdAHS4.push_back(utils::haltonSequence((i + 1) * 409, 5));
 		m_FdAHS5.push_back(utils::haltonSequence((i + 1) * 409, 7));
 	}
+
+	auto generateSortedIndices = [this](std::vector<std::size_t>& idxVec, std::size_t N) {
+		idxVec.resize(N);
+		std::iota(idxVec.begin(), idxVec.end(), 0);
+		std::sort(idxVec.begin(), idxVec.end(), [this](std::size_t i, std::size_t j) { return m_FdAHS2[i] < m_FdAHS2[j]; });
+	};
+
+	generateSortedIndices(m_FdAHSSortedIdx2, m_FdAMaxPoints2);
+	generateSortedIndices(m_FdAHSSortedIdx3, m_FdAMaxPoints3);
+	generateSortedIndices(m_FdAHSSortedIdx4, m_FdAMaxPoints4);
+	generateSortedIndices(m_FdAHSSortedIdx5, m_FdAMaxPoints5);
 }
 
 double EnergyLoss::dAp410(double ph, const LinearInterpolator<double> &norm) const noexcept
@@ -59,7 +76,9 @@ double EnergyLoss::FdA412(double ph, double dp, double mFactor, double invExpNor
 
 	double sum = 0.0;
 	for (std::size_t i = 0; i < m_FdAMaxPoints2; ++i) {
-		y = yl + m_FdAHS2[i] * yq;
+		const std::size_t sorted_idx = m_FdAHSSortedIdx2[i];
+
+		y = yl + m_FdAHS2[sorted_idx] * yq;
 		
 		sum += dndx.interpolate_with_cached_x1(p_idx_dndx, p, 1.0 - ph_over_p - y) *
 			   dndx.interpolate_with_cached_x1(p_idx_dndx, p, y);
@@ -90,11 +109,13 @@ double EnergyLoss::FdA413(double ph, double dp, double mFactor, double invExpNor
 
 	double sum = 0.0;
 	for (std::size_t i = 0; i < m_FdAMaxPoints3; ++i) {
-		y = yl + m_FdAHS2[i] * yq;
+		const std::size_t sorted_idx = m_FdAHSSortedIdx3[i];
+
+		y = yl + m_FdAHS2[sorted_idx] * yq;
 		
 		zh = 1.0 - ph_over_p - y - mFactor;
 		zq = zh - zl;
-		z = zl + m_FdAHS3[i] * zq;
+		z = zl + m_FdAHS3[sorted_idx] * zq;
 		
 		sum += dndx.interpolate_with_cached_x1(p_idx_dndx, p, 1.0 - ph_over_p - y - z) *
 			   dndx.interpolate_with_cached_x1(p_idx_dndx, p, y) *
@@ -129,15 +150,17 @@ double EnergyLoss::FdA414(double ph, double dp, double mFactor, double invExpNor
 
 	double sum = 0.0;
 	for (std::size_t i = 0; i < m_FdAMaxPoints4; ++i) {
-		y = yl + m_FdAHS2[i] * yq;
+		const std::size_t sorted_idx = m_FdAHSSortedIdx4[i];
+
+		y = yl + m_FdAHS2[sorted_idx] * yq;
 		
 		zh = 1.0 - ph_over_p - y - 2.0 * mFactor;
 		zq = zh - zl;
-		z = zl + m_FdAHS3[i]*zq;
+		z = zl + m_FdAHS3[sorted_idx]*zq;
 		
 		zzh = 1.0 - ph_over_p - y - z - mFactor;
 		zzq = zzh - zzl;
-		zz = zzl + m_FdAHS4[i]*zzq;
+		zz = zzl + m_FdAHS4[sorted_idx]*zzq;
 		
 		sum += dndx.interpolate_with_cached_x1(p_idx_dndx, p, 1.0 - ph_over_p - y - z - zz) *
 			   dndx.interpolate_with_cached_x1(p_idx_dndx, p, y) *
@@ -177,19 +200,21 @@ double EnergyLoss::FdA415(double ph, double dp, double mFactor, double invExpNor
 
 	double sum = 0.0;
 	for (std::size_t i = 0; i < m_FdAMaxPoints5; ++i) {
-		y = yl + m_FdAHS2[i] * yq;
+		const std::size_t sorted_idx = m_FdAHSSortedIdx5[i];
+
+		y = yl + m_FdAHS2[sorted_idx] * yq;
 		
 		zh = 1.0 - ph_over_p - y - 3.0 * mFactor;
 		zq = zh - zl;
-		z = zl + m_FdAHS3[i] * zq;
+		z = zl + m_FdAHS3[sorted_idx] * zq;
 
 		zzh = 1.0 - ph_over_p - y - z - 2.0 * mFactor;
 		zzq = zzh - zzl;
-		zz = zzl + m_FdAHS4[i] * zzq;
+		zz = zzl + m_FdAHS4[sorted_idx] * zzq;
 
 		zzzh = 1.0 - ph_over_p - y - z - zz - mFactor;
 		zzzq = zzzh - zzzl;
-		zzz = zzzl + m_FdAHS5[i] * zzzq;
+		zzz = zzzl + m_FdAHS5[sorted_idx] * zzzq;
 
 		sum += dndx.interpolate_with_cached_x1(p_idx_dndx, p, 1.0 - ph_over_p - y - z - zz - zzz) *
 			   dndx.interpolate_with_cached_x1(p_idx_dndx, p, y) *
@@ -232,8 +257,15 @@ void EnergyLoss::dAHaltonSeqInit(std::size_t dAMaxPts)
 	m_dAMaxPoints6 = dAMaxPts - 500;
 	m_dAMaxPoints7 = dAMaxPts - 600; // NOTE (dusan): each consequent integral requires lesser precision
 
-	for (std::size_t i=0; i<dAMaxPts; i++)
-	{
+	m_dAHS1.reserve(dAMaxPts);
+	m_dAHS2.reserve(dAMaxPts);
+	m_dAHS3.reserve(dAMaxPts);
+	m_dAHS4.reserve(dAMaxPts);
+	m_dAHS5.reserve(dAMaxPts);
+	m_dAHS6.reserve(dAMaxPts);
+	m_dAHS7.reserve(dAMaxPts);
+
+	for (std::size_t i = 0; i < dAMaxPts; ++i) {
 		m_dAHS1.push_back(utils::haltonSequence((i + 1) * 409,  2));
 		m_dAHS2.push_back(utils::haltonSequence((i + 1) * 409,  3));
 		m_dAHS3.push_back(utils::haltonSequence((i + 1) * 409,  5));
@@ -242,6 +274,20 @@ void EnergyLoss::dAHaltonSeqInit(std::size_t dAMaxPts)
 		m_dAHS6.push_back(utils::haltonSequence((i + 1) * 409, 13));
 		m_dAHS7.push_back(utils::haltonSequence((i + 1) * 409, 17));
 	}
+
+	auto generateSortedIndices = [this](std::vector<std::size_t>& idxVec, std::size_t N) {
+		idxVec.resize(N);
+		std::iota(idxVec.begin(), idxVec.end(), 0);
+		std::sort(idxVec.begin(), idxVec.end(), [this](std::size_t i, std::size_t j) { return m_dAHS1[i] < m_dAHS1[j]; });
+	};
+
+	generateSortedIndices(m_dAHSSortedIdx1, m_dAMaxPoints1);
+	generateSortedIndices(m_dAHSSortedIdx2, m_dAMaxPoints2);
+	generateSortedIndices(m_dAHSSortedIdx3, m_dAMaxPoints3);
+	generateSortedIndices(m_dAHSSortedIdx4, m_dAMaxPoints4);
+	generateSortedIndices(m_dAHSSortedIdx5, m_dAMaxPoints5);
+	generateSortedIndices(m_dAHSSortedIdx6, m_dAMaxPoints6);
+	generateSortedIndices(m_dAHSSortedIdx7, m_dAMaxPoints7);
 }
 
 double EnergyLoss::dA410(double ph, const LinearInterpolator<double> &norm) const noexcept
@@ -264,7 +310,9 @@ double EnergyLoss::dA411(double ph, double p2, const LinearInterpolator<double> 
 
 	double sum = 0.0;
 	for (std::size_t i = 0; i < m_dAMaxPoints1; ++i) {
-		p = p1 + m_dAHS1[i] * pq;
+		const std::size_t sorted_idx = m_dAHSSortedIdx1[i];
+
+		p = p1 + m_dAHS1[sorted_idx] * pq;
 		ph_over_p = ph / p;
 
 		std::size_t p_idx_dndx = dndx.locateIndex(0, p);
@@ -291,7 +339,9 @@ double EnergyLoss::dA412(double ph, double p2, const LinearInterpolator<double> 
 
 	double sum = 0.0;
 	for (std::size_t i = 0; i < m_dAMaxPoints2; ++i) {
-		p = p1 + m_dAHS1[i] * pq;
+		const std::size_t sorted_idx = m_dAHSSortedIdx2[i];
+
+		p = p1 + m_dAHS1[sorted_idx] * pq;
 
 		e = std::sqrt(m_MC_sq + p * p);
 		mFactor = m_mgC / (p + e);
@@ -300,7 +350,7 @@ double EnergyLoss::dA412(double ph, double p2, const LinearInterpolator<double> 
 		yl = mFactor;
 		yh = 1.0 - ph_over_p - mFactor;
 		yq = yh - yl;
-		y = yl + m_dAHS2[i] * yq;
+		y = yl + m_dAHS2[sorted_idx] * yq;
 
 		std::size_t p_idx_dndx = dndx.locateIndex(0, p);
 		
@@ -331,7 +381,9 @@ double EnergyLoss::dA413(double ph, double p2, const LinearInterpolator<double> 
 
 	double sum = 0.0;
 	for (std::size_t i = 0; i < m_dAMaxPoints3; ++i) {
-		p = p1 + m_dAHS1[i] * pq;
+		const std::size_t sorted_idx = m_dAHSSortedIdx3[i];
+
+		p = p1 + m_dAHS1[sorted_idx] * pq;
 
 		e = std::sqrt(m_MC_sq + p * p);
 		mFactor = m_mgC / (p + e);
@@ -340,12 +392,12 @@ double EnergyLoss::dA413(double ph, double p2, const LinearInterpolator<double> 
 		yl = mFactor;
 		yh = 1.0 - ph_over_p - 2.0 * mFactor;
 		yq = yh - yl;
-		y = yl + m_dAHS2[i] * yq;
+		y = yl + m_dAHS2[sorted_idx] * yq;
 
 		zl = mFactor;
 		zh = 1.0 - ph_over_p - y - mFactor;
 		zq = zh - zl;
-		z = zl + m_dAHS3[i] * zq;
+		z = zl + m_dAHS3[sorted_idx] * zq;
 
 		std::size_t p_idx_dndx = dndx.locateIndex(0, p);
 
@@ -379,7 +431,9 @@ double EnergyLoss::dA414(double ph, double p2, const LinearInterpolator<double> 
 
 	double sum = 0.0;
 	for (std::size_t i = 0; i < m_dAMaxPoints4; ++i) {
-		p = p1 + m_dAHS1[i] * pq;
+		const std::size_t sorted_idx = m_dAHSSortedIdx4[i];
+
+		p = p1 + m_dAHS1[sorted_idx] * pq;
 
 		e = std::sqrt(m_MC_sq + p * p);
 		mFactor = m_mgC / (p + e);
@@ -388,17 +442,17 @@ double EnergyLoss::dA414(double ph, double p2, const LinearInterpolator<double> 
 		yl = mFactor;
 		yh = 1.0 - ph_over_p - 3.0 * mFactor;
 		yq = yh - yl;
-		y = yl + m_dAHS2[i] * yq;
+		y = yl + m_dAHS2[sorted_idx] * yq;
 
 		zl = mFactor;
 		zh = 1.0 - ph_over_p - y - 2.0 * mFactor;
 		zq = zh - zl;
-		z = zl + m_dAHS3[i] * zq;
+		z = zl + m_dAHS3[sorted_idx] * zq;
 
 		zzl = mFactor;
 		zzh = 1.0 - ph_over_p - y - z - mFactor;
 		zzq = zzh - zzl;
-		zz = zzl + m_dAHS4[i] * zzq;
+		zz = zzl + m_dAHS4[sorted_idx] * zzq;
 
 		std::size_t p_idx_dndx = dndx.locateIndex(0, p);
 		
@@ -435,7 +489,9 @@ double EnergyLoss::dA415(double ph, double p2, const LinearInterpolator<double> 
 
 	double sum = 0.0;
 	for (std::size_t i = 0; i < m_dAMaxPoints5; ++i) {
-		p = p1 + m_dAHS1[i] * pq;
+		const std::size_t sorted_idx = m_dAHSSortedIdx5[i];
+
+		p = p1 + m_dAHS1[sorted_idx] * pq;
 
 		e = std::sqrt(m_MC_sq + p * p);
 		mFactor = m_mgC / (p + e);
@@ -444,22 +500,22 @@ double EnergyLoss::dA415(double ph, double p2, const LinearInterpolator<double> 
 		yl = mFactor;
 		yh = 1.0 - ph_over_p - 4.0 * mFactor;
 		yq = yh - yl;
-		y = yl + m_dAHS2[i] * yq;
+		y = yl + m_dAHS2[sorted_idx] * yq;
 
 		zl = mFactor;
 		zh = 1.0 - ph_over_p - y - 3.0 * mFactor;
 		zq = zh - zl;
-		z = zl + m_dAHS3[i] * zq;
+		z = zl + m_dAHS3[sorted_idx] * zq;
 
 		zzl = mFactor;
 		zzh = 1.0 - ph_over_p - y - z - 2.0 * mFactor;
 		zzq = zzh - zzl;
-		zz = zzl + m_dAHS4[i] * zzq;
+		zz = zzl + m_dAHS4[sorted_idx] * zzq;
 
 		zzzl = mFactor;
 		zzzh = 1.0 - ph_over_p - y - z - zz - mFactor;
 		zzzq = zzzh - zzzl;
-		zzz = zzzl + m_dAHS5[i] * zzzq;
+		zzz = zzzl + m_dAHS5[sorted_idx] * zzzq;
 
 		std::size_t p_idx_dndx = dndx.locateIndex(0, p);
 		
@@ -499,7 +555,9 @@ double EnergyLoss::dA416(double ph, double p2, const LinearInterpolator<double> 
 
 	double sum = 0.0;
 	for (std::size_t i = 0; i < m_dAMaxPoints6; ++i) {
-		p = p1 + m_dAHS1[i] * pq;
+		const std::size_t sorted_idx = m_dAHSSortedIdx6[i];
+
+		p = p1 + m_dAHS1[sorted_idx] * pq;
 
 		e = std::sqrt(m_MC_sq + p * p);
 		mFactor = m_mgC / (p + e);
@@ -508,27 +566,27 @@ double EnergyLoss::dA416(double ph, double p2, const LinearInterpolator<double> 
 		yl = mFactor;
 		yh = 1.0 - ph_over_p - 5.0 * mFactor;
 		yq = yh - yl;
-		y = yl + m_dAHS2[i] * yq;
+		y = yl + m_dAHS2[sorted_idx] * yq;
 
 		zl = mFactor;
 		zh = 1.0 - ph_over_p - y - 4.0 * mFactor;
 		zq = zh - zl;
-		z = zl + m_dAHS3[i] * zq;
+		z = zl + m_dAHS3[sorted_idx] * zq;
 
 		zzl = mFactor;
 		zzh = 1.0 - ph/p - y - z - 3.0 * mFactor;
 		zzq = zzh - zzl;
-		zz = zzl + m_dAHS4[i] * zzq;
+		zz = zzl + m_dAHS4[sorted_idx] * zzq;
 
 		zzzl = mFactor;
 		zzzh = 1.0 - ph_over_p - y - z - zz - 2.0 * mFactor;
 		zzzq = zzzh - zzzl;
-		zzz = zzzl + m_dAHS5[i] * zzzq;
+		zzz = zzzl + m_dAHS5[sorted_idx] * zzzq;
 
 		zzzzl = mFactor;
 		zzzzh = 1.0 - ph_over_p - y - z - zz - zzz - mFactor;
 		zzzzq = zzzzh - zzzzl;
-		zzzz = zzzzl + m_dAHS6[i] * zzzzq;
+		zzzz = zzzzl + m_dAHS6[sorted_idx] * zzzzq;
 
 		std::size_t p_idx_dndx = dndx.locateIndex(0, p);
 		
@@ -571,7 +629,9 @@ double EnergyLoss::dA417(double ph, double p2, const LinearInterpolator<double> 
 
 	double sum = 0.0;
 	for (std::size_t i = 0; i < m_dAMaxPoints7; ++i) {
-		p = p1 + m_dAHS1[i] * pq;
+		const std::size_t sorted_idx = m_dAHSSortedIdx7[i];
+
+		p = p1 + m_dAHS1[sorted_idx] * pq;
 
 		e = std::sqrt(m_MC_sq + p * p);
 		mFactor = m_mgC / (p + e);
@@ -580,32 +640,32 @@ double EnergyLoss::dA417(double ph, double p2, const LinearInterpolator<double> 
 		yl = mFactor;
 		yh = 1.0 - ph_over_p - 6.0 * mFactor;
 		yq = yh - yl;
-		y = yl + m_dAHS2[i] * yq;
+		y = yl + m_dAHS2[sorted_idx] * yq;
 
 		zl = mFactor;
 		zh = 1.0 - ph_over_p - y - 5.0 * mFactor;
 		zq = zh - zl;
-		z = zl + m_dAHS3[i] * zq;
+		z = zl + m_dAHS3[sorted_idx] * zq;
 
 		zzl = mFactor;
 		zzh = 1.0 - ph_over_p - y - z - 4.0 * mFactor;
 		zzq = zzh - zzl;
-		zz = zzl + m_dAHS4[i] * zzq;
+		zz = zzl + m_dAHS4[sorted_idx] * zzq;
 
 		zzzl = mFactor;
 		zzzh = 1.0 - ph_over_p - y - z - zz - 3.0 * mFactor;
 		zzzq = zzzh - zzzl;
-		zzz = zzzl + m_dAHS5[i] * zzzq;
+		zzz = zzzl + m_dAHS5[sorted_idx] * zzzq;
 
 		zzzzl = mFactor;
 		zzzzh = 1.0 - ph_over_p - y - z - zz - zzz - 2.0 * mFactor;
 		zzzzq = zzzzh - zzzzl;
-		zzzz = zzzzl + m_dAHS6[i] * zzzzq;
+		zzzz = zzzzl + m_dAHS6[sorted_idx] * zzzzq;
 
 		zzzzzl = mFactor;
 		zzzzzh = 1.0 - ph/p - y - z - zz - zzz - zzzz - mFactor;
 		zzzzzq = zzzzzh - zzzzzl;
-		zzzzz = zzzzzl + m_dAHS7[i] * zzzzzq;
+		zzzzz = zzzzzl + m_dAHS7[sorted_idx] * zzzzzq;
 
 		std::size_t p_idx_dndx = dndx.locateIndex(0, p);
 		

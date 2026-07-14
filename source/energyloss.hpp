@@ -52,11 +52,18 @@ private:
     
     std::vector<double> m_phiGridPts; //phi points
 
-    std::size_t m_FdAMaxPoints2, m_FdAMaxPoints3, m_FdAMaxPoints4, m_FdAMaxPoints5; //number of points for FdA integration
-    std::vector<double> m_FdAHS2, m_FdAHS3, m_FdAHS4, m_FdAHS5;                     //vectors that store Halton sequences for FdA integrals
+    std::size_t m_FdAMaxPoints2, m_FdAMaxPoints3, m_FdAMaxPoints4, m_FdAMaxPoints5;                      // number of points for FdA integration
+    std::vector<double> m_FdAHS2, m_FdAHS3, m_FdAHS4, m_FdAHS5;                                          // vectors that store Halton sequences for FdA integrals
     
-    std::size_t m_dAMaxPoints1, m_dAMaxPoints2, m_dAMaxPoints3, m_dAMaxPoints4, m_dAMaxPoints5, m_dAMaxPoints6, m_dAMaxPoints7; //number of points for dA integration
-    std::vector<double> m_dAHS1, m_dAHS2, m_dAHS3, m_dAHS4, m_dAHS5, m_dAHS6, m_dAHS7; 								 	        //vectors that store Halton sequences for dA integrals
+    std::size_t m_dAMaxPoints1, m_dAMaxPoints2, m_dAMaxPoints3, m_dAMaxPoints4, m_dAMaxPoints5, m_dAMaxPoints6, m_dAMaxPoints7; // number of points for dA integration
+    std::vector<double> m_dAHS1, m_dAHS2, m_dAHS3, m_dAHS4, m_dAHS5, m_dAHS6, m_dAHS7; 								 	        // vectors that store Halton sequences for dA integrals
+    
+    // NOTE(dusan): Halton coordinates jump erratically, causing cache misses and stalling the CPU branch predictor inside LinearInterpolator binary searches
+    //              by sorting these index maps, integrations traverse the interpolation grids monotonically
+    //              they cannot be a single sliced vector since each integration dimension uses a different number of points
+    std::vector<std::size_t> m_FdAHSSortedIdx2, m_FdAHSSortedIdx3, m_FdAHSSortedIdx4, m_FdAHSSortedIdx5;
+    std::vector<std::size_t> m_dAHSSortedIdx1, m_dAHSSortedIdx2, m_dAHSSortedIdx3, m_dAHSSortedIdx4, m_dAHSSortedIdx5, m_dAHSSortedIdx6, m_dAHSSortedIdx7;
+    
    
     int loaddsdpti2(const std::string &pname, LinearInterpolator<double> &dsdpti2int);
     std::string resolveLTablePath(const std::string &tablePrefix, bool includeXB) const;
