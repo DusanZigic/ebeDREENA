@@ -30,6 +30,9 @@ double EnergyLoss::dAp410(double ph, const LinearInterpolator<double> &norm) con
 }
 
 double EnergyLoss::FdA411(double ph, double dp, double invExpNorm, double ph_over_p, const LinearInterpolator<double> &dndx) const noexcept
+// NOTE (dusan): factored out variables:
+// * invExpNorm = 1.0 / std::exp(norm.interpolate(p))
+// * ph_over_p  = ph / p = ph / (ph + dp)
 {
 	return (
 		invExpNorm *
@@ -38,6 +41,11 @@ double EnergyLoss::FdA411(double ph, double dp, double invExpNorm, double ph_ove
 }
 
 double EnergyLoss::FdA412(double ph, double dp, double mFactor, double invExpNorm, double ph_over_p, const LinearInterpolator<double> &dndx) const noexcept
+// NOTE (dusan): factored out variables:
+// * mFactor      = m_mgC / (p + e) =  m_mgC / (p + std::sqrt(m_MC_sq + p * p))
+// * invExpNorm   = 1.0 / std::exp(norm.interpolate(p))
+// * ph_over_p    = ph / p = ph / (ph + dp)
+// * m_mgC_over_2 = m_mgC / 2.0
 {
 	if (dp < 2.0 * m_mgC_over_2) return 0.0;
 
@@ -60,6 +68,11 @@ double EnergyLoss::FdA412(double ph, double dp, double mFactor, double invExpNor
 }
 
 double EnergyLoss::FdA413(double ph, double dp, double mFactor, double invExpNorm, double ph_over_p, const LinearInterpolator<double> &dndx) const noexcept
+// NOTE (dusan): factored out variables:
+// * mFactor      = m_mgC / (p + e) =  m_mgC / (p + std::sqrt(m_MC_sq + p * p))
+// * invExpNorm   = 1.0 / std::exp(norm.interpolate(p))
+// * ph_over_p    = ph / p = ph / (ph + dp)
+// * m_mgC_over_2 = m_mgC / 2.0
 {
 	if (dp < 3.0 * m_mgC_over_2) return 0.0;
 	
@@ -90,6 +103,11 @@ double EnergyLoss::FdA413(double ph, double dp, double mFactor, double invExpNor
 }
 
 double EnergyLoss::FdA414(double ph, double dp, double mFactor, double invExpNorm, double ph_over_p, const LinearInterpolator<double> &dndx) const noexcept
+// NOTE (dusan): factored out variables:
+// * mFactor      = m_mgC / (p + e) =  m_mgC / (p + std::sqrt(m_MC_sq + p * p))
+// * invExpNorm   = 1.0 / std::exp(norm.interpolate(p))
+// * ph_over_p    = ph / p = ph / (ph + dp)
+// * m_mgC_over_2 = m_mgC / 2.0
 {
 	if (dp < 4.0 * m_mgC_over_2) return 0.0;
 
@@ -129,6 +147,11 @@ double EnergyLoss::FdA414(double ph, double dp, double mFactor, double invExpNor
 }
 
 double EnergyLoss::FdA415(double ph, double dp, double mFactor, double invExpNorm, double ph_over_p, const LinearInterpolator<double> &dndx) const noexcept
+// NOTE (dusan): factored out variables:
+// * mFactor      = m_mgC / (p + e) =  m_mgC / (p + std::sqrt(m_MC_sq + p * p))
+// * invExpNorm   = 1.0 / std::exp(norm.interpolate(p))
+// * ph_over_p    = ph / p = ph / (ph + dp)
+// * m_mgC_over_2 = m_mgC / 2.0
 {
 	if (dp < 5.0 * m_mgC_over_2) return 0.0;
 
@@ -225,6 +248,9 @@ double EnergyLoss::dA410(double ph, const LinearInterpolator<double> &norm) cons
 }
 
 double EnergyLoss::dA411(double ph, double p2, const LinearInterpolator<double> &norm, const LinearInterpolator<double> &dndx) const noexcept
+// NOTE (dusan): factored out variables:
+// * p2           = (((2.0 * ph) < (ph + 30.0)) ? (2.0 * ph) : (ph + 30.0))
+// * m_mgC_over_2 = m_mgC / 2.0
 {
 	const double p1 = ph + m_mgC_over_2;
 	const double pq = p2 - p1;
@@ -244,6 +270,9 @@ double EnergyLoss::dA411(double ph, double p2, const LinearInterpolator<double> 
 }
 
 double EnergyLoss::dA412(double ph, double p2, const LinearInterpolator<double> &norm, const LinearInterpolator<double> &dndx) const noexcept
+// NOTE (dusan): factored out variables:
+// * p2           = (((2.0 * ph) < (ph + 30.0)) ? (2.0 * ph) : (ph + 30.0))
+// * m_mgC_over_2 = m_mgC / 2.0
 {
 	const double p1 = ph + 2.0 * m_mgC_over_2;
 	const double pq = p2 - p1;
@@ -277,6 +306,9 @@ double EnergyLoss::dA412(double ph, double p2, const LinearInterpolator<double> 
 }
 
 double EnergyLoss::dA413(double ph, double p2, const LinearInterpolator<double> &norm, const LinearInterpolator<double> &dndx) const noexcept
+// NOTE (dusan): factored out variables:
+// * p2           = (((2.0 * ph) < (ph + 30.0)) ? (2.0 * ph) : (ph + 30.0))
+// * m_mgC_over_2 = m_mgC / 2.0
 {
 	const double p1 = ph + 3.0 * m_mgC_over_2;
 	const double pq = p2 - p1;
@@ -318,6 +350,9 @@ double EnergyLoss::dA413(double ph, double p2, const LinearInterpolator<double> 
 }
 
 double EnergyLoss::dA414(double ph, double p2, const LinearInterpolator<double> &norm, const LinearInterpolator<double> &dndx) const noexcept
+// NOTE (dusan): factored out variables:
+// * p2           = (((2.0 * ph) < (ph + 30.0)) ? (2.0 * ph) : (ph + 30.0))
+// * m_mgC_over_2 = m_mgC / 2.0
 {
 	const double p1 = ph + 4.0 * m_mgC_over_2;
 	const double pq = p2 - p1;
@@ -367,6 +402,9 @@ double EnergyLoss::dA414(double ph, double p2, const LinearInterpolator<double> 
 }
 
 double EnergyLoss::dA415(double ph, double p2, const LinearInterpolator<double> &norm, const LinearInterpolator<double> &dndx) const noexcept
+// NOTE (dusan): factored out variables:
+// * p2           = (((2.0 * ph) < (ph + 30.0)) ? (2.0 * ph) : (ph + 30.0))
+// * m_mgC_over_2 = m_mgC / 2.0
 {
 	const double p1 = ph + 5.0 * m_mgC_over_2;
 	const double pq = p2 - p1;
@@ -424,6 +462,9 @@ double EnergyLoss::dA415(double ph, double p2, const LinearInterpolator<double> 
 }
 
 double EnergyLoss::dA416(double ph, double p2, const LinearInterpolator<double> &norm, const LinearInterpolator<double> &dndx) const noexcept
+// NOTE (dusan): factored out variables:
+// * p2           = (((2.0 * ph) < (ph + 30.0)) ? (2.0 * ph) : (ph + 30.0))
+// * m_mgC_over_2 = m_mgC / 2.0
 {
 	const double p1 = ph + 6.0 * m_mgC_over_2;
 	const double pq = p2 - p1;
@@ -489,6 +530,9 @@ double EnergyLoss::dA416(double ph, double p2, const LinearInterpolator<double> 
 }
 
 double EnergyLoss::dA417(double ph, double p2, const LinearInterpolator<double> &norm, const LinearInterpolator<double> &dndx) const noexcept
+// NOTE (dusan): factored out variables:
+// * p2           = (((2.0 * ph) < (ph + 30.0)) ? (2.0 * ph) : (ph + 30.0))
+// * m_mgC_over_2 = m_mgC / 2.0
 {
 	const double p1 = ph + 7.0 * m_mgC_over_2;
 	const double pq = p2 - p1;
