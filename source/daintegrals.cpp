@@ -262,7 +262,7 @@ double EnergyLoss::dA411(double ph, double p2, const LinearInterpolator<double> 
 		p = p1 + m_dAHS1[i] * pq;
 		ph_over_p = ph / p;
 		
-		sum += m_dsdpti2.interpolate(p) / p / std::exp(norm.interpolate(p)) *
+		sum += m_dsdpti2.interpolate(p) / p * std::exp(-norm.interpolate(p)) *
 			   dndx.interpolate(p, 1.0 - ph_over_p);
 	}
 
@@ -295,7 +295,7 @@ double EnergyLoss::dA412(double ph, double p2, const LinearInterpolator<double> 
 		yq = yh - yl;
 		y = yl + m_dAHS2[i] * yq;
 		
-		sum += m_dsdpti2.interpolate(p) / p / std::exp(norm.interpolate(p)) *
+		sum += m_dsdpti2.interpolate(p) / p * std::exp(-norm.interpolate(p)) *
 			   m_dAPoissonFactors[2] *
 			   dndx.interpolate(p, 1.0 - ph_over_p - y) *
 			   dndx.interpolate(p, y) *
@@ -338,7 +338,7 @@ double EnergyLoss::dA413(double ph, double p2, const LinearInterpolator<double> 
 		zq = zh - zl;
 		z = zl + m_dAHS3[i] * zq;
 
-		sum += m_dsdpti2.interpolate(p) / p / std::exp(norm.interpolate(p)) *
+		sum += m_dsdpti2.interpolate(p) / p * std::exp(-norm.interpolate(p)) *
 			   m_dAPoissonFactors[3] *
 			   dndx.interpolate(p, 1.0 - ph_over_p - y - z) *
 			   dndx.interpolate(p, y) *
@@ -389,7 +389,7 @@ double EnergyLoss::dA414(double ph, double p2, const LinearInterpolator<double> 
 		zzq = zzh - zzl;
 		zz = zzl + m_dAHS4[i] * zzq;
 
-		sum += m_dsdpti2.interpolate(p) / p / std::exp(norm.interpolate(p)) *
+		sum += m_dsdpti2.interpolate(p) / p * std::exp(-norm.interpolate(p)) *
 			   m_dAPoissonFactors[4] *
 			   dndx.interpolate(p, 1.0 - ph_over_p - y - z - zz) *
 			   dndx.interpolate(p, y) *
@@ -448,7 +448,7 @@ double EnergyLoss::dA415(double ph, double p2, const LinearInterpolator<double> 
 		zzzq = zzzh - zzzl;
 		zzz = zzzl + m_dAHS5[i] * zzzq;
 
-		sum += m_dsdpti2.interpolate(p) / p / std::exp(norm.interpolate(p)) *
+		sum += m_dsdpti2.interpolate(p) / p * std::exp(-norm.interpolate(p)) *
 			   m_dAPoissonFactors[5] *
 			   dndx.interpolate(p, 1.0 - ph_over_p - y - z - zz - zzz) *
 			   dndx.interpolate(p, y) *
@@ -515,7 +515,7 @@ double EnergyLoss::dA416(double ph, double p2, const LinearInterpolator<double> 
 		zzzzq = zzzzh - zzzzl;
 		zzzz = zzzzl + m_dAHS6[i] * zzzzq;
 
-		sum += m_dsdpti2.interpolate(p) / p / std::exp(norm.interpolate(p)) *
+		sum += m_dsdpti2.interpolate(p) / p * std::exp(-norm.interpolate(p)) *
 			   m_dAPoissonFactors[6] *
 			   dndx.interpolate(p, 1.0 - ph_over_p - y - z - zz - zzz - zzzz) *
 			   dndx.interpolate(p, y) *
@@ -590,7 +590,7 @@ double EnergyLoss::dA417(double ph, double p2, const LinearInterpolator<double> 
 		zzzzzq = zzzzzh - zzzzzl;
 		zzzzz = zzzzzl + m_dAHS7[i] * zzzzzq;
 
-		sum += m_dsdpti2.interpolate(p) / p / std::exp(norm.interpolate(p)) *
+		sum += m_dsdpti2.interpolate(p) / p * std::exp(-norm.interpolate(p)) *
 			   m_dAPoissonFactors[7] *
 			   dndx.interpolate(p, 1.0 - ph_over_p - y - z - zz - zzz - zzzz - zzzzz) *
 			   dndx.interpolate(p, y) *
