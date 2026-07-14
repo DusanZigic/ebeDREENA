@@ -33,7 +33,7 @@ private:
     double m_nf;			     // effective number of flavours
     
     double m_mgC;                // constant gluon mass used for dA integrals
-    double m_MC;	             // constant particle mass used for dA integrals
+    double m_MC, m_MC_sq;	     // constant particle mass used for dA integrals and the squared value
     double m_TCollConst;         // constant temperature used for Gauss filter integration
     
     gridPoints m_Grids;				    	              //grid points

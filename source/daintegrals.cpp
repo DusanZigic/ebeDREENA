@@ -179,7 +179,7 @@ double EnergyLoss::FdA415(double ph, double dp, double mFactor, double invExpNor
 double EnergyLoss::FdA(double ph, double dp, const LinearInterpolator<double> &currnorm, const LinearInterpolator<double> &currdndx) const noexcept
 {
 	const double p          = ph + dp;
-	const double e          = std::sqrt(m_MC * m_MC + p * p);
+	const double e          = std::sqrt(m_MC_sq + p * p);
 	const double mFactor    = m_mgC / (p + e);
 	const double invExpNorm = 1.0 / std::exp(currnorm.interpolate(p)); // NOTE (dusan): factor out everything that doesn't depend on variable of integration
 
@@ -255,7 +255,7 @@ double EnergyLoss::dA412(double ph, const LinearInterpolator<double> &norm, cons
 	for (std::size_t i = 0; i < m_dAMaxPoints2; ++i) {
 		p = p1 + m_dAHS1[i] * pq;
 
-		e = std::sqrt(m_MC * m_MC + p * p);
+		e = std::sqrt(m_MC_sq + p * p);
 		mFactor = m_mgC / (p + e);
 		
 		yl = mFactor;
@@ -290,7 +290,7 @@ double EnergyLoss::dA413(double ph, const LinearInterpolator<double> &norm, cons
 	for (std::size_t i = 0; i < m_dAMaxPoints3; ++i) {
 		p = p1 + m_dAHS1[i] * pq;
 
-		e = std::sqrt(m_MC * m_MC + p * p);
+		e = std::sqrt(m_MC_sq + p * p);
 		mFactor = m_mgC / (p + e);
 		
 		yl = mFactor;
@@ -333,7 +333,7 @@ double EnergyLoss::dA414(double ph, const LinearInterpolator<double> &norm, cons
 	for (std::size_t i = 0; i < m_dAMaxPoints4; ++i) {
 		p = p1 + m_dAHS1[i] * pq;
 
-		e = std::sqrt(m_MC * m_MC + p * p);
+		e = std::sqrt(m_MC_sq + p * p);
 		mFactor = m_mgC / (p + e);
 		
 		yl = mFactor;
@@ -384,7 +384,7 @@ double EnergyLoss::dA415(double ph, const LinearInterpolator<double> &norm, cons
 	for (std::size_t i = 0; i < m_dAMaxPoints5; ++i) {
 		p = p1 + m_dAHS1[i] * pq;
 
-		e = std::sqrt(m_MC * m_MC + p * p);
+		e = std::sqrt(m_MC_sq + p * p);
 		mFactor = m_mgC / (p + e);
 		
 		yl = mFactor;
@@ -443,7 +443,7 @@ double EnergyLoss::dA416(double ph, const LinearInterpolator<double> &norm, cons
 	for (std::size_t i = 0; i < m_dAMaxPoints6; ++i) {
 		p = p1 + m_dAHS1[i] * pq;
 
-		e = std::sqrt(m_MC * m_MC + p * p);
+		e = std::sqrt(m_MC_sq + p * p);
 		mFactor = m_mgC / (p + e);
 		
 		yl = mFactor;
@@ -510,7 +510,7 @@ double EnergyLoss::dA417(double ph, const LinearInterpolator<double> &norm, cons
 	for (std::size_t i = 0; i < m_dAMaxPoints7; ++i) {
 		p = p1 + m_dAHS1[i] * pq;
 
-		e = std::sqrt(m_MC * m_MC + p * p);
+		e = std::sqrt(m_MC_sq + p * p);
 		mFactor = m_mgC / (p + e);
 
 		yl = mFactor;
