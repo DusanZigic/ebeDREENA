@@ -51,6 +51,8 @@ EnergyLoss::EnergyLoss(const config::energyLossConfig &cfg)
     } else {
         m_masterSeed = static_cast<std::uint32_t>(m_BCPSEED);
     }
+
+	generateGaussTab(m_qGaussTabOG, m_fGaussTabOG); // NOTE (dusan): generate baseline configurations for integration of Gaussian
 }
 
 EnergyLoss::~EnergyLoss() {}
@@ -727,15 +729,12 @@ void EnergyLoss::gaussFilterIntegrate(
     LinearInterpolator<double> RadRelInt1(m_Grids.RadPts(), radiativeRAA1);
     LinearInterpolator<double> RadRelInt2(m_Grids.RadPts(), m_Grids.FdpPts(), radiativeRAA2);
 
-    std::vector<double> qGaussTabOG, fGaussTabOG; // NOTE (dusan): generate baseline Gauss configurations once
-    generateGaussTab(qGaussTabOG, fGaussTabOG);
-
 	const auto &finPts = m_Grids.finPts();
     const auto &FdpPts = m_Grids.FdpPts();
 
 	std::vector<double> qGaussTab, fGaussTab; // NOTE (dusan): reused across loop cycles to eliminate repetitive allocations
-    qGaussTab.reserve(qGaussTabOG.size());
-    fGaussTab.reserve(fGaussTabOG.size());
+    qGaussTab.reserve(m_qGaussTabOG.size());
+    fGaussTab.reserve(m_fGaussTabOG.size());
 
 	for (std::size_t iFin = 0; iFin < finPts.size(); ++iFin) {
 		const double pT            = finPts[iFin];
@@ -743,8 +742,8 @@ void EnergyLoss::gaussFilterIntegrate(
         const double muCollCurrVal = muCollInt.interpolate(pT);
         const double sigmaColl     = std::sqrt(2.0 * m_TCollConst * muCollCurrVal);
 
-		qGaussTab = qGaussTabOG; // NOTE (dusan): reset and populate current Gauss grids
-        fGaussTab = fGaussTabOG;
+		qGaussTab = m_qGaussTabOG; // NOTE (dusan): reset and populate current grids for integration of Gaussian
+        fGaussTab = m_fGaussTabOG;
 
 		// NOTE (dusan): rescaling if out of bounds
 		if ((muCollCurrVal + sigmaColl * qGaussTab.front()) < -3.0) {
@@ -795,14 +794,11 @@ void EnergyLoss::gaussFilterIntegrate(
     LinearInterpolator<double> muCollInt(m_Grids.pCollPts(), collisionalEL);
     LinearInterpolator<double> RadRelInt(m_Grids.RadPts(),   radiativeRAA);
 
-	std::vector<double> qGaussTabOG, fGaussTabOG; // NOTE (dusan): generate baseline configurations for integration of the Gaussian once
-    generateGaussTab(qGaussTabOG, fGaussTabOG);
-
 	const auto &finPts = m_Grids.finPts();
 
 	std::vector<double> qGaussTab, fGaussTab; // NOTE (dusan): reused across loop cycles to eliminate repetitive allocations
-    qGaussTab.reserve(qGaussTabOG.size());
-    fGaussTab.reserve(fGaussTabOG.size());
+    qGaussTab.reserve(m_qGaussTabOG.size());
+    fGaussTab.reserve(m_fGaussTabOG.size());
 
 	for (std::size_t iFin = 0; iFin < finPts.size(); ++iFin) {
 		const double pT            = finPts[iFin];
@@ -810,8 +806,8 @@ void EnergyLoss::gaussFilterIntegrate(
         const double muCollCurrVal = muCollInt.interpolate(pT);
         const double sigmaColl     = std::sqrt(2.0 * m_TCollConst * muCollCurrVal);
 
-		qGaussTab = qGaussTabOG; // NOTE (dusan): reset and populate current Gauss grids
-        fGaussTab = fGaussTabOG;
+		qGaussTab = m_qGaussTabOG; // NOTE (dusan): reset and populate current grids for integration of Gaussian
+        fGaussTab = m_fGaussTabOG;
 
 		// NOTE (dusan): rescaling if out of bounds
 		if ((muCollCurrVal + sigmaColl * qGaussTab.front()) < -3.0) {

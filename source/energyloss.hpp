@@ -64,7 +64,8 @@ private:
     std::vector<std::size_t> m_FdAHSSortedIdx2, m_FdAHSSortedIdx3, m_FdAHSSortedIdx4, m_FdAHSSortedIdx5;
     std::vector<std::size_t> m_dAHSSortedIdx1, m_dAHSSortedIdx2, m_dAHSSortedIdx3, m_dAHSSortedIdx4, m_dAHSSortedIdx5, m_dAHSSortedIdx6, m_dAHSSortedIdx7;
     
-   
+    std::vector<double> m_qGaussTabOG, m_fGaussTabOG; // baseline configurations for integration of Gaussian
+
     int loaddsdpti2(const std::string &pname, LinearInterpolator<double> &dsdpti2int);
     std::string resolveLTablePath(const std::string &tablePrefix, bool includeXB) const;
     int loadLdndx();
