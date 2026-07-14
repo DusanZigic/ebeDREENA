@@ -932,7 +932,7 @@ void EnergyLoss::runELossHeavyFlavour()
 		std::vector<std::vector<double>> RAAdist(finPts.size(), std::vector<double>(m_phiGridN, 0.0));
         std::vector<double> pathLenghDist(m_phiGridN, 0.0), temperatureDist(m_phiGridN, 0.0);
 
-		std::size_t trajectoryNum = 0, energylossNum = 0;
+		std::size_t trajectoryCounter = 0, energylossCounter = 0;
 
 		std::vector<double> radRAA1(radPts.size(), 0.0);
 		std::vector<std::vector<double>> radRAA2(radPts.size(), std::vector<double>(fdpPts.size(), 0.0));
@@ -942,7 +942,10 @@ void EnergyLoss::runELossHeavyFlavour()
 		std::vector<double> sumRAA1(finPts.size(), 0.0);
 		std::vector<std::vector<double>> sumRAA2(finPts.size(), std::vector<double>(fdpPts.size(), 0.0));
 
-		for (std::size_t iPhi=0; iPhi<m_phiGridN; iPhi++) {
+		std::size_t pathLengthTempCounter;
+		double pathLength, temperature;
+
+		for (std::size_t iPhi = 0; iPhi < m_phiGridN; ++iPhi) {
 			const double phi = m_phiGridPts[iPhi];
 
 			std::fill(sumRAA1.begin(), sumRAA1.end(), 0.0);
@@ -950,20 +953,19 @@ void EnergyLoss::runELossHeavyFlavour()
             	std::fill(row.begin(), row.end(), 0.0);
         	}
 
-			std::size_t pltCNT = 0; // TODO (dusan): define outside the phi loop and set to zero here
+			pathLengthTempCounter = 0;
 
 			for (std::size_t iXY = 0; iXY < xPoints.size(); ++iXY) {
-				++trajectoryNum;
+				++trajectoryCounter;
 
 				const double x = xPoints[iXY];
 				const double y = yPoints[iXY];
 
-				double pathLength, temperature; // TODO (dusan): define outside phi loop
 				RadCollEL(x, y, phi, tProfile, radRAA1, radRAA2, collEL, pathLength, temperature);
 
 				if (pathLength > m_tau0) { // NOTE (dusan): jet has traversed through the medium
-					++energylossNum;
-					++pltCNT;
+					++energylossCounter;
+					++pathLengthTempCounter;
 					pathLenghDist[iPhi]   += pathLength;
 					temperatureDist[iPhi] += temperature;
 
@@ -995,9 +997,9 @@ void EnergyLoss::runELossHeavyFlavour()
                 RAAdist[iFin][iPhi] = sumRAA1[iFin] + poly::cubicIntegrate(m_Grids.FdpPts(), sumRAA2[iFin]) / finPts[iFin];
             }
 
-            if (pltCNT > 0) {
-                pathLenghDist[iPhi]   /= static_cast<double>(pltCNT);
-                temperatureDist[iPhi] /= static_cast<double>(pltCNT);
+            if (pathLengthTempCounter > 0) {
+                pathLenghDist[iPhi]   /= static_cast<double>(pathLengthTempCounter);
+                temperatureDist[iPhi] /= static_cast<double>(pathLengthTempCounter);
             } else {
                 pathLenghDist[iPhi]   = 0.0;
                 temperatureDist[iPhi] = 0.0;
@@ -1007,7 +1009,7 @@ void EnergyLoss::runELossHeavyFlavour()
 		std::vector<double> avgPathLength, avgTemp;
 		calculateAvgPathlenTemps(pathLenghDist, temperatureDist, avgPathLength, avgTemp);
 		
-		exportResults(m_pName, eventID, RAAdist, avgPathLength, avgTemp, trajectoryNum, energylossNum);
+		exportResults(m_pName, eventID, RAAdist, avgPathLength, avgTemp, trajectoryCounter, energylossCounter);
 	}
 }
 
@@ -1040,7 +1042,7 @@ void EnergyLoss::runELossLightQuarks()
 		std::vector<std::vector<std::vector<double>>> RAAdist(lqSize, std::vector<std::vector<double>>(finPts.size(), std::vector<double>(m_phiGridN, 0.0)));
 		std::vector<double> pathLenghDist(m_phiGridN, 0.0), temperatureDist(m_phiGridN, 0.0);
 
-		std::size_t trajectoryNum = 0, energylossNum = 0;
+		std::size_t trajectoryCounter = 0, energylossCounter = 0;
 
 		std::vector<double> radRAA1(radPts.size(), 0.0);
 		std::vector<std::vector<double>> radRAA2(radPts.size(), std::vector<double>(fdpPts.size(), 0.0));
@@ -1072,7 +1074,10 @@ void EnergyLoss::runELossLightQuarks()
 			)
 		);
 
-		for (std::size_t iPhi=0; iPhi<m_phiGridN; iPhi++) {
+		std::size_t pathLengthTempCounter;
+		double pathLength, temperature;
+
+		for (std::size_t iPhi = 0; iPhi < m_phiGridN; ++iPhi) {
 			const double phi = m_phiGridPts[iPhi];
 
 			for (std::size_t iLQ = 0; iLQ < lqSize; ++iLQ) {
@@ -1082,20 +1087,19 @@ void EnergyLoss::runELossLightQuarks()
         		}
             }
 
-			std::size_t pltCNT = 0; // TODO (dusan): define outside the phi loop and set to zero here
+			pathLengthTempCounter = 0;
 
 			for (std::size_t iXY = 0; iXY < xPoints.size(); ++iXY) {
-				++trajectoryNum;
+				++trajectoryCounter;
 
 				const double x = xPoints[iXY];
 				const double y = yPoints[iXY];
 
-				double pathLength, temperature; // TODO (dusan): define outside phi loop
 				RadCollEL(x, y, phi, tProfile, radRAA1, radRAA2, collEL, pathLength, temperature);
 
 				if (pathLength > m_tau0) { // NOTE (dusan): jet has traversed through the medium
-					++energylossNum;
-					++pltCNT;
+					++energylossCounter;
+					++pathLengthTempCounter;
 					pathLenghDist[iPhi]   += pathLength;
 					temperatureDist[iPhi] += temperature;
 
@@ -1135,9 +1139,9 @@ void EnergyLoss::runELossLightQuarks()
 				}
 			}
 
-			if (pltCNT > 0) {
-                pathLenghDist[iPhi]   /= static_cast<double>(pltCNT);
-                temperatureDist[iPhi] /= static_cast<double>(pltCNT);
+			if (pathLengthTempCounter > 0) {
+                pathLenghDist[iPhi]   /= static_cast<double>(pathLengthTempCounter);
+                temperatureDist[iPhi] /= static_cast<double>(pathLengthTempCounter);
             } else {
                 pathLenghDist[iPhi]   = 0.0;
                 temperatureDist[iPhi] = 0.0;
@@ -1148,7 +1152,7 @@ void EnergyLoss::runELossLightQuarks()
 		calculateAvgPathlenTemps(pathLenghDist, temperatureDist, avgPathLength, avgTemp);
 		
 		for (std::size_t iLQ=0; iLQ<lqSize; iLQ++)
-			exportResults(lightQuarksList[iLQ], eventID, RAAdist[iLQ], avgPathLength, avgTemp, trajectoryNum, energylossNum);
+			exportResults(lightQuarksList[iLQ], eventID, RAAdist[iLQ], avgPathLength, avgTemp, trajectoryCounter, energylossCounter);
 	}
 }
 
@@ -1174,33 +1178,34 @@ void EnergyLoss::runELossLightFlavour()
 		std::vector<std::vector<double>> RAAdist(finPts.size(), std::vector<double>(m_phiGridN, 0.0));
 		std::vector<double> pathLenghDist(m_phiGridN, 0.0), temperatureDist(m_phiGridN, 0.0);
 
-		std::size_t trajectoryNum = 0, energylossNum = 0;
+		std::size_t trajectoryCounter = 0, energylossCounter = 0;
 
 		std::vector<double> radRAA(radPts.size(), 0.0);
 		std::vector<double> collEL(pCollPts.size(), 0.0);
 		std::vector<double> singleRAA(finPts.size(), 0.0);
 		std::vector<double> sumRAA(finPts.size(), 0.0);
 
-		for (std::size_t iPhi=0; iPhi<m_phiGridN; iPhi++)
-		{
+		std::size_t pathLengthTempCounter;
+		double pathLength, temperature;
+
+		for (std::size_t iPhi = 0; iPhi < m_phiGridN; ++iPhi) {
 			double phi = m_phiGridPts[iPhi];
 
 			std::fill(sumRAA.begin(), sumRAA.end(), 0.0);
 
-			std::size_t pltCNT = 0; // TODO (dusan): define outside the phi loop and set to zero here
+			pathLengthTempCounter = 0;
 
 			for (std::size_t iXY = 0; iXY < xPoints.size(); ++iXY) {
-				++trajectoryNum;
+				++trajectoryCounter;
 
 				const double x = xPoints[iXY];
 				const double y = yPoints[iXY];
 
-				double pathLength, temperature; // TODO (dusan): define outside phi loop
 				RadCollEL(x, y, phi, tProfile, radRAA, collEL, pathLength, temperature);
 
 				if (pathLength > m_tau0) { // NOTE (dusan): jet has traversed through the medium
-					++energylossNum;
-					++pltCNT;
+					++energylossCounter;
+					++pathLengthTempCounter;
 					pathLenghDist[iPhi]   += pathLength;
 					temperatureDist[iPhi] += temperature;
 
@@ -1225,9 +1230,9 @@ void EnergyLoss::runELossLightFlavour()
 				RAAdist[iFin][iPhi] = sumRAA[iFin] / weightsum;
 			}
 
-			if (pltCNT > 0) {
-                pathLenghDist[iPhi]   /= static_cast<double>(pltCNT);
-                temperatureDist[iPhi] /= static_cast<double>(pltCNT);
+			if (pathLengthTempCounter > 0) {
+                pathLenghDist[iPhi]   /= static_cast<double>(pathLengthTempCounter);
+                temperatureDist[iPhi] /= static_cast<double>(pathLengthTempCounter);
             } else {
                 pathLenghDist[iPhi]   = 0.0;
                 temperatureDist[iPhi] = 0.0;
@@ -1237,6 +1242,6 @@ void EnergyLoss::runELossLightFlavour()
 		std::vector<double> avgPathLength, avgTemp;
 		calculateAvgPathlenTemps(pathLenghDist, temperatureDist, avgPathLength, avgTemp);
 
-		exportResults(m_pName, eventID, RAAdist, avgPathLength, avgTemp, trajectoryNum, energylossNum);
+		exportResults(m_pName, eventID, RAAdist, avgPathLength, avgTemp, trajectoryCounter, energylossCounter);
 	}
 }
