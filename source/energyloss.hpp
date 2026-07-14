@@ -69,6 +69,8 @@ private:
     int generateInitPosPoints(std::size_t event_id, std::vector<double> &xPoints, std::vector<double> &yPoints) const;
     int loadTProfile(std::size_t event_id, LinearInterpolator<double> &tempProfile) const;
 
+    std::vector<double> dAPoissonFactors; // TODO (dusan): factor out normalization factors from Poisson distribution (1/2, 1/2/3,...)
+
     void FdAHaltonSeqInit(std::size_t FdAMaxPts);
     double dAp410(double ph, const LinearInterpolator<double> &norm) const noexcept;
     double FdA411(double ph, double dp, const LinearInterpolator<double> &norm, const LinearInterpolator<double> &dndx) const noexcept;
@@ -89,15 +91,44 @@ private:
     double dA417(double ph, const LinearInterpolator<double> &norm, const LinearInterpolator<double> &dndx) const noexcept;
     double dA41(double ph, LinearInterpolator<double> &currnorm, LinearInterpolator<double> &currdndx) const noexcept;
 
-    void RadCollEL(double X0, double Y0, double phi0, const LinearInterpolator<double> &TProfile, std::vector<double> &radiativeRAA1, std::vector<std::vector<double>> &radiativeRAA2, std::vector<double> &collisionalEL, double &pathLength, double &temp) const noexcept;
-    void RadCollEL(double X0, double Y0, double phi0, const LinearInterpolator<double> &TProfile, std::vector<double> &radiativeRAA, std::vector<double> &collisionalEL, double &pathLenght, double &temp) const noexcept;
+    void RadCollEL(
+        double X0, double Y0, double phi0,
+        const LinearInterpolator<double> &TProfile,
+        std::vector<double> &radiativeRAA1, std::vector<std::vector<double>> &radiativeRAA2,
+        std::vector<double> &collisionalEL,
+        double &pathLength, double &temp
+    ) const noexcept;
+    void RadCollEL(
+        double X0, double Y0, double phi0,
+        const LinearInterpolator<double> &TProfile,
+        std::vector<double> &radiativeRAA,
+        std::vector<double> &collisionalEL,
+        double &pathLenght, double &temp
+    ) const noexcept;
     
     void generateGaussTab(std::vector<double> &qGTab, std::vector<double> &fGTab) const noexcept;
-    void gaussFilterIntegrate(const LinearInterpolator<double> &dsdpti2, const std::vector<double> &radiativeRAA1, const std::vector<std::vector<double>> &radiativeRAA2, const std::vector<double> &collisionalEL, std::vector<double> &singRAA1, std::vector<std::vector<double>> &singRAA2) const noexcept;
-    void gaussFilterIntegrate(const std::vector<double> &radiativeRAA, const std::vector<double> &collisionalEL, std::vector<double> &singRAA) const noexcept;
+    void gaussFilterIntegrate(
+        const LinearInterpolator<double> &dsdpti2,
+        const std::vector<double> &radiativeRAA1, const std::vector<std::vector<double>> &radiativeRAA2,
+        const std::vector<double> &collisionalEL,
+        std::vector<double> &singRAA1, std::vector<std::vector<double>> &singRAA2
+    ) const noexcept;
+    void gaussFilterIntegrate(
+        const std::vector<double> &radiativeRAA,
+        const std::vector<double> &collisionalEL,
+        std::vector<double> &singRAA
+    ) const noexcept;
     
-    void calculateAvgPathlenTemps(const std::vector<double> &pathLenghDist, const std::vector<double> &temperatureDist, std::vector<double> &avgPathLength, std::vector<double> &avgTemp) const;
-    int exportResults(const std::string &particleName, std::size_t event_id, const std::vector<std::vector<double>> &RAApTphi, const std::vector<double> &avgPathLength, const std::vector<double> &avgTemp, std::size_t trajecNum, std::size_t elossNum) const;
+    void calculateAvgPathlenTemps(
+        const std::vector<double> &pathLenghDist, const std::vector<double> &temperatureDist,
+        std::vector<double> &avgPathLength, std::vector<double> &avgTemp
+    ) const noexcept;
+    int exportResults(
+        const std::string &particleName, std::size_t event_id,
+        const std::vector<std::vector<double>> &RAApTphi,
+        const std::vector<double> &avgPathLength, const std::vector<double> &avgTemp,
+        std::size_t trajecNum, std::size_t elossNum
+    ) const noexcept;
 
     void runELossHeavyFlavour();
     void runELossLightQuarks();
