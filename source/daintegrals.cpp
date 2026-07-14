@@ -224,17 +224,16 @@ double EnergyLoss::dA410(double ph, const LinearInterpolator<double> &norm) cons
 	);
 }
 
-double EnergyLoss::dA411(double ph, const LinearInterpolator<double> &norm, const LinearInterpolator<double> &dndx) const noexcept
+double EnergyLoss::dA411(double ph, double p2, const LinearInterpolator<double> &norm, const LinearInterpolator<double> &dndx) const noexcept
 {
 	const double p1 = ph + m_mgC / 2.0;
-	const double p2 = (((2.0 * ph) < (ph + 30.0)) ? (2.0 * ph) : (ph + 30.0));
 	const double pq = p2 - p1;
 	double p;
 	double ph_over_p;
 
 	double sum = 0.0;
 	for (std::size_t i = 0; i < m_dAMaxPoints1; ++i) {
-		p         = p1 + m_dAHS1[i] * pq;
+		p = p1 + m_dAHS1[i] * pq;
 		ph_over_p = ph / p;
 		
 		sum += m_dsdpti2.interpolate(p) / p / std::exp(norm.interpolate(p)) *
@@ -244,10 +243,9 @@ double EnergyLoss::dA411(double ph, const LinearInterpolator<double> &norm, cons
 	return (sum * pq / static_cast<double>(m_dAMaxPoints1));
 }
 
-double EnergyLoss::dA412(double ph, const LinearInterpolator<double> &norm, const LinearInterpolator<double> &dndx) const noexcept
+double EnergyLoss::dA412(double ph, double p2, const LinearInterpolator<double> &norm, const LinearInterpolator<double> &dndx) const noexcept
 {
 	const double p1 = ph + 2.0 * m_mgC / 2.0;
-	const double p2 = (((2.0 * ph) < (ph + 30.0)) ? (2.0 * ph) : (ph + 30.0));
 	const double pq = p2 - p1;
 	double p;
 	
@@ -278,10 +276,9 @@ double EnergyLoss::dA412(double ph, const LinearInterpolator<double> &norm, cons
 	return (sum * pq / static_cast<double>(m_dAMaxPoints2));
 }
 
-double EnergyLoss::dA413(double ph, const LinearInterpolator<double> &norm, const LinearInterpolator<double> &dndx) const noexcept
+double EnergyLoss::dA413(double ph, double p2, const LinearInterpolator<double> &norm, const LinearInterpolator<double> &dndx) const noexcept
 {
 	const double p1 = ph + 3.0 * m_mgC / 2.0;
-	const double p2 = (((2.0 * ph) < (ph + 30.0)) ? (2.0 * ph) : (ph + 30.0));
 	const double pq = p2 - p1;
 	double p;
 	
@@ -320,10 +317,9 @@ double EnergyLoss::dA413(double ph, const LinearInterpolator<double> &norm, cons
 	return (sum * pq / static_cast<double>(m_dAMaxPoints3));
 }
 
-double EnergyLoss::dA414(double ph, const LinearInterpolator<double> &norm, const LinearInterpolator<double> &dndx) const noexcept
+double EnergyLoss::dA414(double ph, double p2, const LinearInterpolator<double> &norm, const LinearInterpolator<double> &dndx) const noexcept
 {
 	const double p1 = ph + 4.0 * m_mgC / 2.0;
-	const double p2 = (((2.0 * ph) < (ph + 30.0)) ? (2.0 * ph) : (ph + 30.0));
 	const double pq = p2 - p1;
 	double p;
 	
@@ -370,10 +366,9 @@ double EnergyLoss::dA414(double ph, const LinearInterpolator<double> &norm, cons
 	return (sum * pq / static_cast<double>(m_dAMaxPoints4));
 }
 
-double EnergyLoss::dA415(double ph, const LinearInterpolator<double> &norm, const LinearInterpolator<double> &dndx) const noexcept
+double EnergyLoss::dA415(double ph, double p2, const LinearInterpolator<double> &norm, const LinearInterpolator<double> &dndx) const noexcept
 {
 	const double p1 = ph + 5.0 * m_mgC / 2.0;
-	const double p2 = (((2.0 * ph) < (ph + 30.0)) ? (2.0 * ph) : (ph + 30.0));
 	const double pq = p2 - p1;
 	double p;
 
@@ -428,10 +423,9 @@ double EnergyLoss::dA415(double ph, const LinearInterpolator<double> &norm, cons
 	return (sum * pq / static_cast<double>(m_dAMaxPoints5));
 }
 
-double EnergyLoss::dA416(double ph, const LinearInterpolator<double> &norm, const LinearInterpolator<double> &dndx) const noexcept
+double EnergyLoss::dA416(double ph, double p2, const LinearInterpolator<double> &norm, const LinearInterpolator<double> &dndx) const noexcept
 {
-	const double p1 = ph + 6.0*m_mgC / 2.0;
-	const double p2 = (((2.0 * ph) < (ph + 30.0)) ? (2.0 * ph) : (ph + 30.0));
+	const double p1 = ph + 6.0 * m_mgC / 2.0;
 	const double pq = p2 - p1;
 	double p;
 
@@ -494,10 +488,9 @@ double EnergyLoss::dA416(double ph, const LinearInterpolator<double> &norm, cons
 	return (sum * pq / static_cast<double>(m_dAMaxPoints6));
 }
 
-double EnergyLoss::dA417(double ph, const LinearInterpolator<double> &norm, const LinearInterpolator<double> &dndx) const noexcept
+double EnergyLoss::dA417(double ph, double p2, const LinearInterpolator<double> &norm, const LinearInterpolator<double> &dndx) const noexcept
 {
-	const double p1 = ph + 7.0*m_mgC / 2.0;
-	const double p2 = (((2.0 * ph) < (ph + 30.0)) ? (2.0 * ph) : (ph + 30.0));
+	const double p1 = ph + 7.0 * m_mgC / 2.0;
 	const double pq = p2 - p1;
 	double p;
 
@@ -570,26 +563,29 @@ double EnergyLoss::dA417(double ph, const LinearInterpolator<double> &norm, cons
 
 double EnergyLoss::dA41(double ph, LinearInterpolator<double> &currnorm, LinearInterpolator<double> &currdndx) const noexcept
 {
+	// NOTE (dusan): factor out upper integration limit since it's contant for all dA integrals unlike lower limit
+	const double p2 = (((2.0 * ph) < (ph + 30.0)) ? (2.0 * ph) : (ph + 30.0));
+
 	if (m_pName == "Gluon") { // NOTE (dusan): gluons need 7 dA integrals
 		return (
-			dA410(ph, currnorm) +
-			dA411(ph, currnorm, currdndx) +
-			dA412(ph, currnorm, currdndx) +
-			dA413(ph, currnorm, currdndx) +
-			dA414(ph, currnorm, currdndx) +
-			dA415(ph, currnorm, currdndx) +
-			dA416(ph, currnorm, currdndx) +
-			dA417(ph, currnorm, currdndx)
+			dA410(ph,     currnorm) +
+			dA411(ph, p2, currnorm, currdndx) +
+			dA412(ph, p2, currnorm, currdndx) +
+			dA413(ph, p2, currnorm, currdndx) +
+			dA414(ph, p2, currnorm, currdndx) +
+			dA415(ph, p2, currnorm, currdndx) +
+			dA416(ph, p2, currnorm, currdndx) +
+			dA417(ph, p2, currnorm, currdndx)
 		);
 	}
 	else { // NOTE (dusan): light quarks need 5 dA integrals
 		return (
-			dA410(ph, currnorm) +
-			dA411(ph, currnorm, currdndx) +
-			dA412(ph, currnorm, currdndx) +
-			dA413(ph, currnorm, currdndx) +
-			dA414(ph, currnorm, currdndx) +
-			dA415(ph, currnorm, currdndx)
+			dA410(ph,     currnorm) +
+			dA411(ph, p2, currnorm, currdndx) +
+			dA412(ph, p2, currnorm, currdndx) +
+			dA413(ph, p2, currnorm, currdndx) +
+			dA414(ph, p2, currnorm, currdndx) +
+			dA415(ph, p2, currnorm, currdndx)
 		);
 	}
 }

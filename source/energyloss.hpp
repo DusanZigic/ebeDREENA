@@ -90,14 +90,14 @@ private:
     double FdA(double ph, double dp, const LinearInterpolator<double> &currnorm, const LinearInterpolator<double> &currdndx) const noexcept;
 
     void dAHaltonSeqInit(std::size_t dAMaxPts);
-    double dA410(double ph, const LinearInterpolator<double> &norm) const noexcept;
-    double dA411(double ph, const LinearInterpolator<double> &norm, const LinearInterpolator<double> &dndx) const noexcept;
-    double dA412(double ph, const LinearInterpolator<double> &norm, const LinearInterpolator<double> &dndx) const noexcept;
-    double dA413(double ph, const LinearInterpolator<double> &norm, const LinearInterpolator<double> &dndx) const noexcept;
-    double dA414(double ph, const LinearInterpolator<double> &norm, const LinearInterpolator<double> &dndx) const noexcept;
-    double dA415(double ph, const LinearInterpolator<double> &norm, const LinearInterpolator<double> &dndx) const noexcept;
-    double dA416(double ph, const LinearInterpolator<double> &norm, const LinearInterpolator<double> &dndx) const noexcept;
-    double dA417(double ph, const LinearInterpolator<double> &norm, const LinearInterpolator<double> &dndx) const noexcept;
+    double dA410(double ph,            const LinearInterpolator<double> &norm) const noexcept;
+    double dA411(double ph, double p2, const LinearInterpolator<double> &norm, const LinearInterpolator<double> &dndx) const noexcept;
+    double dA412(double ph, double p2, const LinearInterpolator<double> &norm, const LinearInterpolator<double> &dndx) const noexcept;
+    double dA413(double ph, double p2, const LinearInterpolator<double> &norm, const LinearInterpolator<double> &dndx) const noexcept;
+    double dA414(double ph, double p2, const LinearInterpolator<double> &norm, const LinearInterpolator<double> &dndx) const noexcept;
+    double dA415(double ph, double p2, const LinearInterpolator<double> &norm, const LinearInterpolator<double> &dndx) const noexcept;
+    double dA416(double ph, double p2, const LinearInterpolator<double> &norm, const LinearInterpolator<double> &dndx) const noexcept;
+    double dA417(double ph, double p2, const LinearInterpolator<double> &norm, const LinearInterpolator<double> &dndx) const noexcept;
     double dA41(double ph, LinearInterpolator<double> &currnorm, LinearInterpolator<double> &currdndx) const noexcept;
 
     void RadCollEL(
