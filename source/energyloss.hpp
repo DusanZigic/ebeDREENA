@@ -69,7 +69,16 @@ private:
     int generateInitPosPoints(std::size_t event_id, std::vector<double> &xPoints, std::vector<double> &yPoints) const;
     int loadTProfile(std::size_t event_id, LinearInterpolator<double> &tempProfile) const;
 
-    std::vector<double> dAPoissonFactors; // TODO (dusan): factor out normalization factors from Poisson distribution (1/2, 1/2/3,...)
+    const std::vector<double> m_dAPoissonFactors = { // NOTE (dusan): normalization factors from Poisson distribution (vector index matches dA definition)
+        1.0,                                         // NOTE (dusan): not needed for dA410 and dAp410
+        1.0,                                         // NOTE (dusan): not needed for dA411 and FdA411
+        1.0 / 2.0,                                   // NOTE (dusan): dA412, FdA412
+        1.0 / 2.0 / 3.0,                             // NOTE (dusan): dA413, FdA413
+        1.0 / 2.0 / 3.0 / 4.0,                       // NOTE (dusan): dA414, FdA414
+        1.0 / 2.0 / 3.0 / 4.0 / 5.0,                 // NOTE (dusan): dA415, FdA415
+        1.0 / 2.0 / 3.0 / 4.0 / 5.0 / 6.0,           // NOTE (dusan): dA416, FdA416 not defined
+        1.0 / 2.0 / 3.0 / 4.0 / 5.0 / 6.0 / 7.0,     // NOTE (dusan): dA417, FdA417 not defined
+    };
 
     void FdAHaltonSeqInit(std::size_t FdAMaxPts);
     double dAp410(double ph, const LinearInterpolator<double> &norm) const noexcept;

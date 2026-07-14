@@ -47,13 +47,12 @@ double EnergyLoss::FdA412(double ph, double dp, const LinearInterpolator<double>
 	const double m_factor = m_mgC / (p + e_factor);
 
 	const double yl = m_factor;
-	const double yh =  1.0 - ph / p - m_factor;
+	const double yh = 1.0 - ph / p - m_factor;
 	const double yq = yh - yl;
 	double y;
 
 	const double inv_exp_norm   = 1.0 / std::exp(norm.interpolate(p));
-	const double poisson_factor = 1.0 / 2.0;
-	const double prefactor      = inv_exp_norm * poisson_factor * yq; // NOTE (dusan): constant prefactor outside the loop
+	const double prefactor      = inv_exp_norm * m_dAPoissonFactors[2] * yq; // NOTE (dusan): constant prefactor outside the loop
 
 	double sum = 0.0;
 	for (std::size_t i = 0; i < m_FdAMaxPoints2; ++i) {
@@ -84,8 +83,7 @@ double EnergyLoss::FdA413(double ph, double dp, const LinearInterpolator<double>
 	double zh, zq, z;
 
 	const double inv_exp_norm   = 1.0 / std::exp(norm.interpolate(p));
-	const double poisson_factor = 1.0 / 2.0 / 3.0;
-	const double prefactor      = inv_exp_norm * poisson_factor * yq; // NOTE (dusan): constant prefactor outside the loop
+	const double prefactor      = inv_exp_norm * m_dAPoissonFactors[3] * yq; // NOTE (dusan): constant prefactor outside the loop
 
 	double sum = 0.0;
 	for (std::size_t i = 0; i < m_FdAMaxPoints3; ++i) {
@@ -95,7 +93,7 @@ double EnergyLoss::FdA413(double ph, double dp, const LinearInterpolator<double>
 		zq = zh - zl;
 		z = zl + m_FdAHS3[i] * zq;
 		
-		sum += dndx.interpolate(p, 1.0 - ph/p - y - z) *
+		sum += dndx.interpolate(p, 1.0 - ph / p - y - z) *
 			   dndx.interpolate(p, y) *
 			   dndx.interpolate(p, z) * zq;
 	}
@@ -124,8 +122,7 @@ double EnergyLoss::FdA414(double ph, double dp, const LinearInterpolator<double>
 	double zzh, zzq, zz;
 
 	const double inv_exp_norm   = 1.0 / std::exp(norm.interpolate(p));
-	const double poisson_factor = 1.0 / 2.0 / 3.0 / 4.0;
-	const double prefactor      = inv_exp_norm * poisson_factor * yq; // NOTE (dusan): constant prefactor outside the loop
+	const double prefactor      = inv_exp_norm * m_dAPoissonFactors[4] * yq; // NOTE (dusan): constant prefactor outside the loop
 
 	double sum = 0.0;
 	for (std::size_t i = 0; i < m_FdAMaxPoints4; ++i) {
@@ -139,7 +136,7 @@ double EnergyLoss::FdA414(double ph, double dp, const LinearInterpolator<double>
 		zzq = zzh - zzl;
 		zz = zzl + m_FdAHS4[i]*zzq;
 		
-		sum += dndx.interpolate(p, 1.0 - ph/p - y - z - zz) *
+		sum += dndx.interpolate(p, 1.0 - ph / p - y - z - zz) *
 			   dndx.interpolate(p, y) *
 			   dndx.interpolate(p, z) *
 			   dndx.interpolate(p, zz) *
@@ -173,8 +170,7 @@ double EnergyLoss::FdA415(double ph, double dp, const LinearInterpolator<double>
 	double zzzh, zzzq, zzz;
 
 	const double inv_exp_norm   = 1.0 / std::exp(norm.interpolate(p));
-	const double poisson_factor = 1.0 / 2.0 / 3.0 / 4.0 / 5.0;
-	const double prefactor      = inv_exp_norm * poisson_factor * yq; // NOTE (dusan): constant prefactor outside the loop
+	const double prefactor      = inv_exp_norm * m_dAPoissonFactors[5] * yq; // NOTE (dusan): constant prefactor outside the loop
 	
 	double sum = 0.0;
 	for (std::size_t i = 0; i < m_FdAMaxPoints5; ++i) {
@@ -253,11 +249,11 @@ double EnergyLoss::dA411(double ph, const LinearInterpolator<double> &norm, cons
 	double p;
 
 	double sum = 0.0;
-	for (std::size_t i = 0; i  <m_dAMaxPoints1; ++i) {
+	for (std::size_t i = 0; i < m_dAMaxPoints1; ++i) {
 		p = p1 + m_dAHS1[i] * pq;
 		
 		sum += m_dsdpti2.interpolate(p) / p / std::exp(norm.interpolate(p)) *
-			   dndx.interpolate(p, 1.0 - ph/p);
+			   dndx.interpolate(p, 1.0 - ph / p);
 	}
 
 	return (sum * pq / static_cast<double>(m_dAMaxPoints1));
@@ -274,8 +270,6 @@ double EnergyLoss::dA412(double ph, const LinearInterpolator<double> &norm, cons
 	
 	double e_factor, m_factor;
 
-	const double poisson_factor = 1.0 / 2.0;
-
 	double sum = 0.0;
 	for (std::size_t i = 0; i < m_dAMaxPoints2; ++i) {
 		p = p1 + m_dAHS1[i] * pq;
@@ -289,7 +283,7 @@ double EnergyLoss::dA412(double ph, const LinearInterpolator<double> &norm, cons
 		y = yl + m_dAHS2[i] * yq;
 		
 		sum += m_dsdpti2.interpolate(p) / p / std::exp(norm.interpolate(p)) *
-			   poisson_factor *
+			   m_dAPoissonFactors[2] *
 			   dndx.interpolate(p, 1.0 - ph / p - y) *
 			   dndx.interpolate(p, y) *
 			   yq;
@@ -311,8 +305,6 @@ double EnergyLoss::dA413(double ph, const LinearInterpolator<double> &norm, cons
 
 	double e_factor, m_factor;
 
-	const double poisson_factor = 1.0 / 2.0 / 3.0;
-	
 	double sum = 0.0;
 	for (std::size_t i = 0; i < m_dAMaxPoints3; ++i) {
 		p = p1 + m_dAHS1[i] * pq;
@@ -331,7 +323,7 @@ double EnergyLoss::dA413(double ph, const LinearInterpolator<double> &norm, cons
 		z = zl + m_dAHS3[i] * zq;
 
 		sum += m_dsdpti2.interpolate(p) / p / std::exp(norm.interpolate(p)) *
-			   poisson_factor *
+			   m_dAPoissonFactors[3] *
 			   dndx.interpolate(p, 1.0 - ph / p - y - z) *
 			   dndx.interpolate(p, y) *
 			   dndx.interpolate(p, z) *
@@ -356,8 +348,6 @@ double EnergyLoss::dA414(double ph, const LinearInterpolator<double> &norm, cons
 	
 	double e_factor, m_factor;
 
-	const double poisson_factor = 1.0 / 2.0 / 3.0 / 4.0;
-	
 	double sum = 0.0;
 	for (std::size_t i = 0; i < m_dAMaxPoints4; ++i) {
 		p = p1 + m_dAHS1[i] * pq;
@@ -381,7 +371,7 @@ double EnergyLoss::dA414(double ph, const LinearInterpolator<double> &norm, cons
 		zz = zzl + m_dAHS4[i] * zzq;
 
 		sum += m_dsdpti2.interpolate(p) / p / std::exp(norm.interpolate(p)) *
-			   poisson_factor *
+			   m_dAPoissonFactors[4] *
 			   dndx.interpolate(p, 1.0 - ph / p - y - z - zz) *
 			   dndx.interpolate(p, y) *
 			   dndx.interpolate(p, z) *
@@ -409,8 +399,6 @@ double EnergyLoss::dA415(double ph, const LinearInterpolator<double> &norm, cons
 	
 	double e_factor, m_factor;
 
-	const double poisson_factor = 1.0 / 2.0 / 3.0 / 4.0 / 5.0;
-	
 	double sum = 0.0;
 	for (std::size_t i = 0; i < m_dAMaxPoints5; ++i) {
 		p = p1 + m_dAHS1[i] * pq;
@@ -439,7 +427,7 @@ double EnergyLoss::dA415(double ph, const LinearInterpolator<double> &norm, cons
 		zzz = zzzl + m_dAHS5[i] * zzzq;
 
 		sum += m_dsdpti2.interpolate(p) / p / std::exp(norm.interpolate(p)) *
-			   poisson_factor *
+			   m_dAPoissonFactors[5] *
 			   dndx.interpolate(p, 1.0 - ph / p - y - z - zz - zzz) *
 			   dndx.interpolate(p, y) *
 			   dndx.interpolate(p, z) *
@@ -469,8 +457,6 @@ double EnergyLoss::dA416(double ph, const LinearInterpolator<double> &norm, cons
 	double zzzzl, zzzzh, zzzzq, zzzz;
 	
 	double e_factor, m_factor;
-
-	const double poisson_factor = 1.0 / 2.0 / 3.0 / 4.0 / 5.0 / 6.0;
 
 	double sum = 0.0;
 	for (std::size_t i = 0; i < m_dAMaxPoints6; ++i) {
@@ -505,7 +491,7 @@ double EnergyLoss::dA416(double ph, const LinearInterpolator<double> &norm, cons
 		zzzz = zzzzl + m_dAHS6[i] * zzzzq;
 
 		sum += m_dsdpti2.interpolate(p) / p / std::exp(norm.interpolate(p)) *
-			   poisson_factor *
+			   m_dAPoissonFactors[6] *
 			   dndx.interpolate(p, 1.0 - ph / p - y - z - zz - zzz - zzzz) *
 			   dndx.interpolate(p, y) *
 			   dndx.interpolate(p, z) *
@@ -539,8 +525,6 @@ double EnergyLoss::dA417(double ph, const LinearInterpolator<double> &norm, cons
 	
 	double e_factor, m_factor;
 
-	const double poisson_factor = 1.0 / 2.0 / 3.0 / 4.0 / 5.0 / 6.0 / 7.0;
-	
 	double sum = 0.0;
 	for (std::size_t i = 0; i < m_dAMaxPoints7; ++i) {
 		p = p1 + m_dAHS1[i] * pq;
@@ -579,7 +563,7 @@ double EnergyLoss::dA417(double ph, const LinearInterpolator<double> &norm, cons
 		zzzzz = zzzzzl + m_dAHS7[i] * zzzzzq;
 
 		sum += m_dsdpti2.interpolate(p) / p / std::exp(norm.interpolate(p)) *
-			   poisson_factor *
+			   m_dAPoissonFactors[7] *
 			   dndx.interpolate(p, 1.0 - ph / p - y - z - zz - zzz - zzzz - zzzzz) *
 			   dndx.interpolate(p, y) *
 			   dndx.interpolate(p, z) *
