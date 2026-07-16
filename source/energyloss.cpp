@@ -434,6 +434,9 @@ int EnergyLoss::loadBinCollPoints(std::size_t event_id, std::vector<std::pair<do
 
 int EnergyLoss::generateInitPosPoints(std::size_t event_id, std::vector<double> &xPoints, std::vector<double> &yPoints) const
 {
+	xPoints.clear();
+	yPoints.clear();
+	
 	std::vector<std::pair<double, double>> bcpts;
 	if (loadBinCollPoints(event_id, bcpts) != 0) return 1;
 
@@ -447,9 +450,6 @@ int EnergyLoss::generateInitPosPoints(std::size_t event_id, std::vector<double> 
     std::default_random_engine rng{eventSeed};
 
 	std::shuffle(bcpts.begin(), bcpts.end(), rng);
-
-	xPoints.reserve(bsptsNum);
-    yPoints.reserve(bsptsNum);
 
     for (std::size_t iBCP = 0; iBCP < bsptsNum; ++iBCP) {
         xPoints.push_back(bcpts[iBCP].first);
@@ -837,17 +837,15 @@ void EnergyLoss::calculateAvgPathlenTemps(
 	std::vector<double> &avgPathLength, std::vector<double> &avgTemp
 ) const noexcept
 {
-	avgPathLength.reserve(3);
 	LinearInterpolator<double> pathLenghDistInt(m_phiGridPts, pathLenghDist);
-	avgPathLength.push_back(poly::cubicIntegrate(m_phiGridPts, pathLenghDist)/2.0/utils::constants::PI);
-	avgPathLength.push_back((pathLenghDistInt.interpolate(m_phiGridPts.front())     + pathLenghDistInt.interpolate(m_phiGridPts.back()))          / 2.0);
-	avgPathLength.push_back((pathLenghDistInt.interpolate(utils::constants::PI/2.0) + pathLenghDistInt.interpolate(3.0*utils::constants::PI/2.0)) / 2.0);
+	avgPathLength[0] = poly::cubicIntegrate(m_phiGridPts, pathLenghDist)/2.0/utils::constants::PI;
+	avgPathLength[1] = (pathLenghDistInt.interpolate(m_phiGridPts.front())     + pathLenghDistInt.interpolate(m_phiGridPts.back()))          / 2.0;
+	avgPathLength[2] = (pathLenghDistInt.interpolate(utils::constants::PI/2.0) + pathLenghDistInt.interpolate(3.0*utils::constants::PI/2.0)) / 2.0;
 	
-    avgTemp.reserve(3);
 	LinearInterpolator<double> temperatureDistInt(m_phiGridPts, temperatureDist);
-	avgTemp.push_back(poly::cubicIntegrate(m_phiGridPts, temperatureDist)/2.0/utils::constants::PI);
-	avgTemp.push_back((temperatureDistInt.interpolate(m_phiGridPts.front())      + temperatureDistInt.interpolate(m_phiGridPts.back()))          / 2.0);
-	avgTemp.push_back((temperatureDistInt.interpolate(utils::constants::PI/2.0)  + temperatureDistInt.interpolate(3.0*utils::constants::PI/2.0)) / 2.0);
+	avgTemp[0] = poly::cubicIntegrate(m_phiGridPts, temperatureDist)/2.0/utils::constants::PI;
+	avgTemp[1] = (temperatureDistInt.interpolate(m_phiGridPts.front())      + temperatureDistInt.interpolate(m_phiGridPts.back()))          / 2.0;
+	avgTemp[2] = (temperatureDistInt.interpolate(utils::constants::PI/2.0)  + temperatureDistInt.interpolate(3.0*utils::constants::PI/2.0)) / 2.0;
 }
 
 int EnergyLoss::exportResults(
@@ -917,96 +915,111 @@ void EnergyLoss::runELossHeavyFlavour()
 	const auto& pCollPts = m_Grids.pCollPts();
 	const auto& finPts   = m_Grids.finPts();
 
-	#pragma omp parallel for schedule(dynamic)
-	for (std::size_t eventID = 0; eventID < m_eventN; ++eventID)
+	#pragma omp parallel
 	{
 		std::vector<double> xPoints, yPoints;
-		generateInitPosPoints(eventID, xPoints, yPoints);
+		xPoints.reserve(2000);
+		yPoints.reserve(2000);
 
 		LinearInterpolator<double> tProfile;
-		loadTProfile(eventID, tProfile);
 
 		std::vector<std::vector<double>> RAAdist(finPts.size(), std::vector<double>(m_phiGridN, 0.0));
-        std::vector<double> pathLenghDist(m_phiGridN, 0.0), temperatureDist(m_phiGridN, 0.0);
+		
+		std::vector<double> pathLenghDist(m_phiGridN, 0.0), temperatureDist(m_phiGridN, 0.0);
 
-		std::size_t trajectoryCounter = 0, energylossCounter = 0;
+		std::size_t trajectoryCounter, energylossCounter;
+
+		std::size_t pathLengthTempCounter;
+		double pathLength, temperature;
 
 		std::vector<double> radRAA1(radPts.size(), 0.0);
 		std::vector<std::vector<double>> radRAA2(radPts.size(), std::vector<double>(fdpPts.size(), 0.0));
 		std::vector<double> collEL(pCollPts.size(), 0.0);
 		std::vector<double> singleRAA1(finPts.size(), 0.0);
-        std::vector<std::vector<double>> singleRAA2(finPts.size(), std::vector<double>(fdpPts.size(), 0.0));
+		std::vector<std::vector<double>> singleRAA2(finPts.size(), std::vector<double>(fdpPts.size(), 0.0));
 		std::vector<double> sumRAA1(finPts.size(), 0.0);
 		std::vector<std::vector<double>> sumRAA2(finPts.size(), std::vector<double>(fdpPts.size(), 0.0));
 
-		std::size_t pathLengthTempCounter;
-		double pathLength, temperature;
+		std::vector<double> avgPathLength(3), avgTemp(3); // NOTE (dusan): angle averaged, in- and out-of-plane
 
-		for (std::size_t iPhi = 0; iPhi < m_phiGridN; ++iPhi) {
-			const double phi = m_phiGridPts[iPhi];
+		#pragma omp for schedule(dynamic)
+		for (std::size_t eventID = 0; eventID < m_eventN; ++eventID)
+		{
+			generateInitPosPoints(eventID, xPoints, yPoints);
 
-			std::fill(sumRAA1.begin(), sumRAA1.end(), 0.0);
-			for (auto& row : sumRAA2) {
-            	std::fill(row.begin(), row.end(), 0.0);
-        	}
+			loadTProfile(eventID, tProfile);
+			
+			std::fill(pathLenghDist.begin(), pathLenghDist.end(), 0.0);
+            std::fill(temperatureDist.begin(), temperatureDist.end(), 0.0);
+			
+			trajectoryCounter = 0;
+			energylossCounter = 0;			
 
-			pathLengthTempCounter = 0;
+			for (std::size_t iPhi = 0; iPhi < m_phiGridN; ++iPhi) {
+				const double phi = m_phiGridPts[iPhi];
 
-			for (std::size_t iXY = 0; iXY < xPoints.size(); ++iXY) {
-				++trajectoryCounter;
+				std::fill(sumRAA1.begin(), sumRAA1.end(), 0.0);
+				for (auto& row : sumRAA2) {
+					std::fill(row.begin(), row.end(), 0.0);
+				}
 
-				const double x = xPoints[iXY];
-				const double y = yPoints[iXY];
+				pathLengthTempCounter = 0;
 
-				RadCollEL(x, y, phi, tProfile, radRAA1, radRAA2, collEL, pathLength, temperature);
+				for (std::size_t iXY = 0; iXY < xPoints.size(); ++iXY) {
+					++trajectoryCounter;
 
-				if (pathLength > m_tau0) { // NOTE (dusan): jet has traversed through the medium
-					++energylossCounter;
-					++pathLengthTempCounter;
-					pathLenghDist[iPhi]   += pathLength;
-					temperatureDist[iPhi] += temperature;
+					const double x = xPoints[iXY];
+					const double y = yPoints[iXY];
 
-					for (auto &coll : collEL) coll += 1e-12; // NOTE (dusan): to prevent division by 0
+					RadCollEL(x, y, phi, tProfile, radRAA1, radRAA2, collEL, pathLength, temperature);
 
-					gaussFilterIntegrate(m_dsdpti2, radRAA1, radRAA2, collEL, singleRAA1, singleRAA2);
+					if (pathLength > m_tau0) { // NOTE (dusan): jet has traversed through the medium
+						++energylossCounter;
+						++pathLengthTempCounter;
+						pathLenghDist[iPhi]   += pathLength;
+						temperatureDist[iPhi] += temperature;
 
-					for (std::size_t iFin = 0; iFin < finPts.size(); ++iFin) {
-						sumRAA1[iFin] += singleRAA1[iFin];
-						for (std::size_t iFdp = 0; iFdp < fdpPts.size(); ++iFdp)
-							sumRAA2[iFin][iFdp] += singleRAA2[iFin][iFdp];
+						for (auto &coll : collEL) coll += 1e-12; // NOTE (dusan): to prevent division by 0
+
+						gaussFilterIntegrate(m_dsdpti2, radRAA1, radRAA2, collEL, singleRAA1, singleRAA2);
+
+						for (std::size_t iFin = 0; iFin < finPts.size(); ++iFin) {
+							sumRAA1[iFin] += singleRAA1[iFin];
+							for (std::size_t iFdp = 0; iFdp < fdpPts.size(); ++iFdp)
+								sumRAA2[iFin][iFdp] += singleRAA2[iFin][iFdp];
+						}
+					}
+					else {
+						// NOTE (dusan): adding RAA1, which is 1.0, to RAA sum; RAA2 is 0 in this case
+						for (std::size_t iFin = 0; iFin < finPts.size(); ++iFin) {
+							sumRAA1[iFin] += 1.0; 
+						}
 					}
 				}
-				else {
-					// NOTE (dusan): adding RAA1, which is 1.0, to RAA sum; RAA2 is 0 in this case
-					for (std::size_t iFin = 0; iFin < finPts.size(); ++iFin) {
-						sumRAA1[iFin] += 1.0; 
+
+				double weightsum = static_cast<double>(xPoints.size());
+
+				for (std::size_t iFin = 0; iFin < finPts.size(); ++iFin) {
+					sumRAA1[iFin] /= weightsum;
+					for (std::size_t iFdp = 0; iFdp < fdpPts.size(); ++iFdp) {
+						sumRAA2[iFin][iFdp] /= weightsum;
 					}
+					RAAdist[iFin][iPhi] = sumRAA1[iFin] + poly::cubicIntegrate(m_Grids.FdpPts(), sumRAA2[iFin]) / finPts[iFin];
+				}
+
+				if (pathLengthTempCounter > 0) {
+					pathLenghDist[iPhi]   /= static_cast<double>(pathLengthTempCounter);
+					temperatureDist[iPhi] /= static_cast<double>(pathLengthTempCounter);
+				} else {
+					pathLenghDist[iPhi]   = 0.0;
+					temperatureDist[iPhi] = 0.0;
 				}
 			}
 
-			double weightsum = static_cast<double>(xPoints.size());
-
-			for (std::size_t iFin = 0; iFin < finPts.size(); ++iFin) {
-                sumRAA1[iFin] /= weightsum;
-                for (std::size_t iFdp = 0; iFdp < fdpPts.size(); ++iFdp) {
-                    sumRAA2[iFin][iFdp] /= weightsum;
-                }
-                RAAdist[iFin][iPhi] = sumRAA1[iFin] + poly::cubicIntegrate(m_Grids.FdpPts(), sumRAA2[iFin]) / finPts[iFin];
-            }
-
-            if (pathLengthTempCounter > 0) {
-                pathLenghDist[iPhi]   /= static_cast<double>(pathLengthTempCounter);
-                temperatureDist[iPhi] /= static_cast<double>(pathLengthTempCounter);
-            } else {
-                pathLenghDist[iPhi]   = 0.0;
-                temperatureDist[iPhi] = 0.0;
-            }
+			calculateAvgPathlenTemps(pathLenghDist, temperatureDist, avgPathLength, avgTemp);
+			
+			exportResults(m_pName, eventID, RAAdist, avgPathLength, avgTemp, trajectoryCounter, energylossCounter);
 		}
-
-		std::vector<double> avgPathLength, avgTemp;
-		calculateAvgPathlenTemps(pathLenghDist, temperatureDist, avgPathLength, avgTemp);
-		
-		exportResults(m_pName, eventID, RAAdist, avgPathLength, avgTemp, trajectoryCounter, energylossCounter);
 	}
 }
 
@@ -1027,129 +1040,123 @@ void EnergyLoss::runELossLightQuarks()
 	const auto& pCollPts = m_Grids.pCollPts();
 	const auto& finPts   = m_Grids.finPts();
 
-	#pragma omp parallel for schedule(dynamic)
-	for (std::size_t eventID = 0; eventID < m_eventN; ++eventID)
+	#pragma omp parallel
 	{
 		std::vector<double> xPoints, yPoints;
-		generateInitPosPoints(eventID, xPoints, yPoints);
+		xPoints.reserve(2000);
+		yPoints.reserve(2000);
 
 		LinearInterpolator<double> tProfile;
-		loadTProfile(eventID, tProfile);
 
 		std::vector<std::vector<std::vector<double>>> RAAdist(lqSize, std::vector<std::vector<double>>(finPts.size(), std::vector<double>(m_phiGridN, 0.0)));
+
 		std::vector<double> pathLenghDist(m_phiGridN, 0.0), temperatureDist(m_phiGridN, 0.0);
 
-		std::size_t trajectoryCounter = 0, energylossCounter = 0;
-
-		std::vector<double> radRAA1(radPts.size(), 0.0);
-		std::vector<std::vector<double>> radRAA2(radPts.size(), std::vector<double>(fdpPts.size(), 0.0));
-		std::vector<double> collEL(pCollPts.size(), 0.0);
-		
-		std::vector<std::vector<double>> singleRAA1(
-			lightQuarksList.size(), std::vector<double>(
-				finPts.size(), 0.0
-			)
-		);
-		std::vector<std::vector<std::vector<double>>> singleRAA2(
-			lqSize, std::vector<std::vector<double>>(
-				finPts.size(), std::vector<double>(
-					fdpPts.size(), 0.0
-				)
-			)
-		);
-		
-		std::vector<std::vector<double>> sumRAA1(
-			lqSize, std::vector<double>(
-				finPts.size(), 0.0
-			)
-		);
-		std::vector<std::vector<std::vector<double>>> sumRAA2(
-			lqSize, std::vector<std::vector<double>>(
-				finPts.size(), std::vector<double>(
-					fdpPts.size(), 0.0
-				)
-			)
-		);
+		std::size_t trajectoryCounter, energylossCounter;
 
 		std::size_t pathLengthTempCounter;
 		double pathLength, temperature;
 
-		for (std::size_t iPhi = 0; iPhi < m_phiGridN; ++iPhi) {
-			const double phi = m_phiGridPts[iPhi];
+		std::vector<double> radRAA1(radPts.size(), 0.0);
+		std::vector<std::vector<double>> radRAA2(radPts.size(), std::vector<double>(fdpPts.size(), 0.0));
+		std::vector<double> collEL(pCollPts.size(), 0.0);
+		std::vector<double> singleRAA1(finPts.size(), 0.0);
+		std::vector<std::vector<double>> singleRAA2(finPts.size(), std::vector<double>(fdpPts.size(), 0.0));
+		std::vector<std::vector<double>> sumRAA1(lqSize, std::vector<double>(finPts.size(), 0.0));
+		std::vector<std::vector<std::vector<double>>> sumRAA2(lqSize, std::vector<std::vector<double>>(finPts.size(), std::vector<double>(fdpPts.size(), 0.0)));
 
-			for (std::size_t iLQ = 0; iLQ < lqSize; ++iLQ) {
-                std::fill(sumRAA1[iLQ].begin(), sumRAA1[iLQ].end(), 0.0);
-				for (auto& row : sumRAA2[iLQ]) {
-            		std::fill(row.begin(), row.end(), 0.0);
-        		}
-            }
+		std::vector<double> avgPathLength(3), avgTemp(3); // NOTE (dusan): angle averaged, in- and out-of-plane
 
-			pathLengthTempCounter = 0;
+		#pragma omp for schedule(dynamic)
+		for (std::size_t eventID = 0; eventID < m_eventN; ++eventID)
+		{
+			std::vector<double> xPoints, yPoints;
+			generateInitPosPoints(eventID, xPoints, yPoints);
 
-			for (std::size_t iXY = 0; iXY < xPoints.size(); ++iXY) {
-				++trajectoryCounter;
+			LinearInterpolator<double> tProfile;
+			loadTProfile(eventID, tProfile);
 
-				const double x = xPoints[iXY];
-				const double y = yPoints[iXY];
+			std::fill(pathLenghDist.begin(), pathLenghDist.end(), 0.0);
+            std::fill(temperatureDist.begin(), temperatureDist.end(), 0.0);
 
-				RadCollEL(x, y, phi, tProfile, radRAA1, radRAA2, collEL, pathLength, temperature);
+			trajectoryCounter = 0;
+			energylossCounter = 0;
 
-				if (pathLength > m_tau0) { // NOTE (dusan): jet has traversed through the medium
-					++energylossCounter;
-					++pathLengthTempCounter;
-					pathLenghDist[iPhi]   += pathLength;
-					temperatureDist[iPhi] += temperature;
+			for (std::size_t iPhi = 0; iPhi < m_phiGridN; ++iPhi) {
+				const double phi = m_phiGridPts[iPhi];
 
-					for (auto &coll : collEL) coll += 1e-12; // NOTE (dusan): to prevent division by 0
-
-					for (std::size_t iLQ = 0; iLQ < lqSize; ++iLQ) {
-						gaussFilterIntegrate(dsdpti2LightQuarks[iLQ], radRAA1, radRAA2, collEL, singleRAA1[iLQ], singleRAA2[iLQ]);
+				for (std::size_t iLQ = 0; iLQ < lqSize; ++iLQ) {
+					std::fill(sumRAA1[iLQ].begin(), sumRAA1[iLQ].end(), 0.0);
+					for (auto& row : sumRAA2[iLQ]) {
+						std::fill(row.begin(), row.end(), 0.0);
 					}
+				}
 
-					for (std::size_t iLQ = 0; iLQ < lqSize; ++iLQ) {
-						for (std::size_t iFin = 0; iFin < finPts.size(); ++iFin) {
-							sumRAA1[iLQ][iFin] += singleRAA1[iLQ][iFin];
-							for (std::size_t iFdp = 0; iFdp < fdpPts.size(); ++iFdp)
-								sumRAA2[iLQ][iFin][iFdp] += singleRAA2[iLQ][iFin][iFdp];
+				pathLengthTempCounter = 0;
+
+				for (std::size_t iXY = 0; iXY < xPoints.size(); ++iXY) {
+					++trajectoryCounter;
+
+					const double x = xPoints[iXY];
+					const double y = yPoints[iXY];
+
+					RadCollEL(x, y, phi, tProfile, radRAA1, radRAA2, collEL, pathLength, temperature);
+
+					if (pathLength > m_tau0) { // NOTE (dusan): jet has traversed through the medium
+						++energylossCounter;
+						++pathLengthTempCounter;
+						pathLenghDist[iPhi]   += pathLength;
+						temperatureDist[iPhi] += temperature;
+
+						for (auto &coll : collEL) coll += 1e-12; // NOTE (dusan): to prevent division by 0
+
+						for (std::size_t iLQ = 0; iLQ < lqSize; ++iLQ) {
+							gaussFilterIntegrate(dsdpti2LightQuarks[iLQ], radRAA1, radRAA2, collEL, singleRAA1, singleRAA2);
+						
+							for (std::size_t iFin = 0; iFin < finPts.size(); ++iFin) {
+								sumRAA1[iLQ][iFin] += singleRAA1[iFin];
+								for (std::size_t iFdp = 0; iFdp < fdpPts.size(); ++iFdp)
+									sumRAA2[iLQ][iFin][iFdp] += singleRAA2[iFin][iFdp];
+							}
+						}
+					}
+					else {
+						// NOTE (dusan): adding RAA1, which is 1.0, to RAA sum; RAA2 is 0 in this case
+						for (std::size_t iLQ = 0; iLQ < lqSize; ++iLQ) {
+							for (std::size_t iFin = 0; iFin < finPts.size(); ++iFin) {
+								sumRAA1[iLQ][iFin] += 1.0;
+							}
 						}
 					}
 				}
-				else {
-					// NOTE (dusan): adding RAA1, which is 1.0, to RAA sum; RAA2 is 0 in this case
-					for (std::size_t iLQ = 0; iLQ < lqSize; ++iLQ) {
-						for (std::size_t iFin = 0; iFin < finPts.size(); ++iFin) {
-							sumRAA1[iLQ][iFin] += 1.0;
+
+				const double weightsum = static_cast<double>(xPoints.size());
+
+				for (std::size_t iLQ = 0; iLQ < lqSize; ++iLQ) {
+					for (std::size_t iFin = 0; iFin < finPts.size(); ++iFin) {
+						sumRAA1[iLQ][iFin] /= weightsum;
+						for (std::size_t iFdp = 0; iFdp < fdpPts.size(); ++iFdp) {
+							sumRAA2[iLQ][iFin][iFdp] /= weightsum;
 						}
+						RAAdist[iLQ][iFin][iPhi] = sumRAA1[iLQ][iFin] + poly::cubicIntegrate(fdpPts, sumRAA2[iLQ][iFin]) / finPts[iFin];
 					}
+				}
+
+				if (pathLengthTempCounter > 0) {
+					pathLenghDist[iPhi]   /= static_cast<double>(pathLengthTempCounter);
+					temperatureDist[iPhi] /= static_cast<double>(pathLengthTempCounter);
+				} else {
+					pathLenghDist[iPhi]   = 0.0;
+					temperatureDist[iPhi] = 0.0;
 				}
 			}
 
-			double weightsum = static_cast<double>(xPoints.size());
-
+			calculateAvgPathlenTemps(pathLenghDist, temperatureDist, avgPathLength, avgTemp);
+			
 			for (std::size_t iLQ = 0; iLQ < lqSize; ++iLQ) {
-				for (std::size_t iFin = 0; iFin < finPts.size(); ++iFin) {
-					sumRAA1[iLQ][iFin] /= weightsum;
-					for (std::size_t iFdp = 0; iFdp < fdpPts.size(); ++iFdp) {
-						sumRAA2[iLQ][iFin][iFdp] /= weightsum;
-					}
-					RAAdist[iLQ][iFin][iPhi] = sumRAA1[iLQ][iFin] + poly::cubicIntegrate(fdpPts, sumRAA2[iLQ][iFin]) / finPts[iFin];
-				}
+				exportResults(lightQuarksList[iLQ], eventID, RAAdist[iLQ], avgPathLength, avgTemp, trajectoryCounter, energylossCounter);
 			}
-
-			if (pathLengthTempCounter > 0) {
-                pathLenghDist[iPhi]   /= static_cast<double>(pathLengthTempCounter);
-                temperatureDist[iPhi] /= static_cast<double>(pathLengthTempCounter);
-            } else {
-                pathLenghDist[iPhi]   = 0.0;
-                temperatureDist[iPhi] = 0.0;
-            }
 		}
-
-		std::vector<double> avgPathLength, avgTemp;
-		calculateAvgPathlenTemps(pathLenghDist, temperatureDist, avgPathLength, avgTemp);
-		
-		for (std::size_t iLQ=0; iLQ<lqSize; iLQ++)
-			exportResults(lightQuarksList[iLQ], eventID, RAAdist[iLQ], avgPathLength, avgTemp, trajectoryCounter, energylossCounter);
 	}
 }
 
@@ -1163,82 +1170,97 @@ void EnergyLoss::runELossLightFlavour()
 	const auto& pCollPts = m_Grids.pCollPts();
 	const auto& finPts   = m_Grids.finPts();
 
-	#pragma omp parallel for schedule(dynamic)
-	for (std::size_t eventID = 0; eventID < m_eventN; ++eventID)
+	#pragma omp parallel
 	{
 		std::vector<double> xPoints, yPoints;
-		generateInitPosPoints(eventID, xPoints, yPoints);
+		xPoints.reserve(2000);
+		yPoints.reserve(2000);
 
 		LinearInterpolator<double> tProfile;
-		loadTProfile(eventID, tProfile);
 
 		std::vector<std::vector<double>> RAAdist(finPts.size(), std::vector<double>(m_phiGridN, 0.0));
+		
 		std::vector<double> pathLenghDist(m_phiGridN, 0.0), temperatureDist(m_phiGridN, 0.0);
 
-		std::size_t trajectoryCounter = 0, energylossCounter = 0;
+		std::size_t trajectoryCounter, energylossCounter;
+
+		std::size_t pathLengthTempCounter;
+		double pathLength, temperature;
 
 		std::vector<double> radRAA(radPts.size(), 0.0);
 		std::vector<double> collEL(pCollPts.size(), 0.0);
 		std::vector<double> singleRAA(finPts.size(), 0.0);
 		std::vector<double> sumRAA(finPts.size(), 0.0);
 
-		std::size_t pathLengthTempCounter;
-		double pathLength, temperature;
+		std::vector<double> avgPathLength(3), avgTemp(3); // NOTE (dusan): angle averaged, in- and out-of-plane
 
-		for (std::size_t iPhi = 0; iPhi < m_phiGridN; ++iPhi) {
-			double phi = m_phiGridPts[iPhi];
+		#pragma omp for schedule(dynamic)
+		for (std::size_t eventID = 0; eventID < m_eventN; ++eventID)
+		{
+			generateInitPosPoints(eventID, xPoints, yPoints);
 
-			std::fill(sumRAA.begin(), sumRAA.end(), 0.0);
+			loadTProfile(eventID, tProfile);
 
-			pathLengthTempCounter = 0;
+			trajectoryCounter = 0;
+			energylossCounter = 0;
 
-			for (std::size_t iXY = 0; iXY < xPoints.size(); ++iXY) {
-				++trajectoryCounter;
+			std::fill(pathLenghDist.begin(), pathLenghDist.end(), 0.0);
+            std::fill(temperatureDist.begin(), temperatureDist.end(), 0.0);
 
-				const double x = xPoints[iXY];
-				const double y = yPoints[iXY];
+			for (std::size_t iPhi = 0; iPhi < m_phiGridN; ++iPhi) {
+				double phi = m_phiGridPts[iPhi];
 
-				RadCollEL(x, y, phi, tProfile, radRAA, collEL, pathLength, temperature);
+				std::fill(sumRAA.begin(), sumRAA.end(), 0.0);
 
-				if (pathLength > m_tau0) { // NOTE (dusan): jet has traversed through the medium
-					++energylossCounter;
-					++pathLengthTempCounter;
-					pathLenghDist[iPhi]   += pathLength;
-					temperatureDist[iPhi] += temperature;
+				pathLengthTempCounter = 0;
 
-					for (auto &coll : collEL) coll += 1e-12; // NOTE (dusan): to prevent division by 0
+				for (std::size_t iXY = 0; iXY < xPoints.size(); ++iXY) {
+					++trajectoryCounter;
 
-					gaussFilterIntegrate(radRAA, collEL, singleRAA);
+					const double x = xPoints[iXY];
+					const double y = yPoints[iXY];
 
-					for (std::size_t iFinPts = 0; iFinPts < finPts.size(); ++iFinPts) {
-						sumRAA[iFinPts] += singleRAA[iFinPts];
+					RadCollEL(x, y, phi, tProfile, radRAA, collEL, pathLength, temperature);
+
+					if (pathLength > m_tau0) { // NOTE (dusan): jet has traversed through the medium
+						++energylossCounter;
+						++pathLengthTempCounter;
+						pathLenghDist[iPhi]   += pathLength;
+						temperatureDist[iPhi] += temperature;
+
+						for (auto &coll : collEL) coll += 1e-12; // NOTE (dusan): to prevent division by 0
+
+						gaussFilterIntegrate(radRAA, collEL, singleRAA);
+
+						for (std::size_t iFinPts = 0; iFinPts < finPts.size(); ++iFinPts) {
+							sumRAA[iFinPts] += singleRAA[iFinPts];
+						}
+					}
+					else {
+						// NOTE (dusan): adding RAA1, which is 1.0, to RAA sum; RAA2 is 0 in this case
+						for (std::size_t iFin = 0; iFin < finPts.size(); ++iFin) {
+							sumRAA[iFin] += 1.0; 
+						}
 					}
 				}
-				else {
-					// NOTE (dusan): adding RAA1, which is 1.0, to RAA sum; RAA2 is 0 in this case
-					for (std::size_t iFin = 0; iFin < finPts.size(); ++iFin) {
-						sumRAA[iFin] += 1.0; 
-					}
+
+				double weightsum = (double)(xPoints.size());
+				for (std::size_t iFin = 0; iFin < finPts.size(); ++iFin) {
+					RAAdist[iFin][iPhi] = sumRAA[iFin] / weightsum;
+				}
+
+				if (pathLengthTempCounter > 0) {
+					pathLenghDist[iPhi]   /= static_cast<double>(pathLengthTempCounter);
+					temperatureDist[iPhi] /= static_cast<double>(pathLengthTempCounter);
+				} else {
+					pathLenghDist[iPhi]   = 0.0;
+					temperatureDist[iPhi] = 0.0;
 				}
 			}
 
-			double weightsum = (double)(xPoints.size());
-			for (std::size_t iFin = 0; iFin < finPts.size(); ++iFin) {
-				RAAdist[iFin][iPhi] = sumRAA[iFin] / weightsum;
-			}
+			calculateAvgPathlenTemps(pathLenghDist, temperatureDist, avgPathLength, avgTemp);
 
-			if (pathLengthTempCounter > 0) {
-                pathLenghDist[iPhi]   /= static_cast<double>(pathLengthTempCounter);
-                temperatureDist[iPhi] /= static_cast<double>(pathLengthTempCounter);
-            } else {
-                pathLenghDist[iPhi]   = 0.0;
-                temperatureDist[iPhi] = 0.0;
-            }
+			exportResults(m_pName, eventID, RAAdist, avgPathLength, avgTemp, trajectoryCounter, energylossCounter);
 		}
-
-		std::vector<double> avgPathLength, avgTemp;
-		calculateAvgPathlenTemps(pathLenghDist, temperatureDist, avgPathLength, avgTemp);
-
-		exportResults(m_pName, eventID, RAAdist, avgPathLength, avgTemp, trajectoryCounter, energylossCounter);
 	}
 }
